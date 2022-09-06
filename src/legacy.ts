@@ -1,7 +1,3 @@
-import bsc from './bsc.json'
-
-const now = new Date()
-
 /**
  * calculates the number of days (including fracitons of days)
  * since January first 2000
@@ -30,8 +26,6 @@ interface TimeAndPlace {
   long: number
   lat: number
   lst: number
-  sinLong: number
-  cosLong: number
   sinLat: number
   cosLat: number
 }
@@ -45,8 +39,6 @@ const getTimeAndPlace = (
   long: longitude,
   lat: latitude,
   lst: getLST(date, longitude),
-  sinLong: Math.sin(longitude),
-  cosLong: Math.cos(longitude),
   sinLat: Math.sin(latitude),
   cosLat: Math.cos(latitude),
 })
@@ -108,3 +100,5 @@ class Star {
     return Math.cos(this.altitude)
   }
 }
+
+export { Star, getTimeAndPlace }
