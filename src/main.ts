@@ -1,4 +1,4 @@
-import './style.css'
+import './tailwind.css'
 import typescriptLogo from './typescript.svg'
 import { setupCounter } from './counter'
 
