@@ -90,7 +90,6 @@ class SkyCanvas implements SkyCanvasInterface {
   drawStars(): SkyCanvas {
     let { context, center, radius } = this
     for (const star of SkyCanvas.globalContext.stars) {
-      star.recalculate()
       if (star.altitude < 0) continue
 
       let x = Math.cos(star.theta) * -star.rho,

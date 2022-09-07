@@ -23,7 +23,7 @@ const getLST = (date: Date, longitude: number): number => {
   return ((lst % 360) * Math.PI) / 180
 }
 
-class GlobalContext implements Interface.GlobalContext {
+class GlobalContext extends EventTarget implements Interface.GlobalContext {
   date: Date = new Date()
   long: number = 0
   lat: number = 0
@@ -35,11 +35,13 @@ class GlobalContext implements Interface.GlobalContext {
   canvas?: Interface.SkyCanvas
 
   constructor() {
+    super()
     this.update = this.update.bind(this)
     this.update({ date: new Date(), long: 0, lat: 0 })
   }
 
-  update({ date, long, lat, stars, canvas }: Partial<Interface.GlobalContext>) {
+  update(options: Partial<Interface.GlobalContext>) {
+    let { date, long, lat, stars, canvas } = options
     this.date = date ?? this.date
     this.long = long ?? this.long
     this.lat = lat ?? this.lat
@@ -54,6 +56,11 @@ class GlobalContext implements Interface.GlobalContext {
       this.sinLat = Math.sin(lat)
       this.cosLat = Math.cos(lat)
     }
+
+    const updateEvent = new CustomEvent('update', {
+      detail: options,
+    })
+    this.dispatchEvent(updateEvent)
   }
 }
 

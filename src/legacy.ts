@@ -31,30 +31,40 @@ class Star implements Interface.Star {
     this.#sinDec = Math.sin(declination)
     this.#cosDec = Math.cos(declination)
 
-    // needs to be recalculated if lat changes
-    this.maxAltitude = Math.PI / 2 + declination - Star.context.lat
-
-    this.recalculate()
+    this.recalculate = this.recalculate.bind(this)
+    this.recalculate({
+      date: Star.context.date,
+      long: Star.context.long,
+      lat: Star.context.lat,
+    })
+    Star.context.addEventListener('update', ((event: CustomEvent) => {
+      this.recalculate(event.detail as Partial<Interface.GlobalContext>)
+    }) as EventListener)
   }
 
-  recalculate() {
-    this.lastAzimuth = this.azimuth
-
+  recalculate({ date, long, lat }: Partial<Interface.GlobalContext>): Star {
     // the hour angle can be used to calculate when the star will cross the meridian
     // negative hour angles = moving away from meridian
     // positive hour angles = moving towards the meridian
     // an hour angle of zero occurs when the star passes the meridian
-    this.hourAngle = Star.context.lst - this.ra
+    if (date !== undefined || long !== undefined)
+      this.hourAngle = Star.context.lst - this.ra
+
+    if (lat !== undefined)
+      this.maxAltitude = Math.PI / 2 + this.dec - Star.context.lat
 
     // can potentially abort after altitude if under the horizon
     this.altitude = Math.asin(
       this.#sinDec * Star.context.sinLat +
         this.#cosDec * Star.context.cosLat * Math.cos(this.hourAngle)
     )
+
+    this.lastAzimuth = this.azimuth
     this.azimuth = Math.acos(
       (this.#sinDec - Math.sin(this.altitude) * Star.context.sinLat) /
         (Math.cos(this.altitude) * Star.context.cosLat)
     )
+
     // may be able to get rid of Math.sin here
     if (Math.sin(this.hourAngle) >= 0) {
       this.azimuth = Math.PI * 2 - this.azimuth

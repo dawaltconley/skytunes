@@ -30,7 +30,7 @@ export interface Star {
   theta: number
   rho: number
 
-  recalculate: () => Star
+  recalculate: (options: Partial<GlobalContext>) => Star
   playSynth: (AudioContext) => Star
 }
 
