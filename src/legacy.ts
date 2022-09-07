@@ -51,6 +51,7 @@ class Star {
   ref: number
   ra: number
   dec: number
+  mag: number
   hourAngle: number = 0
   altitude: number = 0
   azimuth: number = 0
@@ -61,11 +62,13 @@ class Star {
   constructor(
     harvardReferenceNumber: number,
     rightAscension: number,
-    declination: number
+    declination: number,
+    magnitude: number
   ) {
     this.ref = harvardReferenceNumber
     this.ra = rightAscension
     this.dec = declination
+    this.mag = magnitude
 
     this.#sinDec = Math.sin(declination)
     this.#cosDec = Math.cos(declination)
