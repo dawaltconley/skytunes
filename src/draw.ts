@@ -39,6 +39,17 @@ class SkyCanvas {
     this.setCanvasSize()
     requestAnimationFrame(this.animateFrame)
     this.speed = options.speed ?? 1
+
+    // recalculate canvas size when resized
+    let resizeTimeout: number
+    const observer = new ResizeObserver(() => {
+      if (resizeTimeout) clearTimeout(resizeTimeout)
+      resizeTimeout = setTimeout(() => {
+        this.setCanvasSize()
+        requestAnimationFrame(this.animateFrame)
+      }, 100)
+    })
+    observer.observe(canvas)
   }
 
   set speed(rate: number) {
