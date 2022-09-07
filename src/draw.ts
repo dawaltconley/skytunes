@@ -66,6 +66,9 @@ class SkyCanvas {
 
   setCanvasSize(): SkyCanvas {
     let { width, height } = this.canvas.getBoundingClientRect()
+    let scale = window.devicePixelRatio
+    width = width * scale
+    height = height * scale
     this.canvas.width = width
     this.canvas.height = height
     this.radius = Math.min(width, height) / 2
