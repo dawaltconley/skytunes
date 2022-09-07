@@ -1,5 +1,4 @@
 import './tailwind.css'
-import colors from 'tailwindcss/colors'
 import bsc from './bsc.json'
 import { getTimeAndPlace, Star } from './legacy'
 import { SkyCanvas } from './draw'
