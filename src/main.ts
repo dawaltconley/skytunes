@@ -1,7 +1,8 @@
 import { BSC } from './types/skytunes'
+import globalContext from './global'
 import './tailwind.css'
 import bsc from './bsc.json'
-import { getTimeAndPlace, Star } from './legacy'
+import { Star } from './legacy'
 import { SkyCanvas } from './draw'
 
 const radianFromRa = (hms: string, sep: string = ':'): number => {
@@ -26,18 +27,19 @@ const stars = bsc.map(
       Number(star.MAG)
     )
 )
+globalContext.update({ stars })
 
 navigator.geolocation.getCurrentPosition(({ coords, timestamp }) => {
-  Star.observer = getTimeAndPlace(
-    new Date(timestamp),
-    coords.longitude,
-    coords.latitude
-  )
-  console.log(Star.observer)
+  globalContext.update({
+    date: new Date(timestamp),
+    long: coords.longitude,
+    lat: coords.latitude,
+  })
 })
 
 const canvas = document.getElementById('canvas') as HTMLCanvasElement
-const skyCanvas = new SkyCanvas(canvas, stars)
+const skyCanvas = new SkyCanvas(canvas)
+globalContext.update({ canvas: skyCanvas })
 
 skyCanvas.startAnimation()
 

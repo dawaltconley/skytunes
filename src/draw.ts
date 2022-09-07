@@ -1,6 +1,6 @@
 import { SkyCanvas as SkyCanvasInterface } from './types/skytunes'
+import context from './global'
 import colors from 'tailwindcss/colors'
-import { Star, getTimeAndPlace } from './legacy'
 
 let fps: number = 0
 setInterval(() => {
@@ -9,6 +9,8 @@ setInterval(() => {
 }, 1000)
 
 class SkyCanvas implements SkyCanvasInterface {
+  static globalContext = context
+
   canvas: HTMLCanvasElement
   context: CanvasRenderingContext2D
   radius: number = 0
@@ -17,22 +19,18 @@ class SkyCanvas implements SkyCanvasInterface {
     y: number
   } = { x: 0, y: 0 }
 
-  stars: Star[]
-
   #speed: number = 1
   #minMsPerFrame: number = 0
   #lastFrameTime: number = 0
 
   constructor(
     canvas: HTMLCanvasElement,
-    stars: Star[],
     options: Partial<{
       speed: number
     }> = {}
   ) {
     this.canvas = canvas
     this.context = canvas.getContext('2d')!
-    this.stars = stars
 
     this.animateFrame = this.animateFrame.bind(this)
 
@@ -90,8 +88,8 @@ class SkyCanvas implements SkyCanvasInterface {
   }
 
   drawStars(): SkyCanvas {
-    let { stars, context, center, radius } = this
-    for (const star of stars) {
+    let { context, center, radius } = this
+    for (const star of SkyCanvas.globalContext.stars) {
       star.recalculate()
       if (star.altitude < 0) continue
 
@@ -111,7 +109,7 @@ class SkyCanvas implements SkyCanvasInterface {
 
   animateFrame(timestamp: DOMHighResTimeStamp): SkyCanvas {
     let now = new Date(performance.timeOrigin + timestamp * this.speed)
-    Star.observer = getTimeAndPlace(now, Star.observer.long, Star.observer.lat)
+    SkyCanvas.globalContext.update({ date: now })
     this.drawBackground().drawStars()
     fps++
     return this
