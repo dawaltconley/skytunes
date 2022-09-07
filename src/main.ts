@@ -2,6 +2,7 @@ import './tailwind.css'
 import colors from 'tailwindcss/colors'
 import bsc from './bsc.json'
 import { getTimeAndPlace, Star } from './legacy'
+import { SkyCanvas } from './draw'
 
 interface BSC {
   'harvard_ref_#': number
@@ -49,74 +50,6 @@ navigator.geolocation.getCurrentPosition(({ coords, timestamp }) => {
 })
 
 const canvas = document.getElementById('canvas') as HTMLCanvasElement
-let canvasRect = canvas.getBoundingClientRect()
-canvas.width = canvasRect.width
-canvas.height = canvasRect.height
+const skyCanvas = new SkyCanvas(canvas, stars)
 
-const context = canvas.getContext('2d')!
-
-const drawBackground = (
-  canvas: HTMLCanvasElement,
-  context: CanvasRenderingContext2D
-): void => {
-  const radius = Math.min(canvas.width, canvas.height) / 2
-  const center = {
-    x: canvas.width / 2,
-    y: canvas.height / 2,
-  }
-  context.beginPath()
-  context.arc(center.x, center.y, radius, 0, 2 * Math.PI)
-  context.fillStyle = colors.blue['900']
-  context.fill()
-}
-drawBackground(canvas, context)
-context.save()
-
-const drawStars = (
-  canvas: HTMLCanvasElement,
-  context: CanvasRenderingContext2D
-): void => {
-  const radius = Math.min(canvas.width, canvas.height) / 2
-  const center = {
-    x: canvas.width / 2,
-    y: canvas.height / 2,
-  }
-
-  for (const star of stars) {
-    star.recalculate()
-    if (star.altitude < 0) continue
-
-    let x = Math.cos(star.theta) * -star.rho,
-      y = Math.sin(star.theta) * star.rho
-    x = x * radius + center.x
-    y = y * radius + center.y
-    // let r = (8 - star.mag) / (radius * 0.01)
-    let r = (8 - star.mag) * (radius * 0.0008)
-
-    context.beginPath()
-    context.arc(x, y, r, 0, 2 * Math.PI)
-    context.fillStyle = colors.yellow[200]
-    context.fill()
-  }
-}
-drawStars(canvas, context)
-
-let framesSinceReset: number = 0
-setInterval(() => {
-  console.log('frame rate', framesSinceReset)
-  framesSinceReset = 0
-}, 1000)
-
-const animateSky = (timestamp: DOMHighResTimeStamp) => {
-  let now = new Date(performance.timeOrigin + timestamp)
-  Star.observer = getTimeAndPlace(now, Star.observer.long, Star.observer.lat)
-
-  framesSinceReset++
-
-  context.restore()
-  drawBackground(canvas, context)
-  drawStars(canvas, context)
-  window.requestAnimationFrame(animateSky)
-}
-
-requestAnimationFrame(animateSky)
+skyCanvas.startAnimation()
