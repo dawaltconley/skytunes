@@ -19,7 +19,6 @@ class SkyCanvas {
   stars: Star[]
 
   #speed: number = 1
-  // #frameCap: number = 60
   #minMsPerFrame: number = 0
   #lastFrameTime: number = 0
 
