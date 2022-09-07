@@ -1,17 +1,8 @@
+import { BSC } from './types/skytunes'
 import './tailwind.css'
 import bsc from './bsc.json'
 import { getTimeAndPlace, Star } from './legacy'
 import { SkyCanvas } from './draw'
-
-interface BSC {
-  'harvard_ref_#': number
-  RA: string
-  DEC: string
-  Epoch: number
-  'RA PM': string
-  'DEC PM': string
-  MAG: string
-}
 
 const radianFromRa = (hms: string, sep: string = ':'): number => {
   let [h, m, s]: number[] = hms.split(sep).map(s => Number(s))

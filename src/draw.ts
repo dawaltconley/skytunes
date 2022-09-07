@@ -1,3 +1,4 @@
+import { SkyCanvas as SkyCanvasInterface } from './types/skytunes'
 import colors from 'tailwindcss/colors'
 import { Star, getTimeAndPlace } from './legacy'
 
@@ -7,7 +8,7 @@ setInterval(() => {
   fps = 0
 }, 1000)
 
-class SkyCanvas {
+class SkyCanvas implements SkyCanvasInterface {
   canvas: HTMLCanvasElement
   context: CanvasRenderingContext2D
   radius: number = 0

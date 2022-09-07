@@ -1,3 +1,5 @@
+import * as Interface from './types/skytunes'
+
 /**
  * calculates the number of days (including fracitons of days)
  * since January first 2000
@@ -21,20 +23,11 @@ const getLST = (date: Date, longitude: number): number => {
   return ((lst % 360) * Math.PI) / 180
 }
 
-interface TimeAndPlace {
-  date: Date
-  long: number
-  lat: number
-  lst: number
-  sinLat: number
-  cosLat: number
-}
-
 const getTimeAndPlace = (
   date: Date,
   longitude: number,
   latitude: number
-): TimeAndPlace => ({
+): Interface.TimeAndPlace => ({
   date,
   long: longitude,
   lat: latitude,
@@ -45,8 +38,8 @@ const getTimeAndPlace = (
 
 let hereAndNow = getTimeAndPlace(new Date(), -73.97131, 40.663119)
 
-class Star {
-  static observer: TimeAndPlace = hereAndNow
+class Star implements Interface.Star {
+  static observer: Interface.TimeAndPlace = hereAndNow
 
   ref: number
   ra: number
