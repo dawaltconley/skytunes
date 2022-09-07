@@ -34,8 +34,10 @@ class SkyCanvas {
     this.context = canvas.getContext('2d')!
     this.stars = stars
 
+    this.animateFrame = this.animateFrame.bind(this)
+
     this.setCanvasSize()
-    requestAnimationFrame(this.animateFrame.bind(this))
+    requestAnimationFrame(this.animateFrame)
     this.speed = options.speed ?? 1
   }
 
@@ -45,6 +47,7 @@ class SkyCanvas {
     let pixelsPerSecond = pixelsPerDegree * (rate / 240)
     let frameCap = pixelsPerSecond * 10
     this.#minMsPerFrame = 1000 / frameCap
+    requestAnimationFrame(this.animateFrame)
   }
 
   get speed() {
