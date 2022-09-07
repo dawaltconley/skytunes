@@ -54,7 +54,9 @@ class Star {
   mag: number
   hourAngle: number = 0
   altitude: number = 0
+  maxAltitude: number = 0
   azimuth: number = 0
+  lastAzimuth: number = 0
 
   #sinDec: number
   #cosDec: number
@@ -73,10 +75,15 @@ class Star {
     this.#sinDec = Math.sin(declination)
     this.#cosDec = Math.cos(declination)
 
+    // needs to be recalculated if lat changes
+    this.maxAltitude = Math.PI / 2 + declination - Star.observer.lat
+
     this.recalculate()
   }
 
   recalculate() {
+    this.lastAzimuth = this.azimuth
+
     // the hour angle can be used to calculate when the star will cross the meridian
     // negative hour angles = moving away from meridian
     // positive hour angles = moving towards the meridian
@@ -106,6 +113,31 @@ class Star {
 
   get rho() {
     return Math.cos(this.altitude)
+  }
+
+  playSynth(ctx: AudioContext): Star {
+    const now = ctx.currentTime
+    // let note = (Math.PI / 2 - Math.abs(this.maxAltitude - Math.PI / 2)) / (Math.PI / 2)
+    let note = 1 - Math.abs(1 - this.maxAltitude / (Math.PI / 2))
+    note = 40 + note * 360
+
+    let oscillator = ctx.createOscillator()
+    oscillator.type = 'triangle'
+    oscillator.frequency.setValueAtTime(note, 0)
+
+    let gainNode = ctx.createGain()
+    gainNode.gain
+      .setValueAtTime(0, 0)
+      .linearRampToValueAtTime(0.5, now + 0.1)
+      .linearRampToValueAtTime(0.35, now + 0.3)
+      .setValueAtTime(0.35, now + 4)
+      .linearRampToValueAtTime(0, now + 5)
+
+    oscillator.connect(gainNode).connect(ctx.destination)
+    oscillator.start()
+    oscillator.stop(now + 6)
+
+    return this
   }
 }
 
