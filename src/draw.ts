@@ -104,6 +104,11 @@ class SkyCanvas {
       context.arc(x, y, r, 0, 2 * Math.PI)
       context.fillStyle = colors.yellow[200]
       context.fill()
+
+      if (star.lastAzimuth < 0 && star.azimuth > 0) {
+        star.playSynth()
+        console.log(star)
+      }
     }
     return this
   }
