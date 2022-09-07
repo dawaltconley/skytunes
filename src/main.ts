@@ -53,3 +53,10 @@ const canvas = document.getElementById('canvas') as HTMLCanvasElement
 const skyCanvas = new SkyCanvas(canvas, stars)
 
 skyCanvas.startAnimation()
+
+const speedSlider = document.getElementById('speed-control') as HTMLInputElement
+speedSlider.value = skyCanvas.speed.toString()
+speedSlider?.addEventListener('input', () => {
+  console.log(speedSlider.value)
+  skyCanvas.speed = Number(speedSlider.value) ** 2
+})
