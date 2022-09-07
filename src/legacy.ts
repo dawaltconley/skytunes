@@ -77,8 +77,13 @@ class Star {
   }
 
   recalculate() {
+    // the hour angle can be used to calculate when the star will cross the meridian
+    // negative hour angles = moving away from meridian
+    // positive hour angles = moving towards the meridian
+    // an hour angle of zero occurs when the star passes the meridian
     this.hourAngle = Star.observer.lst - this.ra
 
+    // can potentially abort after altitude if under the horizon
     this.altitude = Math.asin(
       this.#sinDec * Star.observer.sinLat +
         this.#cosDec * Star.observer.cosLat * Math.cos(this.hourAngle)
