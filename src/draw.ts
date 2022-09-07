@@ -18,7 +18,7 @@ class SkyCanvas {
 
   stars: Star[]
 
-  #timeRate: number = 1
+  #speed: number = 1
   // #frameCap: number = 60
   #minMsPerFrame: number = 0
   #lastFrameTime: number = 0
@@ -27,7 +27,7 @@ class SkyCanvas {
     canvas: HTMLCanvasElement,
     stars: Star[],
     options: Partial<{
-      timeRate: number
+      speed: number
     }> = {}
   ) {
     this.canvas = canvas
@@ -36,19 +36,19 @@ class SkyCanvas {
 
     this.setCanvasSize()
     requestAnimationFrame(this.animateFrame.bind(this))
-    this.timeRate = options.timeRate ?? 1
+    this.speed = options.speed ?? 1
   }
 
-  set timeRate(rate: number) {
-    this.#timeRate = rate
+  set speed(rate: number) {
+    this.#speed = rate
     let pixelsPerDegree = 0.01745240643728351 * this.radius // approximate
     let pixelsPerSecond = pixelsPerDegree * (rate / 240)
     let frameCap = pixelsPerSecond * 10
     this.#minMsPerFrame = 1000 / frameCap
   }
 
-  get timeRate() {
-    return this.#timeRate
+  get speed() {
+    return this.#speed
   }
 
   setCanvasSize(): SkyCanvas {
@@ -93,7 +93,7 @@ class SkyCanvas {
   }
 
   animateFrame(timestamp: DOMHighResTimeStamp): SkyCanvas {
-    let now = new Date(performance.timeOrigin + timestamp * this.timeRate)
+    let now = new Date(performance.timeOrigin + timestamp * this.speed)
     Star.observer = getTimeAndPlace(now, Star.observer.long, Star.observer.lat)
     this.drawBackground().drawStars()
     fps++
