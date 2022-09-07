@@ -3,7 +3,7 @@
  * since January first 2000
  */
 const sinceJ2000 = (date: Date): number =>
-  date.getTime() - Date.UTC(2000, 0) / 86400000
+  (date.getTime() - Date.UTC(2000, 0)) / 86400000
 
 /** calculates the universal (solar) time in hours */
 const getUniversalTime = (date: Date): number =>
