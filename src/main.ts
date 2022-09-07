@@ -6,14 +6,11 @@ import { SkyCanvas } from './draw'
 
 const radianFromRa = (hms: string, sep: string = ':'): number => {
   let [h, m, s]: number[] = hms.split(sep).map(s => Number(s))
-  // let totalSeconds = h * 3600 + m * 60 + s // TODO s can be decimal; this doesn't prevent floating point issues
-  // return totalSeconds * Math.PI / 43200
   let hours = h + m / 60 + s / 3600
   return (hours * Math.PI) / 12
 }
 
 const radianFromDec = (dms: string, sep: string = ':'): number => {
-  // let neg = dms.startsWith('-')
   let [d, m, s]: number[] = dms.split(sep).map(s => Number(s))
   if (dms.startsWith('-')) (m = -m), (s = -s)
   let degrees = d + m / 60 + s / 3600
