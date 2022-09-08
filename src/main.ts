@@ -13,7 +13,7 @@ const radianFromRa = (hms: string, sep: string = ':'): number => {
 
 const radianFromDec = (dms: string, sep: string = ':'): number => {
   let [d, m, s]: number[] = dms.split(sep).map(s => Number(s))
-  if (dms.startsWith('-')) (m = -m), (s = -s)
+  if (dms.startsWith('-')) (m *= -1), (s *= -1)
   let degrees = d + m / 60 + s / 3600
   return (degrees * Math.PI) / 180
 }
