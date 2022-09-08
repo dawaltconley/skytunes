@@ -4,8 +4,8 @@ import * as Interface from './types/skytunes'
  * calculates the number of days (including fracitons of days)
  * since January first 2000
  */
-const sinceJ2000 = (date: Date): number =>
-  (date.getTime() - Date.UTC(2000, 0)) / 86400000
+const sinceJ2000 = (date: Date): number => (date.getTime() - j2000) / 86400000
+const j2000 = Date.UTC(2000, 0, 1, 11, 58, 55, 816)
 
 /** calculates the universal (solar) time in hours */
 const getUniversalTime = (date: Date): number =>
