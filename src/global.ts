@@ -56,8 +56,8 @@ class GlobalContext extends EventTarget implements Interface.GlobalContext {
     }
 
     if (lat !== undefined) {
-      this.sinLat = Math.sin(lat)
-      this.cosLat = Math.cos(lat)
+      this.sinLat = Math.sin(this.lat)
+      this.cosLat = Math.cos(this.lat)
     }
 
     const updateEvent = new CustomEvent('update', {
