@@ -47,8 +47,10 @@ class Star implements Interface.Star {
     // negative hour angles = moving away from meridian
     // positive hour angles = moving towards the meridian
     // an hour angle of zero occurs when the star passes the meridian
-    if (date !== undefined || long !== undefined)
-      this.hourAngle = Star.context.lst - this.ra
+    if (date !== undefined || long !== undefined) {
+      this.hourAngle = (Star.context.lst - this.ra) % (2 * Math.PI)
+      if (this.hourAngle > Math.PI) this.hourAngle -= 2 * Math.PI
+    }
 
     if (lat !== undefined)
       this.maxAltitude = Math.PI / 2 + this.dec - Star.context.lat
@@ -65,8 +67,7 @@ class Star implements Interface.Star {
         (Math.cos(this.altitude) * Star.context.cosLat)
     )
 
-    // may be able to get rid of Math.sin here
-    if (Math.sin(this.hourAngle) >= 0) {
+    if (this.hourAngle > 0) {
       this.azimuth = Math.PI * 2 - this.azimuth
     }
 

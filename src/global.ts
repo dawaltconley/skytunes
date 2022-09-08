@@ -1,28 +1,29 @@
 import * as Interface from './types/skytunes'
 
-/**
- * calculates the number of days (including fracitons of days)
- * since January first 2000
- */
-const sinceJ2000 = (date: Date): number => (date.getTime() - j2000) / 86400000
+/** gets the milliseconds since the J2000 epoch */
+const sinceJ2000 = (date: Date): number => date.getTime() - j2000
 const j2000 = Date.UTC(2000, 0, 1, 11, 58, 55, 816)
 
-/** calculates the universal (solar) time in hours */
+/** calculates the universal (solar) time in milliseconds */
 const getUniversalTime = (date: Date): number =>
-  (date.getTime() - new Date(date).setUTCHours(0, 0, 0, 0)) / 3600000
+  date.getTime() - new Date(date).setUTCHours(0, 0, 0, 0)
 
 /**
- * calculates the local siderial time
+ * calculates the local siderial time in radians
+ * based on the following formula in degrees:
+ * lst = 100.46 + (0.985647 * d) + longitude + (15 * ut)
+ *
  * @param date
  * @param longitude in radians
  * @see {@link http://www.stargazing.net/kepler/altaz.html}
  * @return LST in radians
  */
-const getLST = (date: Date, longitude: number): number => {
-  let d = sinceJ2000(date),
-    ut = getUniversalTime(date)
-  let lst = 100.46 + 0.985647 * d + (longitude * 180) / Math.PI + 15 * ut
-  return ((lst % 360) * Math.PI) / 180
+var getLST = (date: Date, longitude: number): number => {
+  let d = sinceJ2000(date) / 86400000,
+    ut = getUniversalTime(date) / 240000,
+    long = longitude * (180 / Math.PI)
+  let lst = 100.46 + 0.985647 * d + long + ut
+  return (lst * Math.PI) / 180
 }
 
 class GlobalContext extends EventTarget implements Interface.GlobalContext {
