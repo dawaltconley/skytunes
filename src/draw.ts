@@ -79,11 +79,18 @@ class SkyCanvas implements SkyCanvasInterface {
   }
 
   drawBackground(): SkyCanvas {
-    let { context, center, radius } = this
+    let { canvas, context, center, radius } = this
+    let height = canvas.height
+    let skyTop = (height - 2 * radius) / 2
     context.beginPath()
     context.arc(center.x, center.y, radius, 0, 2 * Math.PI)
     context.fillStyle = colors.blue['900']
     context.fill()
+    context.beginPath()
+    context.moveTo(center.x, skyTop)
+    context.lineTo(center.x, height - skyTop)
+    context.strokeStyle = 'rgba(255, 255, 255, 0.2)'
+    context.stroke()
     return this
   }
 
