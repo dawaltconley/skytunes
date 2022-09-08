@@ -13,13 +13,15 @@ const getUniversalTime = (date: Date): number =>
 
 /**
  * calculates the local siderial time
+ * @param date
+ * @param longitude in radians
  * @see {@link http://www.stargazing.net/kepler/altaz.html}
  * @return LST in radians
  */
 const getLST = (date: Date, longitude: number): number => {
   let d = sinceJ2000(date),
     ut = getUniversalTime(date)
-  let lst = 100.46 + 0.985647 * d + longitude + 15 * ut
+  let lst = 100.46 + 0.985647 * d + (longitude * 180) / Math.PI + 15 * ut
   return ((lst % 360) * Math.PI) / 180
 }
 
