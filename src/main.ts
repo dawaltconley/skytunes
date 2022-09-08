@@ -32,8 +32,8 @@ globalContext.update({ stars })
 navigator.geolocation.getCurrentPosition(({ coords, timestamp }) => {
   globalContext.update({
     date: new Date(timestamp),
-    long: coords.longitude,
-    lat: coords.latitude,
+    long: coords.longitude * (Math.PI / 180),
+    lat: coords.latitude * (Math.PI / 180),
   })
 })
 
