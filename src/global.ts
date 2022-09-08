@@ -9,7 +9,7 @@ const j2000 = Date.UTC(2000, 0, 1, 11, 58, 55, 816)
 
 /** calculates the universal (solar) time in hours */
 const getUniversalTime = (date: Date): number =>
-  (date.getTime() % 86400000) / 3600000
+  (date.getTime() - new Date(date).setUTCHours(0, 0, 0, 0)) / 3600000
 
 /**
  * calculates the local siderial time
