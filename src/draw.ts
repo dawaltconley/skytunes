@@ -99,7 +99,7 @@ class SkyCanvas implements SkyCanvasInterface {
     for (const star of SkyCanvas.globalContext.stars) {
       if (star.altitude < 0) continue
 
-      let x = Math.cos(star.theta) * -star.rho,
+      let x = Math.cos(star.theta) * star.rho,
         y = Math.sin(star.theta) * star.rho
       x = x * radius + center.x
       y = y * radius + center.y
