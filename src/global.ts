@@ -11,6 +11,7 @@ class GlobalContext extends EventTarget implements Interface.GlobalContext {
 
   stars: Interface.Star[] = []
   canvas?: Interface.SkyCanvas
+  speed: number = 1
 
   constructor() {
     super()
@@ -19,12 +20,13 @@ class GlobalContext extends EventTarget implements Interface.GlobalContext {
   }
 
   update(options: Partial<Interface.GlobalContext>) {
-    let { date, long, lat, stars, canvas } = options
+    let { date, long, lat, stars, canvas, speed } = options
     this.date = date ?? this.date
     this.long = long ?? this.long
     this.lat = lat ?? this.lat
     this.stars = stars ?? this.stars
     this.canvas = canvas ?? this.canvas
+    this.speed = speed ?? this.speed
 
     if (date !== undefined || long !== undefined) {
       this.lst = getLST(this.date, this.long)

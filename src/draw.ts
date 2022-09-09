@@ -19,24 +19,22 @@ class SkyCanvas implements SkyCanvasInterface {
     y: number
   } = { x: 0, y: 0 }
 
-  #speed: number = 1
   #minMsPerFrame: number = 0
   #lastFrameTime: number = 0
 
-  constructor(
-    canvas: HTMLCanvasElement,
-    options: Partial<{
-      speed: number
-    }> = {}
-  ) {
+  constructor(canvas: HTMLCanvasElement) {
     this.canvas = canvas
     this.context = canvas.getContext('2d')!
 
     this.animateFrame = this.animateFrame.bind(this)
 
-    this.setCanvasSize()
-    requestAnimationFrame(this.animateFrame)
-    this.speed = options.speed ?? 1
+    // frame rate based on the globalContext speed
+    this.speed = SkyCanvas.globalContext.speed
+    SkyCanvas.globalContext.addEventListener('update', ((
+      event: CustomEvent
+    ) => {
+      if (event.detail.speed !== undefined) this.speed = event.detail.speed
+    }) as EventListener)
 
     // recalculate canvas size when resized
     let resizeTimeout: number
@@ -48,19 +46,21 @@ class SkyCanvas implements SkyCanvasInterface {
       }, 100)
     })
     observer.observe(canvas)
+
+    // set the canvas size
+    this.setCanvasSize()
+    requestAnimationFrame(this.animateFrame)
   }
 
   set speed(rate: number) {
-    this.#speed = rate
     let pixelsPerDegree = 0.01745240643728351 * this.radius // approximate
     let pixelsPerSecond = pixelsPerDegree * (rate / 240)
     let frameCap = pixelsPerSecond * 10
     this.#minMsPerFrame = 1000 / frameCap
-    requestAnimationFrame(this.animateFrame)
   }
 
   get speed() {
-    return this.#speed
+    return SkyCanvas.globalContext.speed
   }
 
   setCanvasSize(): SkyCanvas {
@@ -71,6 +71,7 @@ class SkyCanvas implements SkyCanvasInterface {
     this.canvas.width = width
     this.canvas.height = height
     this.radius = Math.min(width, height) / 2
+    this.speed = SkyCanvas.globalContext.speed
     this.center = {
       x: width / 2,
       y: height / 2,

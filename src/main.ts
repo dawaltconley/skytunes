@@ -35,7 +35,6 @@ navigator.geolocation.getCurrentPosition(({ coords, timestamp }) => {
 const speedSlider = document.getElementById('speed-control') as HTMLInputElement
 speedSlider.value = skyCanvas.speed.toString()
 speedSlider.addEventListener('input', () => {
-  console.log(speedSlider.value)
-  skyCanvas.speed = Number(speedSlider.value) ** 2
+  globalContext.update({ speed: Number(speedSlider.value) ** 2 })
 })
 ;(window as any).context = globalContext
