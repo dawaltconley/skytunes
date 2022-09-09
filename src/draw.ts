@@ -2,12 +2,6 @@ import { SkyCanvas as SkyCanvasInterface } from './types/skytunes'
 import context from './global'
 import colors from 'tailwindcss/colors'
 
-let fps: number = 0
-setInterval(() => {
-  console.log('frame rate', fps)
-  fps = 0
-}, 1000)
-
 class SkyCanvas implements SkyCanvasInterface {
   static globalContext = context
 
@@ -21,6 +15,7 @@ class SkyCanvas implements SkyCanvasInterface {
 
   #minMsPerFrame: number = 0
   #lastFrameTime: number = 0
+  #fps: number = 0
 
   constructor(canvas: HTMLCanvasElement) {
     this.canvas = canvas
@@ -50,6 +45,13 @@ class SkyCanvas implements SkyCanvasInterface {
     // set the canvas size
     this.setCanvasSize()
     requestAnimationFrame(this.animateFrame)
+
+    setInterval(() => {
+      requestAnimationFrame(() => {
+        this.drawFPS(this.#fps)
+        this.#fps = 0
+      })
+    }, 1000)
   }
 
   set speed(rate: number) {
@@ -76,6 +78,16 @@ class SkyCanvas implements SkyCanvasInterface {
       x: width / 2,
       y: height / 2,
     }
+    return this
+  }
+
+  drawFPS(fps: number): SkyCanvas {
+    let { context } = this
+    context.beginPath()
+    context.clearRect(0, 0, 80, 16)
+    context.fillStyle = colors.black
+    context.font = '16px mono'
+    context.fillText(`FPS: ${fps}`, 0, 16, 800)
     return this
   }
 
@@ -118,7 +130,7 @@ class SkyCanvas implements SkyCanvasInterface {
     let now = new Date(performance.timeOrigin + timestamp * this.speed)
     SkyCanvas.globalContext.update({ date: now })
     this.drawBackground().drawStars()
-    fps++
+    this.#fps++
     return this
   }
 
