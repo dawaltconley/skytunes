@@ -24,11 +24,12 @@ export interface Star {
   mag: number
   hourAngle: number
   altitude: number
-  maxAltitude: number
   azimuth: number
   lastAzimuth: number
   theta: number
   rho: number
+  highTransit: number
+  lowTransit: number
 
   recalculate: (options: Partial<GlobalContext>) => Star
   playSynth: (AudioContext) => Star

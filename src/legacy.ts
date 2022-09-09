@@ -10,9 +10,10 @@ class Star implements Interface.Star {
   mag: number
   hourAngle: number = 0
   altitude: number = 0
-  maxAltitude: number = 0
   azimuth: number = 0
   lastAzimuth: number = 0
+  highTransit: number = 0
+  lowTransit: number = 0
 
   #sinDec: number
   #cosDec: number
@@ -52,8 +53,11 @@ class Star implements Interface.Star {
       if (this.hourAngle > Math.PI) this.hourAngle -= 2 * Math.PI
     }
 
-    if (lat !== undefined)
-      this.maxAltitude = Math.PI / 2 + this.dec - Star.context.lat
+    if (lat !== undefined) {
+      // source: https://kalobs.org/more/altitudes-at-transit/
+      this.highTransit = Math.asin(Math.cos(this.dec - Star.context.lat))
+      this.lowTransit = Math.asin(-Math.cos(this.dec + Star.context.lat))
+    }
 
     // can potentially abort after altitude if under the horizon
     this.altitude = Math.asin(
@@ -84,8 +88,8 @@ class Star implements Interface.Star {
 
   playSynth(ctx: AudioContext): Star {
     const now = ctx.currentTime
-    // let note = (Math.PI / 2 - Math.abs(this.maxAltitude - Math.PI / 2)) / (Math.PI / 2)
-    let note = 1 - Math.abs(1 - this.maxAltitude / (Math.PI / 2))
+    // let note = (Math.PI / 2 - Math.abs(this.highTransit - Math.PI / 2)) / (Math.PI / 2)
+    let note = 1 - Math.abs(1 - this.highTransit / (Math.PI / 2))
     note = 40 + note * 360
 
     let oscillator = ctx.createOscillator()
