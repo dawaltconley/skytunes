@@ -52,7 +52,7 @@ export interface SkyCanvas {
   /** draws the visible stars in their current position */
   drawStars: () => SkyCanvas
   /** a single animation frame, usually passed to window.requestAnimationFrame */
-  animateFrame: (DOMHighResTimeStamp) => SkyCanvas
+  animateFrame: () => SkyCanvas
   /** starts animating the SkyCanvas */
   startAnimation: () => SkyCanvas
 }
