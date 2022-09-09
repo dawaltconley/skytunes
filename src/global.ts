@@ -1,30 +1,5 @@
 import * as Interface from './types/skytunes'
-
-/** gets the milliseconds since the J2000 epoch */
-const sinceJ2000 = (date: Date): number => date.getTime() - j2000
-const j2000 = Date.UTC(2000, 0, 1, 11, 58, 55, 816)
-
-/** calculates the universal (solar) time in milliseconds */
-const getUniversalTime = (date: Date): number =>
-  date.getTime() - new Date(date).setUTCHours(0, 0, 0, 0)
-
-/**
- * calculates the local siderial time in radians
- * based on the following formula in degrees:
- * lst = 100.46 + (0.985647 * d) + longitude + (15 * ut)
- *
- * @param date
- * @param longitude in radians
- * @see {@link http://www.stargazing.net/kepler/altaz.html}
- * @return LST in radians
- */
-var getLST = (date: Date, longitude: number): number => {
-  let d = sinceJ2000(date) / 86400000,
-    ut = getUniversalTime(date) / 240000,
-    long = longitude * (180 / Math.PI)
-  let lst = 100.46 + 0.985647 * d + long + ut
-  return (lst * Math.PI) / 180
-}
+import { getLST } from './utilities'
 
 class GlobalContext extends EventTarget implements Interface.GlobalContext {
   date: Date = new Date()

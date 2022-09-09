@@ -1,22 +1,10 @@
 import { BSC } from './types/skytunes'
 import globalContext from './global'
+import { radianFromRa, radianFromDec } from './utilities'
 import './tailwind.css'
 import bsc from './bsc.json'
 import { Star } from './legacy'
 import { SkyCanvas } from './draw'
-
-const radianFromRa = (hms: string, sep: string = ':'): number => {
-  let [h, m, s]: number[] = hms.split(sep).map(s => Number(s))
-  let hours = h + m / 60 + s / 3600
-  return (hours * Math.PI) / 12
-}
-
-const radianFromDec = (dms: string, sep: string = ':'): number => {
-  let [d, m, s]: number[] = dms.split(sep).map(s => Number(s))
-  if (dms.startsWith('-')) (m *= -1), (s *= -1)
-  let degrees = d + m / 60 + s / 3600
-  return (degrees * Math.PI) / 180
-}
 
 const stars = bsc.map(
   (star: BSC) =>
@@ -49,3 +37,4 @@ speedSlider.addEventListener('input', () => {
   console.log(speedSlider.value)
   skyCanvas.speed = Number(speedSlider.value) ** 2
 })
+;(window as any).context = globalContext
