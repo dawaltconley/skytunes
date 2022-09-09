@@ -17,19 +17,20 @@ const stars = bsc.map(
 )
 globalContext.update({ stars })
 
+const canvas = document.getElementById('canvas') as HTMLCanvasElement
+const skyCanvas = new SkyCanvas(canvas)
+globalContext.update({ canvas: skyCanvas })
+
+skyCanvas.startAnimation()
+
 navigator.geolocation.getCurrentPosition(({ coords, timestamp }) => {
   globalContext.update({
     date: new Date(timestamp),
     long: coords.longitude * (Math.PI / 180),
     lat: coords.latitude * (Math.PI / 180),
   })
+  requestAnimationFrame(skyCanvas.animateFrame)
 })
-
-const canvas = document.getElementById('canvas') as HTMLCanvasElement
-const skyCanvas = new SkyCanvas(canvas)
-globalContext.update({ canvas: skyCanvas })
-
-skyCanvas.startAnimation()
 
 const speedSlider = document.getElementById('speed-control') as HTMLInputElement
 speedSlider.value = skyCanvas.speed.toString()
