@@ -11,12 +11,14 @@ class GlobalContext extends EventTarget implements Interface.GlobalContext {
 
   stars: Interface.Star[] = []
   canvas?: Interface.SkyCanvas
+  audio: AudioContext
   speed: number = 1
 
   constructor() {
     super()
     this.update = this.update.bind(this)
     this.update({ date: new Date(), long: 0, lat: 0 })
+    this.audio = new AudioContext()
   }
 
   update(options: Partial<Interface.GlobalContext>) {

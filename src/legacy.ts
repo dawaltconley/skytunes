@@ -17,6 +17,7 @@ class Star implements Interface.Star {
 
   #sinDec: number
   #cosDec: number
+  #queuedSynth: number | null = null
 
   constructor(
     harvardReferenceNumber: number,
@@ -43,7 +44,12 @@ class Star implements Interface.Star {
     }) as EventListener)
   }
 
-  recalculate({ date, long, lat }: Partial<Interface.GlobalContext>): Star {
+  recalculate({
+    date,
+    long,
+    lat,
+    speed,
+  }: Partial<Interface.GlobalContext>): Star {
     // the hour angle can be used to calculate when the star will cross the meridian
     // negative hour angles = moving away from meridian
     // positive hour angles = moving towards the meridian
@@ -57,6 +63,30 @@ class Star implements Interface.Star {
       // source: https://kalobs.org/more/altitudes-at-transit/
       this.highTransit = Math.asin(Math.cos(this.dec - Star.context.lat))
       this.lowTransit = Math.asin(-Math.cos(this.dec + Star.context.lat))
+    }
+
+    // queue a synth for when the star transits
+    if (
+      this.highTransit > 0 &&
+      (this.#queuedSynth === null || speed !== undefined || long !== undefined)
+    ) {
+      if (this.#queuedSynth) clearTimeout(this.#queuedSynth)
+
+      if (this.hourAngle < 0) {
+        console.log('queueing transit')
+        let queueTime = Math.floor(this.nextTransit) - 1000
+        this.#queuedSynth = setTimeout(() => {
+          let transit = this.nextTransit
+          if (transit < 0) {
+            this.#queuedSynth = null
+            return
+          }
+          this.playSynth(transit / 1000)
+          setTimeout(() => {
+            this.#queuedSynth = null
+          }, Math.ceil(transit))
+        }, queueTime)
+      }
     }
 
     // can potentially abort after altitude if under the horizon
@@ -86,27 +116,41 @@ class Star implements Interface.Star {
     return Math.cos(this.altitude)
   }
 
-  playSynth(ctx: AudioContext): Star {
-    const now = ctx.currentTime
+  /** time to the next high transit in milliseconds */
+  get nextTransit() {
+    return (this.hourAngle * (-43200000 / Math.PI)) / Star.context.speed
+  }
+
+  playSynth(start: number = 0): Star {
+    const ctx = Star.context.audio
+    const speedAdjust = 10 / Star.context.speed
+    const play = ctx.currentTime + start
     // let note = (Math.PI / 2 - Math.abs(this.highTransit - Math.PI / 2)) / (Math.PI / 2)
     let note = 1 - Math.abs(1 - this.highTransit / (Math.PI / 2))
     note = 40 + note * 360
 
     let oscillator = ctx.createOscillator()
-    oscillator.type = 'triangle'
     oscillator.frequency.setValueAtTime(note, 0)
+
+    let [attack, decay, sustain, release, stop] = [
+      0.05,
+      0.2 * speedAdjust,
+      0.5 * speedAdjust,
+      5 * speedAdjust,
+      0.1 + 6 * speedAdjust,
+    ]
 
     let gainNode = ctx.createGain()
     gainNode.gain
-      .setValueAtTime(0, 0)
-      .linearRampToValueAtTime(0.5, now + 0.1)
-      .linearRampToValueAtTime(0.35, now + 0.3)
-      .setValueAtTime(0.35, now + 4)
-      .linearRampToValueAtTime(0, now + 5)
+      .setValueAtTime(0, play)
+      .linearRampToValueAtTime(0.3, play + attack)
+      .linearRampToValueAtTime(0.2, play + decay)
+      .setValueAtTime(0.2, play + sustain)
+      .linearRampToValueAtTime(0, play + release)
 
     oscillator.connect(gainNode).connect(ctx.destination)
-    oscillator.start()
-    oscillator.stop(now + 6)
+    oscillator.start(play)
+    oscillator.stop(play + release + 1)
 
     return this
   }

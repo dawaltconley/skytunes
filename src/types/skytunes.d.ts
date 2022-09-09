@@ -30,9 +30,10 @@ export interface Star {
   rho: number
   highTransit: number
   lowTransit: number
+  readonly nextTransit: number
 
   recalculate: (options: Partial<GlobalContext>) => Star
-  playSynth: (AudioContext) => Star
+  playSynth: (start: number = 0) => Star
 }
 
 export interface SkyCanvas {
