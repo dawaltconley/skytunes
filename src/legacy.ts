@@ -17,6 +17,8 @@ class Star implements Interface.Star {
 
   #sinDec: number
   #cosDec: number
+
+  #highNote: number = 0
   #queuedSynth: number | null = null
 
   constructor(
@@ -63,6 +65,8 @@ class Star implements Interface.Star {
       // source: https://kalobs.org/more/altitudes-at-transit/
       this.highTransit = Math.asin(Math.cos(this.dec - Star.context.lat))
       this.lowTransit = Math.asin(-Math.cos(this.dec + Star.context.lat))
+      let highNote = 1 - Math.abs(1 - this.highTransit / (Math.PI / 2))
+      this.#highNote = highNote = 40 + highNote * 360
     }
 
     // queue a synth for when the star transits
@@ -125,9 +129,7 @@ class Star implements Interface.Star {
     const ctx = Star.context.audio
     const speedAdjust = 10 / Star.context.speed
     const play = ctx.currentTime + start
-    // let note = (Math.PI / 2 - Math.abs(this.highTransit - Math.PI / 2)) / (Math.PI / 2)
-    let note = 1 - Math.abs(1 - this.highTransit / (Math.PI / 2))
-    note = 40 + note * 360
+    const note = this.#highNote
 
     let oscillator = ctx.createOscillator()
     oscillator.frequency.setValueAtTime(note, 0)
