@@ -18,20 +18,21 @@ interface TimeAndPlace {
 }
 
 export interface Star {
-  ref: number
-  ra: number
-  dec: number
-  mag: number
-  hourAngle: number
-  altitude: number
-  azimuth: number
-  theta: number
-  rho: number
-  highTransit: number
-  lowTransit: number
+  readonly ref: number
+  readonly ra: number
+  readonly dec: number
+  readonly mag: number
+  readonly hourAngle: number
+  readonly altitude: number
+  readonly azimuth: number
+  readonly theta: number
+  readonly rho: number
+  readonly highTransit: number
+  readonly lowTransit: number
   readonly nextTransit: number
 
   recalculate: (options: Partial<GlobalContext>) => Star
+  queueSynth: () => Star
   draw: () => Star
   log?: () => void
 }
