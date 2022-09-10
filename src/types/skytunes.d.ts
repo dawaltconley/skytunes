@@ -34,6 +34,7 @@ export interface Star {
 
   recalculate: (options: Partial<GlobalContext>) => Star
   playSynth: (start: number = 0) => Star
+  draw: () => Star
 }
 
 export interface SkyCanvas {

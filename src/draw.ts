@@ -108,20 +108,9 @@ class SkyCanvas implements SkyCanvasInterface {
   }
 
   drawStars(): SkyCanvas {
-    let { context, center, radius } = this
     for (const star of SkyCanvas.globalContext.stars) {
       if (star.altitude < 0) continue
-
-      let x = Math.cos(star.theta) * star.rho,
-        y = Math.sin(star.theta) * star.rho
-      x = x * radius + center.x
-      y = y * radius + center.y
-      let r = (8 - star.mag) * (radius * 0.0008)
-
-      context.beginPath()
-      context.arc(x, y, r, 0, 2 * Math.PI)
-      context.fillStyle = colors.yellow[200]
-      context.fill()
+      star.draw()
     }
     return this
   }

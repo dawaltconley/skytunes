@@ -1,5 +1,6 @@
 import * as Interface from './types/skytunes'
 import globalContext from './global'
+import colors from 'tailwindcss/colors'
 
 class Star implements Interface.Star {
   static context = globalContext
@@ -123,6 +124,23 @@ class Star implements Interface.Star {
   /** time to the next high transit in milliseconds */
   get nextTransit() {
     return (this.hourAngle * (-43200000 / Math.PI)) / Star.context.speed
+  }
+
+  draw(): Star {
+    if (!Star.context.canvas) return this
+    let { context, center, radius } = Star.context.canvas
+    let x = Math.cos(this.theta) * this.rho,
+      y = Math.sin(this.theta) * this.rho
+    x = x * radius + center.x
+    y = y * radius + center.y
+    let r = (8 - this.mag) * (radius * 0.0008)
+
+    context.beginPath()
+    context.arc(x, y, r, 0, 2 * Math.PI)
+    context.fillStyle = colors.yellow[200]
+    context.fill()
+
+    return this
   }
 
   playSynth(start: number = 0): Star {
