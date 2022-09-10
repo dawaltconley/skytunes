@@ -135,6 +135,20 @@ class Star implements Interface.Star {
       this.lowTransit = Math.asin(-Math.cos(this.dec + Star.context.lat))
       let highNote = 1 - Math.abs(1 - this.highTransit / (Math.PI / 2))
       this.#highNote = highNote = 40 + highNote * 360
+
+      // horizonTransit will be NaN for stars that don't cross the horizon
+      // these can be eliminated if below the horizon
+      // stars above the horizon have both high and low transit
+      //
+      // sin(alt) = sin(dec) * sin(lat) + cos(dec) * cos(lat) * cos(ha)
+      // 0 = sin(dec) * sin(lat) + cos(dec) * cos(lat) * cos(ha)
+      // cos(dec) * cos(lat) * cos(ha) = -(sin(dec) * sin(lat))
+      // cos(ha) = -1 * sin(dec) * sin(lat) / cos(dec) * cos(lat)
+      // cos(ha) = -1 * tan(dec) * tan(lat)
+      // ha = acos(tan(dec) * tan(lat))
+      this.horizonTransit = Math.acos(
+        Math.tan(this.dec) * Math.tan(Star.context.lat)
+      )
     }
 
     // queue a synth for when the star transits
@@ -171,6 +185,7 @@ class Star implements Interface.Star {
         this.#cosDec * Star.context.cosLat * Math.cos(this.hourAngle)
     )
 
+    // TODO delete lastAzimuth
     this.lastAzimuth = this.azimuth
     this.azimuth = Math.acos(
       (this.#sinDec - Math.sin(this.altitude) * Star.context.sinLat) /
@@ -229,6 +244,9 @@ class Star implements Interface.Star {
       } else {
         requestAnimationFrame(() => this.draw())
       }
+    } else if (this.ref > 9058 && this.ref < 9063) {
+      console.log(this.altitude)
+      context.fillStyle = colors.red[400]
     } else {
       context.fillStyle = colors.yellow[200]
     }
@@ -236,6 +254,25 @@ class Star implements Interface.Star {
     context.arc(x, y, r, 0, 2 * Math.PI)
     context.fill()
 
+    return this
+  }
+
+  drawTransit(until: number): Star {
+    if (!Star.context.canvas) return this
+    let { context, center, radius } = Star.context.canvas
+    let x = center.x,
+      y = Math.sin(this.theta) * this.rho
+    y = y * radius + center.y
+    let r = (10 - this.mag) * (radius * 0.0008)
+    let maxHA = Math.max(
+      Math.PI,
+      ((until * Math.PI) / 43200000) * Star.context.speed
+    )
+    console.log({ maxHA })
+    context.beginPath()
+    context.arc(x, y, r, 0, 2 * Math.PI)
+    context.fillStyle = colors.blue[100]
+    context.fill()
     return this
   }
 }
