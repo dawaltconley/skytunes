@@ -2,6 +2,59 @@ import * as Interface from './types/skytunes'
 import globalContext from './global'
 import colors from 'tailwindcss/colors'
 
+interface Envelope {
+  attack: number
+  decay: number
+  sustain: number
+  release: number
+}
+
+class StarSynth {
+  ctx: AudioContext
+  env: Envelope
+  amp: number = 1
+  constructor(
+    context: AudioContext,
+    { env, amp = 1 }: { env: Envelope; amp?: number }
+  ) {
+    this.ctx = context
+    this.env = env
+    this.amp = amp
+  }
+
+  /**
+   * play a synth
+   * @return the AudioContext time at which the synth stops
+   */
+  play(
+    note: number,
+    { start = 0, speed = 1 }: { start?: number; speed?: number }
+  ): number {
+    const { ctx, amp } = this
+    const play = ctx.currentTime + start
+    let { attack, decay, sustain, release } = this.env
+    attack = play + attack
+    decay = attack + decay * speed
+    release = decay + release * speed
+
+    let oscillator = ctx.createOscillator()
+    oscillator.frequency.setValueAtTime(note, 0)
+
+    let gainNode = ctx.createGain()
+    gainNode.gain
+      .setValueAtTime(0, play)
+      .linearRampToValueAtTime(amp, attack)
+      .linearRampToValueAtTime(amp * sustain, decay)
+      .linearRampToValueAtTime(0, release)
+
+    oscillator.connect(gainNode).connect(ctx.destination)
+    oscillator.start(play)
+    oscillator.stop(release + 1)
+
+    return release
+  }
+}
+
 class Star implements Interface.Star {
   static context = globalContext
 
@@ -21,6 +74,8 @@ class Star implements Interface.Star {
 
   #highNote: number = 0
   #queuedSynth: number | null = null
+
+  synth: StarSynth
 
   constructor(
     harvardReferenceNumber: number,
@@ -45,6 +100,16 @@ class Star implements Interface.Star {
     Star.context.addEventListener('update', ((event: CustomEvent) => {
       this.recalculate(event.detail as Partial<Interface.GlobalContext>)
     }) as EventListener)
+
+    this.synth = new StarSynth(Star.context.audio, {
+      env: {
+        attack: 0.05,
+        decay: 0.15,
+        sustain: 0.66,
+        release: 5,
+      },
+      amp: 0.3,
+    })
   }
 
   recalculate({
@@ -86,7 +151,10 @@ class Star implements Interface.Star {
             this.#queuedSynth = null
             return
           }
-          this.playSynth(transit / 1000)
+          let synthEnd = this.synth.play(this.#highNote, {
+            start: transit / 1000,
+            speed: 10 / Star.context.speed,
+          })
           setTimeout(() => {
             this.#queuedSynth = null
           }, Math.ceil(transit))
@@ -156,37 +224,6 @@ class Star implements Interface.Star {
     return this
   }
 
-  playSynth(start: number = 0): Star {
-    const ctx = Star.context.audio
-    const speedAdjust = 10 / Star.context.speed
-    const play = ctx.currentTime + start
-    const note = this.#highNote
-
-    let oscillator = ctx.createOscillator()
-    oscillator.frequency.setValueAtTime(note, 0)
-
-    let [attack, decay, sustain, release, stop] = [
-      0.05,
-      0.2 * speedAdjust,
-      0.5 * speedAdjust,
-      5 * speedAdjust,
-      0.1 + 6 * speedAdjust,
-    ]
-
-    let gainNode = ctx.createGain()
-    gainNode.gain
-      .setValueAtTime(0, play)
-      .linearRampToValueAtTime(0.3, play + attack)
-      .linearRampToValueAtTime(0.2, play + decay)
-      .setValueAtTime(0.2, play + sustain)
-      .linearRampToValueAtTime(0, play + release)
-
-    oscillator.connect(gainNode).connect(ctx.destination)
-    oscillator.start(play)
-    oscillator.stop(play + release + 1)
-
-    return this
-  }
 }
 
 export { Star }
