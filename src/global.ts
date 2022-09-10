@@ -23,7 +23,7 @@ class GlobalContext extends EventTarget implements Interface.GlobalContext {
 
   update(options: Partial<Interface.GlobalContext>) {
     let { date, long, lat, stars, canvas, speed } = options
-    this.date = date ?? this.date
+    this.date = date ?? this.date ?? new Date()
     this.long = long ?? this.long
     this.lat = lat ?? this.lat
     this.stars = stars ?? this.stars
