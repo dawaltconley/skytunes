@@ -62,15 +62,18 @@ class Star implements Interface.Star {
   readonly ra: number
   readonly dec: number
   readonly mag: number
-  #hourAngle?: number
-  #altitude?: number
-  #azimuth?: number
+
   highTransit: number = 0
   lowTransit: number = 0
   horizonTransit: number = 0
 
   #sinDec: number
   #cosDec: number
+  #hourAngle?: number
+  #altitude?: number
+  #azimuth?: number
+  #theta?: number
+  #rho?: number
 
   #highNote: number = 0
   #queuedSynth: number | null = null
@@ -138,6 +141,7 @@ class Star implements Interface.Star {
 
     // unset dependants
     this.#azimuth = undefined
+    this.#rho = undefined
 
     return (this.#altitude = Math.asin(
       this.#sinDec * Star.context.sinLat +
@@ -150,6 +154,9 @@ class Star implements Interface.Star {
     let altitude = this.altitude
     if (this.#azimuth !== undefined) return this.#azimuth
 
+    // unset dependants
+    this.#theta = undefined
+
     let azimuth = Math.acos(
       (this.#sinDec - Math.sin(altitude) * Star.context.sinLat) /
         (Math.cos(altitude) * Star.context.cosLat)
@@ -160,11 +167,15 @@ class Star implements Interface.Star {
   }
 
   get theta() {
-    return Math.PI / 2 - this.azimuth
+    let azimuth = this.azimuth
+    if (this.#theta !== undefined) return this.#theta
+    return (this.#theta = Math.PI / 2 - azimuth)
   }
 
   get rho() {
-    return Math.cos(this.altitude)
+    let altitude = this.altitude
+    if (this.#rho !== undefined) return this.#rho
+    return (this.#rho = Math.cos(altitude))
   }
 
   /** time to the next high transit in milliseconds */
