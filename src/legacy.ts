@@ -119,8 +119,8 @@ class Star implements Interface.Star {
     speed,
   }: Partial<Interface.GlobalContext>): Star {
     // the hour angle can be used to calculate when the star will cross the meridian
-    // negative hour angles = moving away from meridian
-    // positive hour angles = moving towards the meridian
+    // negative hour angles = moving towards the meridian
+    // positive hour angles = moving away from meridian
     // an hour angle of zero occurs when the star passes the meridian
     if (date !== undefined || long !== undefined) {
       this.hourAngle = (Star.context.lst - this.ra) % (2 * Math.PI)
