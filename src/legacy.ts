@@ -116,12 +116,6 @@ class Star implements Interface.Star {
     })
   }
 
-  /**
-   * the hour angle can be used to calculate when the star will cross the meridian
-   * negative hour angles = moving towards the meridian
-   * positive hour angles = moving away from meridian
-   * an hour angle of zero occurs when the star passes the meridian
-   */
   get hourAngle(): number {
     if (this.#hourAngle !== undefined) return this.#hourAngle
 
@@ -178,7 +172,6 @@ class Star implements Interface.Star {
     return (this.#rho = Math.cos(altitude))
   }
 
-  /** time to the next high transit in milliseconds */
   get nextTransit() {
     return (this.hourAngle * (-43200000 / Math.PI)) / Star.context.speed
   }
