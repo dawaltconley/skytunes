@@ -74,6 +74,7 @@ class Star implements Interface.Star {
 
   #highNote: number = 0
   #queuedSynth: number | null = null
+  #playingUntil?: number
 
   synth: StarSynth
 
@@ -158,6 +159,7 @@ class Star implements Interface.Star {
           })
           setTimeout(() => {
             this.#queuedSynth = null
+            this.#playingUntil = Star.context.date.getTime() + synthEnd * 1000
           }, Math.ceil(transit))
         }, queueTime)
       }
@@ -218,13 +220,24 @@ class Star implements Interface.Star {
     let r = (8 - this.mag) * (radius * 0.0008)
 
     context.beginPath()
+
+    if (this.#playingUntil) {
+      r += 2
+      context.fillStyle = colors.blue[100]
+      if (Star.context.date.getTime() > this.#playingUntil) {
+        this.#playingUntil = undefined
+      } else {
+        requestAnimationFrame(() => this.draw())
+      }
+    } else {
+      context.fillStyle = colors.yellow[200]
+    }
+
     context.arc(x, y, r, 0, 2 * Math.PI)
-    context.fillStyle = colors.yellow[200]
     context.fill()
 
     return this
   }
-
 }
 
 export { Star }
