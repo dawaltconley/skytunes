@@ -68,6 +68,7 @@ class Star implements Interface.Star {
   lastAzimuth: number = 0
   highTransit: number = 0
   lowTransit: number = 0
+  horizonTransit: number = 0
 
   #sinDec: number
   #cosDec: number
@@ -135,6 +136,20 @@ class Star implements Interface.Star {
       this.lowTransit = Math.asin(-Math.cos(this.dec + Star.context.lat))
       let highNote = 1 - Math.abs(1 - this.highTransit / (Math.PI / 2))
       this.#highNote = highNote = 40 + highNote * 360
+
+      // horizonTransit will be NaN for stars that don't cross the horizon
+      // these can be eliminated if below the horizon
+      // stars above the horizon have both high and low transit
+      //
+      // sin(alt) = sin(dec) * sin(lat) + cos(dec) * cos(lat) * cos(ha)
+      // 0 = sin(dec) * sin(lat) + cos(dec) * cos(lat) * cos(ha)
+      // cos(dec) * cos(lat) * cos(ha) = -(sin(dec) * sin(lat))
+      // cos(ha) = -1 * sin(dec) * sin(lat) / cos(dec) * cos(lat)
+      // cos(ha) = -1 * tan(dec) * tan(lat)
+      // ha = acos(tan(dec) * tan(lat))
+      this.horizonTransit = Math.acos(
+        Math.tan(this.dec) * Math.tan(Star.context.lat)
+      )
     }
 
     // queue a synth for when the star transits
