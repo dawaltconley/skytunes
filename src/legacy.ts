@@ -58,13 +58,13 @@ class StarSynth {
 class Star implements Interface.Star {
   static context = globalContext
 
-  ref: number
-  ra: number
-  dec: number
-  mag: number
-  hourAngle: number = 0
-  altitude: number = 0
-  azimuth: number = 0
+  readonly ref: number
+  readonly ra: number
+  readonly dec: number
+  readonly mag: number
+  #hourAngle?: number
+  #altitude?: number
+  #azimuth?: number
   highTransit: number = 0
   lowTransit: number = 0
   horizonTransit: number = 0
@@ -113,88 +113,50 @@ class Star implements Interface.Star {
     })
   }
 
-  // TODO shouldn't run if none of the options here have changed
-  recalculate({
-    date,
-    long,
-    lat,
-    speed,
-  }: Partial<Interface.GlobalContext>): Star {
-    // the hour angle can be used to calculate when the star will cross the meridian
-    // negative hour angles = moving towards the meridian
-    // positive hour angles = moving away from meridian
-    // an hour angle of zero occurs when the star passes the meridian
-    if (date !== undefined || long !== undefined) {
-      this.hourAngle = (Star.context.lst - this.ra) % (2 * Math.PI)
-      if (this.hourAngle > Math.PI) this.hourAngle -= 2 * Math.PI
-    }
+  /**
+   * the hour angle can be used to calculate when the star will cross the meridian
+   * negative hour angles = moving towards the meridian
+   * positive hour angles = moving away from meridian
+   * an hour angle of zero occurs when the star passes the meridian
+   */
+  get hourAngle(): number {
+    if (this.#hourAngle !== undefined) return this.#hourAngle
 
-    if (lat !== undefined) {
-      // source: https://kalobs.org/more/altitudes-at-transit/
-      this.highTransit = Math.asin(Math.cos(this.dec - Star.context.lat))
-      this.lowTransit = Math.asin(-Math.cos(this.dec + Star.context.lat))
-      let highNote = 1 - Math.abs(1 - this.highTransit / (Math.PI / 2))
-      this.#highNote = highNote = 40 + highNote * 360
+    // unset dependants
+    this.#altitude = undefined
+    this.#azimuth = undefined
 
-      // horizonTransit will be NaN for stars that don't cross the horizon
-      // these can be eliminated if below the horizon
-      // stars above the horizon have both high and low transit
-      //
-      // sin(alt) = sin(dec) * sin(lat) + cos(dec) * cos(lat) * cos(ha)
-      // 0 = sin(dec) * sin(lat) + cos(dec) * cos(lat) * cos(ha)
-      // cos(dec) * cos(lat) * cos(ha) = -(sin(dec) * sin(lat))
-      // cos(ha) = -1 * sin(dec) * sin(lat) / cos(dec) * cos(lat)
-      // cos(ha) = -1 * tan(dec) * tan(lat)
-      // ha = acos(tan(dec) * tan(lat))
-      this.horizonTransit = Math.acos(
-        Math.tan(this.dec) * Math.tan(Star.context.lat)
-      )
-    }
+    let hourAngle = (Star.context.lst - this.ra) % (2 * Math.PI)
+    if (hourAngle > Math.PI) hourAngle -= 2 * Math.PI
+    return (this.#hourAngle = hourAngle)
+  }
 
-    // queue a synth for when the star transits
-    if (
-      this.highTransit > 0 &&
-      (this.#queuedSynth === null || speed !== undefined || long !== undefined)
-    ) {
-      if (this.#queuedSynth) clearTimeout(this.#queuedSynth)
+  get altitude(): number {
+    // get dependencies
+    let hourAngle = this.hourAngle
+    if (this.#altitude !== undefined) return this.#altitude
 
-      if (this.hourAngle < 0) {
-        console.log('queueing transit')
-        let queueTime = Math.floor(this.nextTransit) - 1000
-        this.#queuedSynth = setTimeout(() => {
-          let transit = this.nextTransit
-          if (transit < 0) {
-            this.#queuedSynth = null
-            return
-          }
-          let synthEnd = this.synth.play(this.#highNote, {
-            start: transit / 1000,
-            speed: 10 / Star.context.speed,
-          })
-          setTimeout(() => {
-            this.#queuedSynth = null
-            this.#playingUntil = Star.context.date.getTime() + synthEnd * 1000
-          }, Math.ceil(transit))
-        }, queueTime)
-      }
-    }
+    // unset dependants
+    this.#azimuth = undefined
 
-    // can potentially abort after altitude if under the horizon
-    this.altitude = Math.asin(
+    return (this.#altitude = Math.asin(
       this.#sinDec * Star.context.sinLat +
-        this.#cosDec * Star.context.cosLat * Math.cos(this.hourAngle)
+        this.#cosDec * Star.context.cosLat * Math.cos(hourAngle)
+    ))
+  }
+
+  get azimuth(): number {
+    // get dependencies
+    let altitude = this.altitude
+    if (this.#azimuth !== undefined) return this.#azimuth
+
+    let azimuth = Math.acos(
+      (this.#sinDec - Math.sin(altitude) * Star.context.sinLat) /
+        (Math.cos(altitude) * Star.context.cosLat)
     )
+    if (this.hourAngle > 0) azimuth = Math.PI * 2 - azimuth
 
-    this.azimuth = Math.acos(
-      (this.#sinDec - Math.sin(this.altitude) * Star.context.sinLat) /
-        (Math.cos(this.altitude) * Star.context.cosLat)
-    )
-
-    if (this.hourAngle > 0) {
-      this.azimuth = Math.PI * 2 - this.azimuth
-    }
-
-    return this
+    return (this.#azimuth = azimuth)
   }
 
   get theta() {
@@ -208,6 +170,64 @@ class Star implements Interface.Star {
   /** time to the next high transit in milliseconds */
   get nextTransit() {
     return (this.hourAngle * (-43200000 / Math.PI)) / Star.context.speed
+  }
+
+  // TODO shouldn't run if none of the options here have changed
+  recalculate({
+    date,
+    long,
+    lat,
+    speed,
+  }: Partial<Interface.GlobalContext>): Star {
+    if (date !== undefined || long !== undefined) {
+      this.#hourAngle = undefined
+    }
+
+    if (lat !== undefined) {
+      // source: https://kalobs.org/more/altitudes-at-transit/
+      this.highTransit = Math.asin(Math.cos(this.dec - Star.context.lat))
+      this.lowTransit = Math.asin(-Math.cos(this.dec + Star.context.lat))
+      let highNote = 1 - Math.abs(1 - this.highTransit / (Math.PI / 2))
+      this.#highNote = highNote = 40 + highNote * 360
+
+      // horizonTransit will be NaN for stars that don't cross the horizon
+      // these can be eliminated if below the horizon
+      // stars above the horizon have both high and low transit
+      this.horizonTransit = Math.acos(
+        Math.tan(this.dec) * Math.tan(Star.context.lat)
+      )
+    }
+
+    // queue a synth for when the star transits
+    if (
+      this.highTransit > 0 &&
+      (this.#queuedSynth === null || speed !== undefined || long !== undefined)
+    ) {
+      if (this.#queuedSynth) clearTimeout(this.#queuedSynth)
+      if (this.hourAngle < 0) this.queueSynth()
+    }
+
+    return this
+  }
+
+  queueSynth() {
+    let queueTime = Math.floor(this.nextTransit) - 1000
+    this.#queuedSynth = setTimeout(() => {
+      let transit = this.nextTransit
+      if (transit < 0) {
+        this.#queuedSynth = null
+        return
+      }
+      let synthEnd = this.synth.play(this.#highNote, {
+        start: transit / 1000,
+        speed: 10 / Star.context.speed,
+      })
+      setTimeout(() => {
+        this.#queuedSynth = null
+        this.#playingUntil = Star.context.date.getTime() + synthEnd * 1000
+      }, Math.ceil(transit))
+    }, queueTime)
+    return this
   }
 
   log() {
