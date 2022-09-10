@@ -65,7 +65,6 @@ class Star implements Interface.Star {
   hourAngle: number = 0
   altitude: number = 0
   azimuth: number = 0
-  lastAzimuth: number = 0
   highTransit: number = 0
   lowTransit: number = 0
   horizonTransit: number = 0
@@ -186,7 +185,6 @@ class Star implements Interface.Star {
         this.#cosDec * Star.context.cosLat * Math.cos(this.hourAngle)
     )
 
-    this.lastAzimuth = this.azimuth
     this.azimuth = Math.acos(
       (this.#sinDec - Math.sin(this.altitude) * Star.context.sinLat) /
         (Math.cos(this.altitude) * Star.context.cosLat)

@@ -25,7 +25,6 @@ export interface Star {
   hourAngle: number
   altitude: number
   azimuth: number
-  lastAzimuth: number
   theta: number
   rho: number
   highTransit: number
