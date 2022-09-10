@@ -126,6 +126,19 @@ class Star implements Interface.Star {
     return (this.hourAngle * (-43200000 / Math.PI)) / Star.context.speed
   }
 
+  log() {
+    let { ref, hourAngle, altitude, azimuth, theta, rho } = this
+    const toDegrees = (r: number) => (r * 180) / Math.PI
+    console.log({
+      ref,
+      hourAngle: toDegrees(hourAngle),
+      altitude: toDegrees(altitude),
+      azimuth: toDegrees(azimuth),
+      theta,
+      rho,
+    })
+  }
+
   draw(): Star {
     if (!Star.context.canvas) return this
     let { context, center, radius } = Star.context.canvas
