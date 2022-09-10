@@ -112,6 +112,7 @@ class Star implements Interface.Star {
     })
   }
 
+  // TODO shouldn't run if none of the options here have changed
   recalculate({
     date,
     long,
