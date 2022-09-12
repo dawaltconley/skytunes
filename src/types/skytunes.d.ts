@@ -65,13 +65,13 @@ export interface Star {
   readonly rho: number
 
   /**
-   * the hour angle when the star makes its high meridian transit
+   * the altitude when the star makes its high meridian transit
    * @see {@link  https://kalobs.org/more/altitudes-at-transit/}
    */
   readonly highTransit: number
 
   /**
-   * the hour angle when the star makes its low meridian transit
+   * the altitude when the star makes its low meridian transit
    * @see {@link  https://kalobs.org/more/altitudes-at-transit/}
    */
   readonly lowTransit: number
