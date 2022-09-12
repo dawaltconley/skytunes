@@ -1,6 +1,114 @@
 import * as Interface from './types/skytunes'
 import { getLST } from './utilities'
 
+// interface StateListeners {
+//
+// }
+
+// type SettingKeys = keyof GlobalContext
+//
+// let foo: SettingKeys
+//
+// foo =
+
+// type StateListeners = Record<Pick<GlobalContext, 'date'>, () => void>
+
+// type Listenable = 'date' | 'long' | 'lat' | 'lst' | 'sinLat' | 'cosLat' | 'speed'
+
+// interface Listeners {
+//   date: (updated: Date) => void
+//   [prop: 'long' | 'lat' | 'lst' | 'sinLat' | 'cosLat' | 'speed']: (updated: number) => void
+// }
+
+// type GetListeners<Type, Listeners> = {
+//   [Property in keyof Type as Extract<Property, Listeners>]+?: (
+//     updated: Type[Property]
+//   ) => void
+// }
+
+// type GlobalListeners = GetListeners<
+//   Interface.GlobalContext,
+//   'date' | 'long' | 'lat' | 'lst' | 'sinLat' | 'cosLat' | 'speed'
+// >
+
+// let test: GetListeners<Interface.GlobalContext, 'date' | 'long'> = {
+//   // foo: 'bar',
+//   date: (updated: Date) => {
+//     console.log(updated)
+//   },
+//   long: (updated: number) => {
+//     console.log(updated)
+//   },
+// }
+
+class StarSorter extends Array<Interface.Star> {
+  #ref: Interface.Star[] = []
+  #visible: Interface.Star[] = []
+  #hidden: Interface.Star[] = []
+  // #circumpolar: Interface.Star[] = []
+  // #wontRise: Interface.Star[] = []
+
+  constructor(stars: Interface.Star[]) {
+    super()
+    this.push(...stars) // maybe return only visible
+    this.#ref = stars.reduce((indexed, star) => {
+      indexed[star.ref] = star
+      return indexed
+    }, [] as Interface.Star[])
+
+    this.recalculateVisible()
+
+    Object.setPrototypeOf(this, StarSorter.prototype)
+  }
+
+  getStar(ref: number): Interface.Star {
+    return this.#ref[ref]
+  }
+
+  get visible(): Interface.Star[] {
+    return this.#visible
+  }
+
+  setVisible(star: Interface.Star) {
+    this.visible[star.ref] = star
+    delete this.#hidden[star.ref]
+  }
+
+  // TODO get rid of speed as argument
+  setInvisible(star: Interface.Star, speed: number) {
+    this.#hidden[star.ref] = star
+    delete this.#visible[star.ref]
+
+    // if star.highTransit < 0 ? or if star.horizonTransit !== NaN
+    // star.hourAngle is probably ~90deg to 180deg or -180deg to ~-90deg
+    // need difference between that angle and horizonTransit ~90deg
+    // hourAngle + 180deg = hourAngle of 0 - 360deg, increasing the closer it gets to meridian
+    // hourAngle - 180deg = hourAngle of -3
+    let ha = star.hourAngle
+    if (ha > 0) ha -= Math.PI * 2
+    let angleToRise = Math.abs(star.horizonTransit) + ha
+    let msToRise = (angleToRise * (-43200000 / Math.PI)) / speed
+
+    setTimeout(this.setVisible.bind(this, star), msToRise - 1000)
+  }
+
+  recalculateVisible(props: Partial<Interface.GlobalContext> = {}) {
+    this.#visible = new Array(this.#ref.length)
+    this.#hidden = new Array(this.#ref.length)
+
+    for (let star of this) {
+      if (star.highTransit < 0) continue
+      if (star.altitude > 0) {
+        this.setVisible(star)
+      } else {
+        this.setInvisible(star, props.speed)
+      }
+    }
+
+    return this.visible
+  }
+}
+
 class GlobalContext extends EventTarget implements Interface.GlobalContext {
   date: Date = new Date()
   long: number = 0
@@ -10,6 +118,8 @@ class GlobalContext extends EventTarget implements Interface.GlobalContext {
   cosLat: number = 1
 
   stars: Interface.Star[] = []
+  starsRef: Interface.Star[] = []
+
   canvas?: Interface.SkyCanvas
   audio: AudioContext
   speed: number = 1
@@ -26,9 +136,19 @@ class GlobalContext extends EventTarget implements Interface.GlobalContext {
     this.date = date ?? this.date ?? new Date()
     this.long = long ?? this.long
     this.lat = lat ?? this.lat
-    this.stars = stars ?? this.stars
     this.canvas = canvas ?? this.canvas
     this.speed = speed ?? this.speed
+
+    if (stars !== undefined) {
+      this.stars = stars
+      this.starsRef = stars.reduce((indexed, star) => {
+        indexed[star.ref] = star
+        return indexed
+      }, [] as Interface.Star[])
+
+      // this.starsInvisible = []
+      // this.starsVisible = stars.filter()
+    }
 
     if (date !== undefined || long !== undefined) {
       this.lst = getLST(this.date, this.long)
@@ -44,6 +164,25 @@ class GlobalContext extends EventTarget implements Interface.GlobalContext {
     })
     this.dispatchEvent(updateEvent)
   }
+  // TODO type should be more specifig; only listen to a subset of global keys
+  // listen(listeners: GlobalListeners) {
+  //   return new Proxy(this, {
+  //     set(target, property: string, value) {
+  //       const callback = listeners[property]
+  //       if (!callback) return false
+  //
+  //       callback.call(this, value)
+  //       target[property] = value
+  //       return true
+  //     },
+  //   })
+  // }
 }
+
+// new GlobalContext().listen({
+//   date: newDate => {
+//     console.log(newDate)
+//   },
+// })
 
 export default new GlobalContext()

@@ -79,6 +79,13 @@ export interface Star {
   /** time to the next high transit in milliseconds */
   readonly nextTransit: number
 
+  /**
+   * the hour angle at which a star will cross the horizon
+   * same for setting and rising, but the rising hour angle is negative
+   * will be NaN for stars that don't cross the horizon
+   */
+  readonly horizonTransit: number | NaN
+
   /** recalculate the star's properties based on what global data has changed */
   recalculate: (options: Partial<GlobalContext>) => Star
 

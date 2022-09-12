@@ -1,3 +1,4 @@
+set relativenumber
 let g:ale_fix_on_save = 1
 
 source ~/.vim/coc.vim
