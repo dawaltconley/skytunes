@@ -107,6 +107,20 @@ class StarSorter extends Array<Interface.Star> {
 
     return this.visible
   }
+
+  // assuming no empty elements in visible array
+  // fastest way to remove elements that have become no longer visible
+  eachVisible(callback: (star: Interface.Star) => void) {
+    const stillVisible: Interface.Star[] = []
+    for (let star of this.#visible) {
+      callback(star)
+      if (star.altitude > 0)
+        stillVisible.push(star)
+      else
+        this.setInvisible(star)
+    }
+    this.#visible = stillVisible
+  }
 }
 
 class GlobalContext extends EventTarget implements Interface.GlobalContext {
