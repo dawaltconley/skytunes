@@ -285,7 +285,7 @@ class Star implements Interface.Star {
   }
 }
 
-class StarManager extends Array<Interface.Star> {
+class StarManager extends Array<Star> {
   static context = globalContext
 
   #ref: Interface.Star[] = []
@@ -294,7 +294,7 @@ class StarManager extends Array<Interface.Star> {
   // #circumpolar: Interface.Star[] = []
   // #wontRise: Interface.Star[] = []
 
-  constructor(stars: Interface.Star[]) {
+  constructor(stars: Star[]) {
     super()
     this.push(...stars) // maybe return only visible
     this.#ref = stars.reduce((indexed, star) => {
