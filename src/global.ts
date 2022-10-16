@@ -96,7 +96,7 @@ class GlobalContext extends EventTarget implements Interface.GlobalContext {
     })
     this.dispatchEvent(updateEvent)
   }
-  // TODO type should be more specifig; only listen to a subset of global keys
+  // TODO type should be more specific; only listen to a subset of global keys
   // listen(listeners: GlobalListeners) {
   //   return new Proxy(this, {
   //     set(target, property: string, value) {
