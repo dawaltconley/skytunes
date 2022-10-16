@@ -1,11 +1,10 @@
 class CacheItem<Value = any> {
-  #value: Value | null
+  #value: Value | null = null
   #recalculate: () => Value
   dependencies: CacheItem[]
   dependents: CacheItem[] = []
 
   constructor(calculate: () => Value, dependencies: CacheItem[] = []) {
-    this.#value = calculate()
     this.#recalculate = calculate
     this.dependencies = dependencies
     dependencies.forEach(dep => dep.dependents.push(this))
