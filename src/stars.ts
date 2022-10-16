@@ -55,6 +55,36 @@ class StarSynth {
   }
 }
 
+// interface CacheItem {
+//   [name: string]: (keyof CacheItem)[]
+// }
+
+type ConfigEntry<K extends object> = {
+  [name: string]: 
+}
+
+class StarCache {
+  hourAngle?: number
+  altitude?: number
+  azimuth?: number
+  theta?: number
+  rho?: number
+
+  constructor(cacheItems: CacheItem) {
+
+  }
+
+  // get(key: string) {
+  //   this[key]
+  // }
+
+}
+
+const test = new StarCache({
+  hourAngle: [],
+  altitude: ['hourAngle']
+})
+
 class Star implements Interface.Star {
   static context = globalContext
 
@@ -179,6 +209,14 @@ class Star implements Interface.Star {
 
   get nextTransit() {
     return (this.hourAngle * (-43200000 / Math.PI)) / Star.context.speed
+  }
+
+  get timeToRise(): number {
+    let ha = star.hourAngle
+    if (ha > 0) ha -= Math.PI * 2
+    let angleToRise = Math.abs(star.horizonTransit) + ha
+    let msToRise =
+      (angleToRise * (-43200000 / Math.PI)) / StarManager.context.speed
   }
 
   // TODO shouldn't run if none of the options here have changed
@@ -320,6 +358,11 @@ class StarManager extends Array<Interface.Star> {
 
     this.recalculateVisible()
 
+    Star.context.addEventListener('update', ((event: CustomEvent) => {
+      // this.recalculate(event.detail as Partial<Interface.GlobalContext>)
+      this.recalculateVisible(event.detail)
+    }) as EventListener)
+
     Object.setPrototypeOf(this, StarManager.prototype)
   }
 
@@ -361,6 +404,7 @@ class StarManager extends Array<Interface.Star> {
     this.#hidden = new Array(this.#ref.length) // TODO maybe useless
 
     for (let star of this) {
+      star.recalculate(props)
       if (star.highTransit < 0) continue
       if (star.altitude > 0) {
         this.setVisible(star)
