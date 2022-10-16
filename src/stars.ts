@@ -145,7 +145,8 @@ class Star implements Interface.Star {
 
   get azimuth(): number {
     // get dependencies
-    let altitude = this.altitude
+    let altitude = this.altitude,
+      hourAngle = this.hourAngle
     if (this.#azimuth !== undefined) return this.#azimuth
 
     // unset dependants
@@ -155,7 +156,7 @@ class Star implements Interface.Star {
       (this.#sinDec - Math.sin(altitude) * Star.context.sinLat) /
         (Math.cos(altitude) * Star.context.cosLat)
     )
-    if (this.hourAngle > 0) azimuth = Math.PI * 2 - azimuth
+    if (hourAngle > 0) azimuth = Math.PI * 2 - azimuth
 
     return (this.#azimuth = azimuth)
   }
