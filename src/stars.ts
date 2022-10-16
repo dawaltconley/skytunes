@@ -193,11 +193,12 @@ class Star implements Interface.Star {
   }
 
   get timeToRise(): number {
-    let ha = star.hourAngle
+    let ha = this.hourAngle
     if (ha > 0) ha -= Math.PI * 2
-    let angleToRise = Math.abs(star.horizonTransit) + ha
+    let angleToRise = Math.abs(this.horizonTransit) + ha
     let msToRise =
       (angleToRise * (-43200000 / Math.PI)) / StarManager.context.speed
+    return msToRise
   }
 
   // TODO shouldn't run if none of the options here have changed
