@@ -97,10 +97,6 @@ class Star implements Interface.Star {
       long: Star.context.long,
       lat: Star.context.lat,
     })
-    // TODO can do this better in StarManager
-    Star.context.addEventListener('update', ((event: CustomEvent) => {
-      this.recalculate(event.detail as Partial<Interface.GlobalContext>)
-    }) as EventListener)
 
     this.synth = new StarSynth(Star.context.audio, {
       env: {
@@ -309,8 +305,7 @@ class StarManager extends Array<Interface.Star> {
     this.recalculateVisible()
 
     Star.context.addEventListener('update', ((event: CustomEvent) => {
-      // this.recalculate(event.detail as Partial<Interface.GlobalContext>)
-      this.recalculateVisible(event.detail)
+      this.updateStars(event.detail)
     }) as EventListener)
 
     Object.setPrototypeOf(this, StarManager.prototype)
@@ -380,6 +375,12 @@ class StarManager extends Array<Interface.Star> {
       // bellow the horizon
     }
     this.#visible = stillVisible
+  }
+
+  updateStars(props: Partial<Interface.GlobalContext> = {}) {
+    for (let star of this) {
+      star.recalculate(props)
+    }
   }
 }
 
