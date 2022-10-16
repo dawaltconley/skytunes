@@ -1,5 +1,6 @@
 import * as Interface from './types/skytunes'
 import globalContext from './global'
+import { CacheItem } from './cache'
 import colors from 'tailwindcss/colors'
 
 interface Envelope {
@@ -52,39 +53,6 @@ class StarSynth {
     oscillator.stop(release + 1)
 
     return release
-  }
-}
-
-class CacheItem<Value = any> {
-  #value: Value | null
-  #recalculate: () => Value
-  dependencies: CacheItem[]
-  dependents: CacheItem[] = []
-
-  constructor(calculate: () => Value, dependencies: CacheItem[] = []) {
-    this.#value = calculate()
-    this.#recalculate = calculate
-    this.dependencies = dependencies
-    dependencies.forEach(dep => dep.dependents.push(this))
-  }
-
-  isCached(): boolean {
-    return this.#value !== null
-  }
-
-  get(): Value {
-    return this.#value ?? this.set(this.#recalculate())
-  }
-
-  set(v: Value): Value {
-    this.clear()
-    this.#value = v
-    return v
-  }
-
-  clear() {
-    this.dependents.forEach(dep => dep.clear())
-    this.#value = null
   }
 }
 
