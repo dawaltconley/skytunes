@@ -55,18 +55,6 @@ class StarSynth {
   }
 }
 
-// interface CacheItem {
-//   [name: string]: (keyof CacheItem)[]
-// }
-
-// type ConfigEntry<K extends object> = {
-//   [name: string]:
-// }
-
-// type DependencyGraph = {
-//   <Dependency extends keyof DependencyGraph>(name: string): Dependency[]
-// }
-
 class CacheItem<Value = any> {
   #value: Value | null
   #recalculate: () => Value
@@ -100,30 +88,6 @@ class CacheItem<Value = any> {
   }
 }
 
-// class StarCache {
-//   [name: string]: CacheItem
-//
-//   constructor(cacheItems: DependencyGraph) {
-//     for (let name in cacheItems) {
-//       this[name] = new CacheItem()
-//     }
-//   }
-//
-//   // get(key: string) {
-//   //   this[key]
-//   // }
-// }
-//
-// const test = new StarCache({
-//   hourAngle: [],
-//   altitude: ['hourAngle'],
-// })
-
-// const starCache = {
-//   hourAngle: new CacheItem<number>(),
-//   altitude: new CacheItem<number([ this.hourAngle ])
-// }
-
 class Star implements Interface.Star {
   static context = globalContext
 
@@ -138,14 +102,6 @@ class Star implements Interface.Star {
 
   #sinDec: number
   #cosDec: number
-
-  // // these private properties function as caches of their public counterparts
-  // // setting them to undefined forces recalculation
-  // #hourAngle?: number
-  // #altitude?: number
-  // #azimuth?: number
-  // #theta?: number
-  // #rho?: number
 
   #highNote: number = 0
   #queuedSynth: number | null = null
