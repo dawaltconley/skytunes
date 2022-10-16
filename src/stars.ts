@@ -63,16 +63,19 @@ class StarSynth {
 //   [name: string]:
 // }
 
-type DependencyGraph = {
-  <Dependency extends keyof DependencyGraph>(name: string): Dependency[]
-}
+// type DependencyGraph = {
+//   <Dependency extends keyof DependencyGraph>(name: string): Dependency[]
+// }
 
 class CacheItem<Value = any> {
-  #value: Value | null = null
+  #value: Value | null
+  #recalculate: () => Value
   dependencies: CacheItem[]
   dependents: CacheItem[] = []
 
-  constructor(dependencies: CacheItem[] = []) {
+  constructor(calculate: () => Value, dependencies: CacheItem[] = []) {
+    this.#value = calculate()
+    this.#recalculate = calculate
     this.dependencies = dependencies
     dependencies.forEach(dep => dep.dependents.push(this))
   }
@@ -81,13 +84,14 @@ class CacheItem<Value = any> {
     return this.#value !== null
   }
 
-  get() {
-    return this.#value
+  get(): Value {
+    return this.#value ?? this.set(this.#recalculate())
   }
 
-  set(v: Value) {
+  set(v: Value): Value {
     this.clear()
     this.#value = v
+    return v
   }
 
   clear() {
@@ -185,56 +189,47 @@ class Star implements Interface.Star {
     })
   }
 
-  #hourAngle = new CacheItem<number>()
-  get hourAngle(): number {
-    let cached = this.#hourAngle.get()
-    if (cached !== null) return cached
-
+  #hourAngle = new CacheItem(() => {
     let hourAngle = (Star.context.lst - this.ra) % (2 * Math.PI)
     if (hourAngle > Math.PI) hourAngle -= 2 * Math.PI
-    this.#hourAngle.set(hourAngle)
     return hourAngle
+  })
+  get hourAngle(): number {
+    return this.#hourAngle.get()
   }
 
-  #altitude = new CacheItem<number>([this.#hourAngle])
+  #altitude = new CacheItem(
+    () =>
+      Math.asin(
+        this.#sinDec * Star.context.sinLat +
+          this.#cosDec * Star.context.cosLat * Math.cos(this.hourAngle)
+      ),
+    [this.#hourAngle]
+  )
   get altitude(): number {
-    let cached = this.#altitude.get()
-    if (cached !== null) return cached
-
-    let altitude = Math.asin(
-      this.#sinDec * Star.context.sinLat +
-        this.#cosDec * Star.context.cosLat * Math.cos(this.hourAngle)
-    )
-    this.#altitude.set(altitude)
-    return altitude
+    return this.#altitude.get()
   }
 
-  #azimuth = new CacheItem<number>([this.#hourAngle, this.#altitude])
-  get azimuth(): number {
-    let cached = this.#azimuth.get()
-    if (cached !== null) return cached
-
+  #azimuth = new CacheItem(() => {
     let azimuth = Math.acos(
-      (this.#sinDec - Math.sin(altitude) * Star.context.sinLat) /
-        (Math.cos(altitude) * Star.context.cosLat)
+      (this.#sinDec - Math.sin(this.altitude) * Star.context.sinLat) /
+        (Math.cos(this.altitude) * Star.context.cosLat)
     )
-    if (hourAngle > 0) azimuth = Math.PI * 2 - azimuth
-
-    return (this.#azimuth = azimuth)
+    if (this.hourAngle > 0) azimuth = Math.PI * 2 - azimuth
+    return azimuth
+  }, [this.#hourAngle, this.#altitude])
+  get azimuth(): number {
+    return this.#azimuth.get()
   }
 
-  #theta = new CacheItem<number>([this.#azimuth])
+  #theta = new CacheItem(() => Math.PI / 2 - this.azimuth, [this.#azimuth])
   get theta() {
-    let azimuth = this.azimuth
-    if (this.#theta !== undefined) return this.#theta
-    return (this.#theta = Math.PI / 2 - azimuth)
+    return this.#theta.get()
   }
 
-  #rho = new CacheItem<number>([this.#altitude])
+  #rho = new CacheItem(() => Math.cos(this.altitude), [this.#altitude])
   get rho() {
-    let altitude = this.altitude
-    if (this.#rho !== undefined) return this.#rho
-    return (this.#rho = Math.cos(altitude))
+    return this.#rho.get()
   }
 
   get nextTransit() {
@@ -257,7 +252,7 @@ class Star implements Interface.Star {
     speed,
   }: Partial<Interface.GlobalContext>): Star {
     if (date !== undefined || long !== undefined) {
-      this.#hourAngle = undefined
+      this.#hourAngle.clear()
     }
 
     if (lat !== undefined) {
