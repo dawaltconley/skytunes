@@ -69,6 +69,9 @@ class Star implements Interface.Star {
 
   #sinDec: number
   #cosDec: number
+
+  // these private properties function as caches of their public counterparts
+  // setting them to undefined forces recalculation
   #hourAngle?: number
   #altitude?: number
   #azimuth?: number
@@ -101,6 +104,7 @@ class Star implements Interface.Star {
       long: Star.context.long,
       lat: Star.context.lat,
     })
+    // TODO can do this better in StarManager
     Star.context.addEventListener('update', ((event: CustomEvent) => {
       this.recalculate(event.detail as Partial<Interface.GlobalContext>)
     }) as EventListener)
@@ -348,12 +352,13 @@ class StarManager extends Array<Interface.Star> {
     let msToRise =
       (angleToRise * (-43200000 / Math.PI)) / StarManager.context.speed
 
+    // TODO need to make this cancelable, save it somewhere
     setTimeout(this.setVisible.bind(this, star), msToRise - 1000)
   }
 
   recalculateVisible(props: Partial<Interface.GlobalContext> = {}) {
     this.#visible = new Array(this.#ref.length)
-    this.#hidden = new Array(this.#ref.length)
+    this.#hidden = new Array(this.#ref.length) // TODO maybe useless
 
     for (let star of this) {
       if (star.highTransit < 0) continue
@@ -372,9 +377,13 @@ class StarManager extends Array<Interface.Star> {
   eachVisible(callback: (star: Interface.Star) => void) {
     const stillVisible: Interface.Star[] = []
     for (let star of this.#visible) {
+      // recalculate position / visibility here?
       callback(star)
       if (star.altitude > 0) stillVisible.push(star)
       else this.setInvisible(star)
+        // TODO some way to avoid setting as invisible stars that
+        // were recently set visible by a timeout, but are slightly
+        // bellow the horizon
     }
     this.#visible = stillVisible
   }
