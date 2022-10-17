@@ -116,11 +116,10 @@ class SkyCanvas implements SkyCanvasInterface {
   }
 
   animateFrame(): SkyCanvas {
-    this.#fps++
     return this.drawBackground().drawStars()
   }
 
-  startAnimation(): SkyCanvas {
+  animate(eachFrame: (canvas: SkyCanvas) => void): SkyCanvas {
     const frame = (timestamp: DOMHighResTimeStamp) => {
       let elapsed = timestamp - this.#lastFrameTime
       if (elapsed > this.#minMsPerFrame) {
@@ -128,8 +127,9 @@ class SkyCanvas implements SkyCanvasInterface {
         SkyCanvas.globalContext.update({
           date: new Date(last + elapsed * this.speed),
         })
-        this.animateFrame()
+        eachFrame(this)
         this.#lastFrameTime = timestamp
+        this.#fps++
       }
       requestAnimationFrame(frame)
     }
