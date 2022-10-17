@@ -64,23 +64,12 @@ class GlobalContext extends EventTarget implements Interface.GlobalContext {
   }
 
   update(options: Partial<Interface.GlobalContext>) {
-    let { date, long, lat, stars, canvas, speed } = options
+    let { date, long, lat, canvas, speed } = options
     this.date = date ?? this.date ?? new Date()
     this.long = long ?? this.long
     this.lat = lat ?? this.lat
     this.canvas = canvas ?? this.canvas
     this.speed = speed ?? this.speed
-
-    if (stars !== undefined) {
-      this.stars = stars
-      this.starsRef = stars.reduce((indexed, star) => {
-        indexed[star.ref] = star
-        return indexed
-      }, [] as Interface.Star[])
-
-      // this.starsInvisible = []
-      // this.starsVisible = stars.filter()
-    }
 
     if (date !== undefined || long !== undefined) {
       this.lst = getLST(this.date, this.long)
