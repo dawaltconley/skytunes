@@ -108,6 +108,7 @@ class SkyCanvas implements SkyCanvasInterface {
   }
 
   drawStars(): SkyCanvas {
+    console.log('bad call to drawStars')
     for (const star of SkyCanvas.globalContext.stars) {
       if (star.altitude < 0) continue
       star.draw()
@@ -116,6 +117,7 @@ class SkyCanvas implements SkyCanvasInterface {
   }
 
   animateFrame(): SkyCanvas {
+    console.log('bad call to animateFrame')
     return this.drawBackground().drawStars()
   }
 

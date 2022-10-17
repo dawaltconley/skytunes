@@ -23,11 +23,32 @@ const skyCanvas = new SkyCanvas(canvas)
 globalContext.update({ canvas: skyCanvas }) // remove?
 
 skyCanvas.animate(canvas => {
+  console.time('animation loop')
   canvas.drawBackground()
-  stars.forEach(star => {
-    star.recalculate({ date: new Date() })
-    if (star.altitude > 0) star.draw()
+  let loops = 0,
+    vegaVisible = true
+  stars.eachVisible(star => {
+    // star.recalculate({ date: globalContext.date })
+    star.draw()
+    if (star.ref === 7001) {
+      // console.log(getTimeToRise(star, globalContext.speed))
+      // console.log(star.horizonTransit, getTimeToRise(star, globalContext.speed))
+      if (vegaVisible && star.altitude < 0) {
+        vegaVisible = false
+        console.log(vegaVisible, star.horizonTransit, star.hourAngle)
+      } else if (!vegaVisible && star.altitude > 0) {
+        vegaVisible = true
+        console.log(vegaVisible, star.horizonTransit, star.hourAngle)
+      }
+      let ha = star.hourAngle
+      if (ha < 0) ha += Math.PI * 2
+      let angleUnder = star.horizonTransit + (ha - Math.PI)
+    }
+    // if (star.altitude > 0) star.draw()
+    loops++
   })
+  // console.log({ loops })
+  console.timeEnd('animation loop')
 })
 
 navigator.geolocation.getCurrentPosition(({ coords, timestamp }) => {
