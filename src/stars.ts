@@ -273,9 +273,7 @@ class StarManager extends Array<Interface.Star> {
 
   #ref: Interface.Star[] = []
   #visible: Interface.Star[] = []
-  #hidden: Interface.Star[] = []
-  // #circumpolar: Interface.Star[] = []
-  // #wontRise: Interface.Star[] = []
+  #setVisibleTimeouts: number[] = []
 
   constructor(stars: Interface.Star[]) {
     super()
@@ -285,8 +283,7 @@ class StarManager extends Array<Interface.Star> {
       return indexed
     }, [] as Interface.Star[])
 
-    this.recalculateVisible()
-
+    this.updateStars(StarManager.context)
     Star.context.addEventListener('update', ((event: CustomEvent) => {
       this.updateStars(event.detail)
     }) as EventListener)
@@ -303,15 +300,12 @@ class StarManager extends Array<Interface.Star> {
   }
 
   setVisible(star: Interface.Star) {
-    this.visible[star.ref] = star
-    delete this.#hidden[star.ref]
+    this.#visible.push(star)
+    clearTimeout(this.#setVisibleTimeouts[star.ref])
+    delete this.#setVisibleTimeouts[star.ref]
   }
 
-  // TODO get rid of speed as argument
-  setInvisible(star: Interface.Star) {
-    this.#hidden[star.ref] = star
-    delete this.#visible[star.ref]
-
+  queueRise(star: Interface.Star) {
     // if star.highTransit < 0 ? or if star.horizonTransit !== NaN
     // star.hourAngle is probably ~90deg to 180deg or -180deg to ~-90deg
     // need difference between that angle and horizonTransit ~90deg
@@ -323,25 +317,23 @@ class StarManager extends Array<Interface.Star> {
     let msToRise =
       (angleToRise * (-43200000 / Math.PI)) / StarManager.context.speed
 
-    // TODO need to make this cancelable, save it somewhere
-    setTimeout(this.setVisible.bind(this, star), msToRise - 1000)
+    this.#setVisibleTimeouts[star.ref] = setTimeout(
+      this.setVisible.bind(this, star),
+      msToRise - 1000
+    )
   }
 
-  recalculateVisible(props: Partial<Interface.GlobalContext> = {}) {
-    this.#visible = new Array(this.#ref.length)
-    this.#hidden = new Array(this.#ref.length) // TODO maybe useless
-
+  updateStars(props: Partial<Interface.GlobalContext> = {}) {
+    this.#visible = []
     for (let star of this) {
       star.recalculate(props)
       if (star.highTransit < 0) continue
       if (star.altitude > 0) {
         this.setVisible(star)
       } else {
-        this.setInvisible(star)
+        this.queueRise(star)
       }
     }
-
-    return this.visible
   }
 
   // assuming no empty elements in visible array
@@ -349,21 +341,19 @@ class StarManager extends Array<Interface.Star> {
   eachVisible(callback: (star: Interface.Star) => void) {
     const stillVisible: Interface.Star[] = []
     for (let star of this.#visible) {
-      // recalculate position / visibility here?
-      callback(star)
-      if (star.altitude > 0) stillVisible.push(star)
-      else this.setInvisible(star)
-      // TODO some way to avoid setting as invisible stars that
-      // were recently set visible by a timeout, but are slightly
-      // bellow the horizon
+      star.recalculate({ date: StarManager.context.date })
+
+      // treat stars as visible if they are rising / have passed the antimeridian
+      // this allows treating stars that are 'about to rise' as 'visible'
+      // and to work with the setInvisible timeout
+      if (star.altitude > 0 || star.hourAngle < 0) {
+        callback(star)
+        stillVisible.push(star)
+      } else {
+        this.queueRise(star)
+      }
     }
     this.#visible = stillVisible
-  }
-
-  updateStars(props: Partial<Interface.GlobalContext> = {}) {
-    for (let star of this) {
-      star.recalculate(props)
-    }
   }
 }
 
