@@ -9,7 +9,6 @@ class GlobalContext extends EventTarget implements Interface.GlobalContext {
   sinLat: number = 0
   cosLat: number = 1
 
-  stars: Interface.Star[] = []
   canvas?: Interface.SkyCanvas
   audio: AudioContext
   speed: number = 1
@@ -22,11 +21,10 @@ class GlobalContext extends EventTarget implements Interface.GlobalContext {
   }
 
   update(options: Partial<Interface.GlobalContext>) {
-    let { date, long, lat, stars, canvas, speed } = options
+    let { date, long, lat, canvas, speed } = options
     this.date = date ?? this.date ?? new Date()
     this.long = long ?? this.long
     this.lat = lat ?? this.lat
-    this.stars = stars ?? this.stars
     this.canvas = canvas ?? this.canvas
     this.speed = speed ?? this.speed
 

@@ -118,7 +118,6 @@ export interface SkyCanvas {
 }
 
 export interface GlobalContext extends TimeAndPlace {
-  stars: Star[]
   canvas?: SkyCanvas
   speed: number
 }
