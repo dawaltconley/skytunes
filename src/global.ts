@@ -39,10 +39,12 @@ class GlobalContext extends EventTarget implements Interface.GlobalContext {
       this.cosLat = Math.cos(this.lat)
     }
 
-    const updateEvent = new CustomEvent('update', {
-      detail: options,
-    })
-    this.dispatchEvent(updateEvent)
+    if (long ?? lat ?? canvas ?? speed ?? false) {
+      const updateEvent = new CustomEvent('update', {
+        detail: options,
+      })
+      this.dispatchEvent(updateEvent)
+    }
   }
 }
 
