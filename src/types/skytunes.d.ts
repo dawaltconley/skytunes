@@ -117,8 +117,8 @@ export interface SkyCanvas {
   drawStars: () => SkyCanvas
   /** a single animation frame, usually passed to window.requestAnimationFrame */
   animateFrame: () => SkyCanvas
-  /** starts animating the SkyCanvas */
-  startAnimation: () => SkyCanvas
+  /** starts an animation, running the callback on each frame */
+  animate: (callback: (canvas: SkyCanvas) => void) => SkyCanvas
 }
 
 export interface GlobalContext extends TimeAndPlace {

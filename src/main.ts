@@ -17,14 +17,18 @@ let stars = new StarManager(
       )
   )
 )
-globalContext.update({ stars }) // remove?
-// possibly doing too much with globalContext, should just be settings
 
 const canvas = document.getElementById('canvas') as HTMLCanvasElement
 const skyCanvas = new SkyCanvas(canvas)
 globalContext.update({ canvas: skyCanvas }) // remove?
 
-skyCanvas.startAnimation()
+skyCanvas.animate(canvas => {
+  canvas.drawBackground()
+  stars.forEach(star => {
+    star.recalculate({ date: new Date() })
+    if (star.altitude > 0) star.draw()
+  })
+})
 
 navigator.geolocation.getCurrentPosition(({ coords, timestamp }) => {
   globalContext.update({
