@@ -294,7 +294,7 @@ class StarManager extends Array<Interface.Star> {
     Object.setPrototypeOf(this, StarManager.prototype)
   }
 
-  getStar(ref: number): Interface.Star {
+  getStar(ref: Interface.Star['ref']): Interface.Star {
     return this.#ref[ref]
   }
 
