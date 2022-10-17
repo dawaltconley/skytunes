@@ -177,6 +177,8 @@ class Star implements Interface.Star {
     }
 
     if (lat !== undefined) {
+      this.#altitude.clear()
+
       // source: https://kalobs.org/more/altitudes-at-transit/
       this.highTransit = Math.asin(Math.cos(this.dec - Star.context.lat))
       this.lowTransit = Math.asin(-Math.cos(this.dec + Star.context.lat))
