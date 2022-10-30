@@ -273,14 +273,14 @@ class Star implements Interface.Star {
   }
 }
 
-class StarManager extends Array<Star> {
+class StarManager extends Array<Interface.Star> {
   static context = globalContext
 
   #ref: Interface.Star[] = []
   #visible: Interface.Star[] = []
   #setVisibleTimeouts: number[] = []
 
-  constructor(stars: Star[]) {
+  constructor(stars: Interface.Star[]) {
     super()
     this.push(...stars) // maybe return only visible
     this.#ref = stars.reduce((indexed, star) => {
