@@ -349,7 +349,7 @@ class StarManager extends Array<Interface.Star> {
     console.log('running update', props)
     this.#visible = []
     for (let star of this) {
-      star.recalculate(props)
+      star.recalculate({ ...props, date: StarManager.context.date })
       clearTimeout(this.#setVisibleTimeouts[star.ref])
       if (star.highTransit < 0) continue
       if (star.altitude > 0) {
