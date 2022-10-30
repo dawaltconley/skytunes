@@ -322,23 +322,31 @@ class StarManager extends Array<Interface.Star> {
 
   queueRise(star: Interface.Star) {
     // binary search stars to find insertion point
-    let len = this.#nextToRise.length
     let target = star.angleToRise
-    let middle = Math.floor(len / 2)
-    let insert = 0
-    // let m1 = m2 - 1
-    while (!insert && len > 1) {
-      if (target > this.#nextToRise[middle].angleToRise) {
-        len = len - middle + 2
-        middle += Math.floor(len / 2)
-      } else if (target < this.#nextToRise[middle - 1].angleToRise) {
-        // handle search to the left
-        len = middle // same as above?
-        middle -= Math.floor(len / 2)
+    let left = 0
+    let right = this.#nextToRise.length - 1
+    let insert
+
+    while (true) {
+      // let i = Math.ceil((right - left) / 2) + left
+      let i = (((1 + right - left) / 2) | 0) + left
+      let star = this.#nextToRise[i]
+      star.recalculate({ date: StarManager.context.date })
+      if (star.angleToRise < target) {
+        // search right
+        if (right - left < 2) {
+          insert = i + 1
+          break
+        }
+        left = i + 1
       } else {
-        insert = middle - 1
+        // search left
+        if (right === left) {
+          insert = i
+          break
+        }
+        right = i - 1
       }
-      // len /= 2
     }
 
     this.#nextToRise.splice(insert, 0, star)
@@ -382,6 +390,17 @@ class StarManager extends Array<Interface.Star> {
       } else {
         console.log('star set')
         this.queueRise(star)
+      }
+    }
+    for (let i = 0; i < this.#nextToRise.length; i++) {
+      let star = this.#nextToRise[i]
+      star.recalculate({ date: StarManager.context.date })
+      if (star.altitude > 0) {
+        callback(star)
+        stillVisible.push(star)
+      } else {
+        this.#nextToRise.splice(0, i) // TODO should be able to pop if reverse sorted
+        break
       }
     }
     this.#visible = stillVisible
