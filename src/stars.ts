@@ -329,7 +329,7 @@ class StarManager extends Array<Interface.Star> {
       let i = (((1 + right - left) / 2) | 0) + left
       let star = this.#nextToRise[i]
       star.recalculate({ date: StarManager.context.date })
-      if (star.angleToRise < target) {
+      if (star.angleToRise > target) {
         // search right
         if (right - left < 2) {
           insert = i + 1
@@ -363,7 +363,7 @@ class StarManager extends Array<Interface.Star> {
         this.#nextToRise.push(star)
       }
     }
-    this.#nextToRise.sort((a, b) => a.angleToRise - b.angleToRise)
+    this.#nextToRise.sort((a, b) => b.angleToRise - a.angleToRise)
   }
 
   // assuming no empty elements in visible array
@@ -387,14 +387,14 @@ class StarManager extends Array<Interface.Star> {
         this.queueRise(star)
       }
     }
-    for (let i = 0; i < this.#nextToRise.length; i++) {
+    for (let i = this.#nextToRise.length - 1; i > -1; i--) {
       let star = this.#nextToRise[i]
       star.recalculate({ date: StarManager.context.date })
       if (star.altitude > 0) {
         callback(star)
         stillVisible.push(star)
+        this.#nextToRise.pop()
       } else {
-        this.#nextToRise.splice(0, i) // TODO should be able to pop if reverse sorted
         break
       }
     }
