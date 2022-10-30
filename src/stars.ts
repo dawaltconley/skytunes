@@ -388,7 +388,6 @@ class StarManager extends Array<Interface.Star> {
       } else if (star.hourAngle < 0) {
         stillVisible.push(star)
       } else {
-        console.log('star set')
         this.queueRise(star)
       }
     }

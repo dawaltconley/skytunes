@@ -23,7 +23,7 @@ const skyCanvas = new SkyCanvas(canvas)
 globalContext.update({ canvas: skyCanvas }) // remove?
 
 skyCanvas.animate(canvas => {
-  // console.time('animation loop')
+  console.time('animation loop')
   canvas.drawBackground()
   let loops = 0,
     vegaVisible = true
@@ -48,7 +48,7 @@ skyCanvas.animate(canvas => {
     loops++
   })
   // console.log({ loops })
-  // console.timeEnd('animation loop')
+  console.timeEnd('animation loop')
 })
 
 navigator.geolocation.getCurrentPosition(({ coords, timestamp }) => {
