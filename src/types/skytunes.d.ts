@@ -79,6 +79,9 @@ export interface Star {
   /** time to the next high transit in milliseconds */
   readonly nextTransit: number
 
+  /** angle from where the star crosses the horizon */
+  readonly angleToRise: number
+
   /**
    * the hour angle at which a star will cross the horizon
    * same for setting and rising, but the rising hour angle is negative
