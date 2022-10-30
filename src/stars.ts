@@ -288,7 +288,6 @@ class StarManager extends Array<Interface.Star> {
   #ref: Interface.Star[] = []
   #visible: Interface.Star[] = []
   #nextToRise: Interface.Star[] = []
-  #setVisibleTimeouts: number[] = []
 
   constructor(stars: Interface.Star[]) {
     super()
@@ -316,8 +315,6 @@ class StarManager extends Array<Interface.Star> {
 
   setVisible(star: Interface.Star) {
     this.#visible.push(star)
-    clearTimeout(this.#setVisibleTimeouts[star.ref])
-    delete this.#setVisibleTimeouts[star.ref]
   }
 
   queueRise(star: Interface.Star) {
@@ -358,7 +355,6 @@ class StarManager extends Array<Interface.Star> {
     this.#nextToRise = []
     for (let star of this) {
       star.recalculate({ ...props, date: StarManager.context.date })
-      clearTimeout(this.#setVisibleTimeouts[star.ref])
       if (star.highTransit < 0) continue
       if (star.altitude > 0) {
         this.setVisible(star)
