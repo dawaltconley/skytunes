@@ -287,6 +287,7 @@ class StarManager extends Array<Interface.Star> {
 
   #ref: Interface.Star[] = []
   #visible: Interface.Star[] = []
+  #nextToRise: Interface.Star[] = []
   #setVisibleTimeouts: number[] = []
 
   constructor(stars: Interface.Star[]) {
@@ -320,43 +321,33 @@ class StarManager extends Array<Interface.Star> {
   }
 
   queueRise(star: Interface.Star) {
-    // // if star.highTransit < 0 ? or if star.horizonTransit !== NaN
-    // // star.hourAngle is probably ~90deg to 180deg or -180deg to ~-90deg
-    // // need difference between that angle and horizonTransit ~90deg
-    // // hourAngle + 180deg = hourAngle of 0 - 360deg, increasing the closer it gets to meridian
-    // // hourAngle - 180deg = hourAngle of -3
-    // let ha = star.hourAngle
-    // if (ha > 0) ha -= Math.PI * 2
-    // let angleToRise = Math.abs(star.horizonTransit) + ha
-    // let msToRise =
-    //   (angleToRise * (-43200000 / Math.PI)) / StarManager.context.speed
-
-    // let timeUnder = Math.acos(
-    //   Math.tan(StarManager.context.lat) * Math.tan(star.dec)
-    // )
-    // let msToRise =
-    //   (timeUnder * (43200000 / Math.PI)) / StarManager.context.speed
-
-    const getTimeToRise = (star: Interface.Star, speed: number): number => {
-      let ha = star.hourAngle
-      if (ha > 0) ha = Math.PI * 2 - ha
-      let angleToRise = Math.abs(ha) - Math.abs(star.horizonTransit)
-      if (star.ref === 7001)
-        console.log({ ha, angleToRise, horizonTransit: star.horizonTransit })
-      let msToRise = (angleToRise * (43200000 / Math.PI)) / speed
-      return msToRise
+    // binary search stars to find insertion point
+    let len = this.#nextToRise.length
+    let target = star.angleToRise
+    let middle = Math.floor(len / 2)
+    let insert = 0
+    // let m1 = m2 - 1
+    while (!insert && len > 1) {
+      if (target > this.#nextToRise[middle].angleToRise) {
+        len = len - middle + 2
+        middle += Math.floor(len / 2)
+      } else if (target < this.#nextToRise[middle - 1].angleToRise) {
+        // handle search to the left
+        len = middle // same as above?
+        middle -= Math.floor(len / 2)
+      } else {
+        insert = middle - 1
+      }
+      // len /= 2
     }
 
-    this.#setVisibleTimeouts[star.ref] = setTimeout(() => {
-      this.setVisible(star)
-      if (star.ref === 7001) console.log('vega visible')
-      // this.setVisible.bind(this, star)
-    }, getTimeToRise(star, StarManager.context.speed) - 100)
+    this.#nextToRise.splice(insert, 0, star)
   }
 
   updateStars(props: Partial<Interface.GlobalContext> = {}) {
     console.log('running update', props)
     this.#visible = []
+    this.#nextToRise = []
     for (let star of this) {
       star.recalculate(props)
       clearTimeout(this.#setVisibleTimeouts[star.ref])
@@ -364,9 +355,11 @@ class StarManager extends Array<Interface.Star> {
       if (star.altitude > 0) {
         this.setVisible(star)
       } else {
-        this.queueRise(star)
+        // this.queueRise(star)
+        this.#nextToRise.push(star)
       }
     }
+    this.#nextToRise.sort((a, b) => a.angleToRise - b.angleToRise)
   }
 
   // assuming no empty elements in visible array
