@@ -358,6 +358,11 @@ class StarManager extends Array<Interface.Star> {
 
     this.recalculateVisible()
 
+    Star.context.addEventListener('update', ((event: CustomEvent) => {
+      // this.recalculate(event.detail as Partial<Interface.GlobalContext>)
+      this.recalculateVisible(event.detail)
+    }) as EventListener)
+
     Object.setPrototypeOf(this, StarManager.prototype)
   }
 
@@ -399,6 +404,7 @@ class StarManager extends Array<Interface.Star> {
     this.#hidden = new Array(this.#ref.length) // TODO maybe useless
 
     for (let star of this) {
+      star.recalculate(props)
       if (star.highTransit < 0) continue
       if (star.altitude > 0) {
         this.setVisible(star)
