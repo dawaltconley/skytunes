@@ -455,9 +455,9 @@ class StarManager extends Array<Interface.Star> {
       callback(star)
       if (star.altitude > 0) stillVisible.push(star)
       else this.setInvisible(star)
-        // TODO some way to avoid setting as invisible stars that
-        // were recently set visible by a timeout, but are slightly
-        // bellow the horizon
+      // TODO some way to avoid setting as invisible stars that
+      // were recently set visible by a timeout, but are slightly
+      // bellow the horizon
     }
     this.#visible = stillVisible
   }
