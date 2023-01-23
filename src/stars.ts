@@ -55,6 +55,36 @@ class StarSynth {
   }
 }
 
+// interface CacheItem {
+//   [name: string]: (keyof CacheItem)[]
+// }
+
+type ConfigEntry<K extends object> = {
+  [name: string]: 
+}
+
+class StarCache {
+  hourAngle?: number
+  altitude?: number
+  azimuth?: number
+  theta?: number
+  rho?: number
+
+  constructor(cacheItems: CacheItem) {
+
+  }
+
+  // get(key: string) {
+  //   this[key]
+  // }
+
+}
+
+const test = new StarCache({
+  hourAngle: [],
+  altitude: ['hourAngle']
+})
+
 class Star implements Interface.Star {
   static context = globalContext
 
