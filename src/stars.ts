@@ -156,6 +156,15 @@ class Star implements Interface.Star {
     return (this.hourAngle * (-43200000 / Math.PI)) / Star.context.speed
   }
 
+  #angleToRise = new CacheItem(() => {
+    let ha = this.hourAngle
+    if (ha > 0) ha = Math.PI * 2 - ha
+    return Math.abs(ha) - Math.abs(this.horizonTransit)
+  }, [this.#hourAngle])
+  get angleToRise() {
+    return this.#angleToRise.get()
+  }
+
   get timeToRise(): number {
     let angleUnder = this.hourAngle - Math.abs(this.horizonTransit)
     console.log({ angleUnder })
