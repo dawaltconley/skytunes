@@ -55,6 +55,39 @@ class StarSynth {
   }
 }
 
+class CacheItem<Value = any> {
+  #value: Value | null
+  #recalculate: () => Value
+  dependencies: CacheItem[]
+  dependents: CacheItem[] = []
+
+  constructor(calculate: () => Value, dependencies: CacheItem[] = []) {
+    this.#value = calculate()
+    this.#recalculate = calculate
+    this.dependencies = dependencies
+    dependencies.forEach(dep => dep.dependents.push(this))
+  }
+
+  isCached(): boolean {
+    return this.#value !== null
+  }
+
+  get(): Value {
+    return this.#value ?? this.set(this.#recalculate())
+  }
+
+  set(v: Value): Value {
+    this.clear()
+    this.#value = v
+    return v
+  }
+
+  clear() {
+    this.dependents.forEach(dep => dep.clear())
+    this.#value = null
+  }
+}
+
 class Star implements Interface.Star {
   static context = globalContext
 
@@ -69,14 +102,6 @@ class Star implements Interface.Star {
 
   #sinDec: number
   #cosDec: number
-
-  // these private properties function as caches of their public counterparts
-  // setting them to undefined forces recalculation
-  #hourAngle?: number
-  #altitude?: number
-  #azimuth?: number
-  #theta?: number
-  #rho?: number
 
   #highNote: number = 0
   #queuedSynth: number | null = null
@@ -116,61 +141,47 @@ class Star implements Interface.Star {
     })
   }
 
-  get hourAngle(): number {
-    if (this.#hourAngle !== undefined) return this.#hourAngle
-
-    // unset dependants
-    this.#altitude = undefined
-    this.#azimuth = undefined
-
+  #hourAngle = new CacheItem(() => {
     let hourAngle = (Star.context.lst - this.ra) % (2 * Math.PI)
     if (hourAngle > Math.PI) hourAngle -= 2 * Math.PI
-    return (this.#hourAngle = hourAngle)
+    return hourAngle
+  })
+  get hourAngle(): number {
+    return this.#hourAngle.get()
   }
 
+  #altitude = new CacheItem(
+    () =>
+      Math.asin(
+        this.#sinDec * Star.context.sinLat +
+          this.#cosDec * Star.context.cosLat * Math.cos(this.hourAngle)
+      ),
+    [this.#hourAngle]
+  )
   get altitude(): number {
-    // get dependencies
-    let hourAngle = this.hourAngle
-    if (this.#altitude !== undefined) return this.#altitude
-
-    // unset dependants
-    this.#azimuth = undefined
-    this.#rho = undefined
-
-    return (this.#altitude = Math.asin(
-      this.#sinDec * Star.context.sinLat +
-        this.#cosDec * Star.context.cosLat * Math.cos(hourAngle)
-    ))
+    return this.#altitude.get()
   }
 
-  get azimuth(): number {
-    // get dependencies
-    let altitude = this.altitude,
-      hourAngle = this.hourAngle
-    if (this.#azimuth !== undefined) return this.#azimuth
-
-    // unset dependants
-    this.#theta = undefined
-
+  #azimuth = new CacheItem(() => {
     let azimuth = Math.acos(
-      (this.#sinDec - Math.sin(altitude) * Star.context.sinLat) /
-        (Math.cos(altitude) * Star.context.cosLat)
+      (this.#sinDec - Math.sin(this.altitude) * Star.context.sinLat) /
+        (Math.cos(this.altitude) * Star.context.cosLat)
     )
-    if (hourAngle > 0) azimuth = Math.PI * 2 - azimuth
-
-    return (this.#azimuth = azimuth)
+    if (this.hourAngle > 0) azimuth = Math.PI * 2 - azimuth
+    return azimuth
+  }, [this.#hourAngle, this.#altitude])
+  get azimuth(): number {
+    return this.#azimuth.get()
   }
 
+  #theta = new CacheItem(() => Math.PI / 2 - this.azimuth, [this.#azimuth])
   get theta() {
-    let azimuth = this.azimuth
-    if (this.#theta !== undefined) return this.#theta
-    return (this.#theta = Math.PI / 2 - azimuth)
+    return this.#theta.get()
   }
 
+  #rho = new CacheItem(() => Math.cos(this.altitude), [this.#altitude])
   get rho() {
-    let altitude = this.altitude
-    if (this.#rho !== undefined) return this.#rho
-    return (this.#rho = Math.cos(altitude))
+    return this.#rho.get()
   }
 
   get nextTransit() {
@@ -194,7 +205,7 @@ class Star implements Interface.Star {
     speed,
   }: Partial<Interface.GlobalContext>): Star {
     if (date !== undefined || long !== undefined) {
-      this.#hourAngle = undefined
+      this.#hourAngle.clear()
     }
 
     if (lat !== undefined) {
