@@ -3,23 +3,26 @@ import globalContext from './global'
 import { radianFromRa, radianFromDec } from './utilities'
 import './tailwind.css'
 import bsc from './bsc.json'
-import { Star } from './legacy'
+import { Star, StarManager } from './stars'
 import { SkyCanvas } from './draw'
 
-const stars = bsc.map(
-  (star: BSC) =>
-    new Star(
-      star['harvard_ref_#'],
-      radianFromRa(star.RA),
-      radianFromDec(star.DEC),
-      Number(star.MAG)
-    )
+let stars = new StarManager(
+  bsc.map(
+    (star: BSC) =>
+      new Star(
+        star['harvard_ref_#'],
+        radianFromRa(star.RA),
+        radianFromDec(star.DEC),
+        Number(star.MAG)
+      )
+  )
 )
-globalContext.update({ stars })
+globalContext.update({ stars }) // remove?
+// possibly doing too much with globalContext, should just be settings
 
 const canvas = document.getElementById('canvas') as HTMLCanvasElement
 const skyCanvas = new SkyCanvas(canvas)
-globalContext.update({ canvas: skyCanvas })
+globalContext.update({ canvas: skyCanvas }) // remove?
 
 skyCanvas.startAnimation()
 
