@@ -1,6 +1,46 @@
 import * as Interface from './types/skytunes'
 import { getLST } from './utilities'
 
+// interface StateListeners {
+//
+// }
+
+// type SettingKeys = keyof GlobalContext
+//
+// let foo: SettingKeys
+//
+// foo =
+
+// type StateListeners = Record<Pick<GlobalContext, 'date'>, () => void>
+
+// type Listenable = 'date' | 'long' | 'lat' | 'lst' | 'sinLat' | 'cosLat' | 'speed'
+
+// interface Listeners {
+//   date: (updated: Date) => void
+//   [prop: 'long' | 'lat' | 'lst' | 'sinLat' | 'cosLat' | 'speed']: (updated: number) => void
+// }
+
+// type GetListeners<Type, Listeners> = {
+//   [Property in keyof Type as Extract<Property, Listeners>]+?: (
+//     updated: Type[Property]
+//   ) => void
+// }
+
+// type GlobalListeners = GetListeners<
+//   Interface.GlobalContext,
+//   'date' | 'long' | 'lat' | 'lst' | 'sinLat' | 'cosLat' | 'speed'
+// >
+
+// let test: GetListeners<Interface.GlobalContext, 'date' | 'long'> = {
+//   // foo: 'bar',
+//   date: (updated: Date) => {
+//     console.log(updated)
+//   },
+//   long: (updated: number) => {
+//     console.log(updated)
+//   },
+// }
+
 class StarSorter extends Array<Interface.Star> {
   #ref: Interface.Star[] = []
   #visible: Interface.Star[] = []
@@ -124,6 +164,25 @@ class GlobalContext extends EventTarget implements Interface.GlobalContext {
     })
     this.dispatchEvent(updateEvent)
   }
+  // TODO type should be more specifig; only listen to a subset of global keys
+  // listen(listeners: GlobalListeners) {
+  //   return new Proxy(this, {
+  //     set(target, property: string, value) {
+  //       const callback = listeners[property]
+  //       if (!callback) return false
+  //
+  //       callback.call(this, value)
+  //       target[property] = value
+  //       return true
+  //     },
+  //   })
+  // }
 }
+
+// new GlobalContext().listen({
+//   date: newDate => {
+//     console.log(newDate)
+//   },
+// })
 
 export default new GlobalContext()
