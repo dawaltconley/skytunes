@@ -373,7 +373,7 @@ class StarManager extends Array<Star> {
   // fastest way to remove elements that have become no longer visible
   eachVisible(callback: (star: Interface.Star) => void) {
     const stillVisible: Interface.Star[] = []
-    console.log(this.#visible.length)
+    // console.log(this.#visible.length)
     for (let star of this.#visible) {
       // recalculate position / visibility here?
       star.recalculate({ date: StarManager.context.date })
@@ -387,6 +387,7 @@ class StarManager extends Array<Star> {
       } else if (star.hourAngle < 0) {
         stillVisible.push(star)
       } else {
+        console.log('star set')
         this.queueRise(star)
       }
     }
