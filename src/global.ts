@@ -10,6 +10,8 @@ class GlobalContext extends EventTarget implements Interface.GlobalContext {
   cosLat: number = 1
 
   stars: Interface.Star[] = []
+  starsRef: Interface.Star[] = []
+
   canvas?: Interface.SkyCanvas
   audio: AudioContext
   speed: number = 1
@@ -26,9 +28,19 @@ class GlobalContext extends EventTarget implements Interface.GlobalContext {
     this.date = date ?? this.date ?? new Date()
     this.long = long ?? this.long
     this.lat = lat ?? this.lat
-    this.stars = stars ?? this.stars
     this.canvas = canvas ?? this.canvas
     this.speed = speed ?? this.speed
+
+    if (stars !== undefined) {
+      this.stars = stars
+      this.starsRef = stars.reduce((indexed, star) => {
+        indexed[star.ref] = star
+        return indexed
+      }, [] as Interface.Star[])
+
+      // this.starsInvisible = []
+      // this.starsVisible = stars.filter()
+    }
 
     if (date !== undefined || long !== undefined) {
       this.lst = getLST(this.date, this.long)
