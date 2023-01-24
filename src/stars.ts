@@ -234,6 +234,10 @@ class Star implements Interface.Star {
     })
   }
 
+  logVega() {
+    if (this.ref === 7001) this.log()
+  }
+
   draw(): Star {
     if (!Star.context.canvas) return this
     let { context, center, radius } = Star.context.canvas
@@ -253,6 +257,9 @@ class Star implements Interface.Star {
       } else {
         requestAnimationFrame(() => this.draw())
       }
+    } else if (this.ref === 7001) {
+      // vega
+      context.fillStyle = 'red'
     } else {
       context.fillStyle = colors.yellow[200]
     }

@@ -22,6 +22,9 @@ const canvas = document.getElementById('canvas') as HTMLCanvasElement
 const skyCanvas = new SkyCanvas(canvas)
 globalContext.update({ canvas: skyCanvas }) // remove?
 
+// TODO should animate at ~60fps
+// but only recalculate/draw star properties as frequently as needed
+// maybe handle this in StarManager?
 skyCanvas.animate(canvas => {
   canvas.drawBackground()
   stars.eachVisible(star => {
