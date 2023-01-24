@@ -24,9 +24,8 @@ globalContext.update({ canvas: skyCanvas }) // remove?
 
 skyCanvas.animate(canvas => {
   canvas.drawBackground()
-  stars.forEach(star => {
-    star.recalculate({ date: new Date() })
-    if (star.altitude > 0) star.draw()
+  stars.eachVisible(star => {
+    star.draw()
   })
 })
 

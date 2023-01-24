@@ -156,15 +156,6 @@ class Star implements Interface.Star {
     return (this.hourAngle * (-43200000 / Math.PI)) / Star.context.speed
   }
 
-  get timeToRise(): number {
-    let ha = this.hourAngle
-    if (ha > 0) ha -= Math.PI * 2
-    let angleToRise = Math.abs(this.horizonTransit) + ha
-    let msToRise =
-      (angleToRise * (-43200000 / Math.PI)) / StarManager.context.speed
-    return msToRise
-  }
-
   // TODO shouldn't run if none of the options here have changed
   recalculate({
     date,
@@ -185,12 +176,8 @@ class Star implements Interface.Star {
       let highNote = 1 - Math.abs(1 - this.highTransit / (Math.PI / 2))
       this.#highNote = highNote = 40 + highNote * 360
 
-      // horizonTransit will be NaN for stars that don't cross the horizon
-      // these can be eliminated if below the horizon
-      // stars above the horizon have both high and low transit
-      this.horizonTransit = Math.acos(
-        Math.tan(this.dec) * Math.tan(Star.context.lat)
-      )
+      this.horizonTransit =
+        Math.PI - Math.acos(Math.tan(this.dec) * Math.tan(Star.context.lat))
     }
 
     // queue a synth for when the star transits
@@ -306,27 +293,24 @@ class StarManager extends Array<Interface.Star> {
   }
 
   queueRise(star: Interface.Star) {
-    // if star.highTransit < 0 ? or if star.horizonTransit !== NaN
-    // star.hourAngle is probably ~90deg to 180deg or -180deg to ~-90deg
-    // need difference between that angle and horizonTransit ~90deg
-    // hourAngle + 180deg = hourAngle of 0 - 360deg, increasing the closer it gets to meridian
-    // hourAngle - 180deg = hourAngle of -3
-    let ha = star.hourAngle
-    if (ha > 0) ha -= Math.PI * 2
-    let angleToRise = Math.abs(star.horizonTransit) + ha
-    let msToRise =
-      (angleToRise * (-43200000 / Math.PI)) / StarManager.context.speed
+    const getTimeToRise = (star: Interface.Star, speed: number): number => {
+      let ha = star.hourAngle
+      if (ha > 0) ha = Math.PI * 2 - ha
+      let angleToRise = Math.abs(ha) - Math.abs(star.horizonTransit)
+      let msToRise = (angleToRise * (43200000 / Math.PI)) / speed
+      return msToRise
+    }
 
-    this.#setVisibleTimeouts[star.ref] = setTimeout(
-      this.setVisible.bind(this, star),
-      msToRise - 1000
-    )
+    this.#setVisibleTimeouts[star.ref] = setTimeout(() => {
+      this.setVisible(star)
+    }, getTimeToRise(star, StarManager.context.speed) - 100)
   }
 
   updateStars(props: Partial<Interface.GlobalContext> = {}) {
     this.#visible = []
     for (let star of this) {
       star.recalculate(props)
+      clearTimeout(this.#setVisibleTimeouts[star.ref])
       if (star.highTransit < 0) continue
       if (star.altitude > 0) {
         this.setVisible(star)
@@ -346,8 +330,10 @@ class StarManager extends Array<Interface.Star> {
       // treat stars as visible if they are rising / have passed the antimeridian
       // this allows treating stars that are 'about to rise' as 'visible'
       // and to work with the setInvisible timeout
-      if (star.altitude > 0 || star.hourAngle < 0) {
+      if (star.altitude > 0) {
         callback(star)
+        stillVisible.push(star)
+      } else if (star.hourAngle < 0) {
         stillVisible.push(star)
       } else {
         this.queueRise(star)
