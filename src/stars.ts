@@ -264,25 +264,6 @@ class Star implements Interface.Star {
 
     return this
   }
-
-  drawTransit(until: number): Star {
-    if (!Star.context.canvas) return this
-    let { context, center, radius } = Star.context.canvas
-    let x = center.x,
-      y = Math.sin(this.theta) * this.rho
-    y = y * radius + center.y
-    let r = (10 - this.mag) * (radius * 0.0008)
-    let maxHA = Math.max(
-      Math.PI,
-      ((until * Math.PI) / 43200000) * Star.context.speed
-    )
-    console.log({ maxHA })
-    context.beginPath()
-    context.arc(x, y, r, 0, 2 * Math.PI)
-    context.fillStyle = colors.blue[100]
-    context.fill()
-    return this
-  }
 }
 
 class StarManager extends Array<Interface.Star> {
