@@ -113,10 +113,6 @@ export interface SkyCanvas {
   setCanvasSize: () => SkyCanvas
   /** draws the sky background */
   drawBackground: () => SkyCanvas
-  /** draws the visible stars in their current position */
-  drawStars: () => SkyCanvas
-  /** a single animation frame, usually passed to window.requestAnimationFrame */
-  animateFrame: () => SkyCanvas
   /** starts an animation, running the callback on each frame */
   animate: (callback: (canvas: SkyCanvas) => void) => SkyCanvas
 }

@@ -21,7 +21,7 @@ class SkyCanvas implements SkyCanvasInterface {
     this.canvas = canvas
     this.context = canvas.getContext('2d')!
 
-    this.animateFrame = this.animateFrame.bind(this)
+    this.drawBackground = this.drawBackground.bind(this)
 
     // frame rate based on the globalContext speed
     this.speed = SkyCanvas.globalContext.speed
@@ -37,14 +37,14 @@ class SkyCanvas implements SkyCanvasInterface {
       if (resizeTimeout) clearTimeout(resizeTimeout)
       resizeTimeout = setTimeout(() => {
         this.setCanvasSize()
-        requestAnimationFrame(this.animateFrame)
+        requestAnimationFrame(this.drawBackground)
       }, 100)
     })
     observer.observe(canvas)
 
     // set the canvas size
     this.setCanvasSize()
-    requestAnimationFrame(this.animateFrame)
+    requestAnimationFrame(this.drawBackground)
 
     setInterval(() => {
       requestAnimationFrame(() => {
@@ -105,18 +105,6 @@ class SkyCanvas implements SkyCanvasInterface {
     context.strokeStyle = 'rgba(255, 255, 255, 0.2)'
     context.stroke()
     return this
-  }
-
-  drawStars(): SkyCanvas {
-    for (const star of SkyCanvas.globalContext.stars) {
-      if (star.altitude < 0) continue
-      star.draw()
-    }
-    return this
-  }
-
-  animateFrame(): SkyCanvas {
-    return this.drawBackground().drawStars()
   }
 
   animate(eachFrame: (canvas: SkyCanvas) => void): SkyCanvas {
