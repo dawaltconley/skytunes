@@ -77,6 +77,7 @@ class SkyCanvas implements SkyCanvasInterface {
     let { canvas, context, center, radius } = this
     let height = canvas.height
     let skyTop = (height - 2 * radius) / 2
+    context.clearRect(0, 0, canvas.width, canvas.height)
     context.beginPath()
     context.arc(center.x, center.y, radius, 0, 2 * Math.PI)
     context.fillStyle = colors.blue['900']
