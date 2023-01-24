@@ -15,7 +15,6 @@ class SkyCanvas implements SkyCanvasInterface {
 
   #minMsPerFrame: number = 0
   #lastFrameTime: number = 0
-  #fps: number = 0
 
   constructor(canvas: HTMLCanvasElement) {
     this.canvas = canvas
@@ -45,13 +44,6 @@ class SkyCanvas implements SkyCanvasInterface {
     // set the canvas size
     this.setCanvasSize()
     requestAnimationFrame(this.drawBackground)
-
-    setInterval(() => {
-      requestAnimationFrame(() => {
-        this.drawFPS(this.#fps)
-        this.#fps = 0
-      })
-    }, 1000)
   }
 
   set speed(rate: number) {
@@ -81,16 +73,6 @@ class SkyCanvas implements SkyCanvasInterface {
     return this
   }
 
-  drawFPS(fps: number): SkyCanvas {
-    let { context } = this
-    context.beginPath()
-    context.clearRect(0, 0, 80, 16)
-    context.fillStyle = colors.black
-    context.font = '16px mono'
-    context.fillText(`FPS: ${fps}`, 0, 16, 800)
-    return this
-  }
-
   drawBackground(): SkyCanvas {
     let { canvas, context, center, radius } = this
     let height = canvas.height
@@ -117,7 +99,6 @@ class SkyCanvas implements SkyCanvasInterface {
         })
         eachFrame(this)
         this.#lastFrameTime = timestamp
-        this.#fps++
       }
       requestAnimationFrame(frame)
     }
