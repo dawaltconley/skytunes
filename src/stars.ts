@@ -269,7 +269,7 @@ class StarManager extends Array<Interface.Star> {
 
   #ref: Interface.Star[] = []
   #visible: Interface.Star[] = []
-  #setVisibleTimeouts: number[] = []
+  #nextToRise: Interface.Star[] = []
 
   constructor(stars: Interface.Star[]) {
     super()
@@ -297,36 +297,52 @@ class StarManager extends Array<Interface.Star> {
 
   setVisible(star: Interface.Star) {
     this.#visible.push(star)
-    clearTimeout(this.#setVisibleTimeouts[star.ref])
-    delete this.#setVisibleTimeouts[star.ref]
   }
 
   queueRise(star: Interface.Star) {
-    const getTimeToRise = (star: Interface.Star, speed: number): number => {
-      let ha = star.hourAngle
-      if (ha > 0) ha = Math.PI * 2 - ha
-      let angleToRise = Math.abs(ha) - Math.abs(star.horizonTransit)
-      let msToRise = (angleToRise * (43200000 / Math.PI)) / speed
-      return msToRise
+    // binary search stars to find insertion point
+    let target = star.angleToRise
+    let left = 0
+    let right = this.#nextToRise.length - 1
+    let insert
+
+    while (true) {
+      let i = (((1 + right - left) / 2) | 0) + left // equivalent to Math.ceil((right - left) / 2) + left
+      let star = this.#nextToRise[i]
+      star.recalculate({ date: StarManager.context.date })
+      if (star.angleToRise < target) {
+        // search right
+        if (right - left < 2) {
+          insert = i + 1
+          break
+        }
+        left = i + 1
+      } else {
+        // search left
+        if (right === left) {
+          insert = i
+          break
+        }
+        right = i - 1
+      }
     }
 
-    this.#setVisibleTimeouts[star.ref] = setTimeout(() => {
-      this.setVisible(star)
-    }, getTimeToRise(star, StarManager.context.speed) - 100)
+    this.#nextToRise.splice(insert, 0, star)
   }
 
   updateStars(props: Partial<Interface.GlobalContext> = {}) {
     this.#visible = []
+    this.#nextToRise = []
     for (let star of this) {
       star.recalculate({ ...props, date: StarManager.context.date })
-      clearTimeout(this.#setVisibleTimeouts[star.ref])
       if (star.highTransit < 0) continue
       if (star.altitude > 0) {
         this.setVisible(star)
       } else {
-        this.queueRise(star)
+        this.#nextToRise.push(star)
       }
     }
+    this.#nextToRise.sort((a, b) => a.angleToRise - b.angleToRise)
   }
 
   // assuming no empty elements in visible array
@@ -346,6 +362,17 @@ class StarManager extends Array<Interface.Star> {
         stillVisible.push(star)
       } else {
         this.queueRise(star)
+      }
+    }
+    for (let i = 0; i < this.#nextToRise.length; i++) {
+      let star = this.#nextToRise[i]
+      star.recalculate({ date: StarManager.context.date })
+      if (star.altitude > 0) {
+        callback(star)
+        stillVisible.push(star)
+      } else {
+        this.#nextToRise.splice(0, i) // TODO should be able to pop if reverse sorted
+        break
       }
     }
     this.#visible = stillVisible
