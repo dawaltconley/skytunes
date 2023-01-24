@@ -39,8 +39,10 @@ class CacheItem<Value = any> {
 
   /** clears the cache of this item and all of its dependents */
   clear() {
-    this.dependents.forEach(dep => dep.clear())
-    this.#value = null
+    if (this.#value !== null) {
+      this.dependents.forEach(dep => dep.clear())
+      this.#value = null
+    }
   }
 }
 
