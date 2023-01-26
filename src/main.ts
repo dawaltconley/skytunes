@@ -25,7 +25,7 @@ globalContext.update({ canvas: skyCanvas }) // remove?
 skyCanvas.animate(canvas => {
   canvas.drawBackground()
   stars.eachVisible(star => {
-    star.draw()
+    star.draw(canvas)
   })
 })
 

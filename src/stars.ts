@@ -234,9 +234,8 @@ class Star implements Interface.Star {
     })
   }
 
-  draw(): Star {
-    if (!Star.context.canvas) return this
-    let { context, center, radius } = Star.context.canvas
+  draw(canvas: Interface.SkyCanvas): Star {
+    let { context, center, radius } = canvas
     let x = Math.cos(this.theta) * this.rho,
       y = Math.sin(this.theta) * this.rho
     x = x * radius + center.x
@@ -251,7 +250,7 @@ class Star implements Interface.Star {
       if (Star.context.date.getTime() > this.#playingUntil) {
         this.#playingUntil = undefined
       } else {
-        requestAnimationFrame(() => this.draw())
+        requestAnimationFrame(() => this.draw(canvas))
       }
     } else {
       context.fillStyle = colors.yellow[200]

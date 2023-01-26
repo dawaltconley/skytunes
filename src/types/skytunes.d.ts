@@ -96,7 +96,7 @@ export interface Star {
   queueSynth: () => Star
 
   /** draw the star's position on a canvas */
-  draw: () => Star
+  draw: (canvas: SkyCanvas) => Star
 
   /** log data about the star's current position */
   log?: () => void
