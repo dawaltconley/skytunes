@@ -1,7 +1,7 @@
-import * as Interface from './types/skytunes'
+import type { SkyCanvas } from './draw'
 import { getLST } from './utilities'
 
-class GlobalContext extends EventTarget implements Interface.GlobalContext {
+class GlobalContext extends EventTarget {
   date: Date = new Date()
   long: number = 0
   lat: number = 0
@@ -9,7 +9,7 @@ class GlobalContext extends EventTarget implements Interface.GlobalContext {
   sinLat: number = 0
   cosLat: number = 1
 
-  canvas?: Interface.SkyCanvas
+  canvas?: SkyCanvas
   audio: AudioContext
   speed: number = 1
 
@@ -20,7 +20,7 @@ class GlobalContext extends EventTarget implements Interface.GlobalContext {
     this.audio = new AudioContext()
   }
 
-  update(options: Partial<Interface.GlobalContext>) {
+  update(options: Partial<GlobalContext>) {
     let { date, long, lat, canvas, speed } = options
     this.date = date ?? this.date ?? new Date()
     this.long = long ?? this.long
@@ -47,3 +47,4 @@ class GlobalContext extends EventTarget implements Interface.GlobalContext {
 }
 
 export default new GlobalContext()
+export type { GlobalContext }

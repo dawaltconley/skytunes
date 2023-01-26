@@ -1,8 +1,7 @@
-import { SkyCanvas as SkyCanvasInterface } from './types/skytunes'
 import context from './global'
 import colors from 'tailwindcss/colors'
 
-class SkyCanvas implements SkyCanvasInterface {
+class SkyCanvas {
   static globalContext = context
 
   canvas: HTMLCanvasElement
@@ -57,6 +56,7 @@ class SkyCanvas implements SkyCanvasInterface {
     return SkyCanvas.globalContext.speed
   }
 
+  /** adjusts the canvas width and height to match the screen sice and pixel ratio */
   setCanvasSize(): SkyCanvas {
     let { width, height } = this.canvas.getBoundingClientRect()
     let scale = window.devicePixelRatio
@@ -73,6 +73,7 @@ class SkyCanvas implements SkyCanvasInterface {
     return this
   }
 
+  /** draws the sky background */
   drawBackground(): SkyCanvas {
     let { canvas, context, center, radius } = this
     let height = canvas.height
@@ -90,6 +91,7 @@ class SkyCanvas implements SkyCanvasInterface {
     return this
   }
 
+  /** starts an animation, running the callback on each frame */
   animate(eachFrame: (canvas: SkyCanvas) => void): SkyCanvas {
     const frame = (timestamp: DOMHighResTimeStamp) => {
       let elapsed = timestamp - this.#lastFrameTime

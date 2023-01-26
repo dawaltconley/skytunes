@@ -1,4 +1,6 @@
-import * as Interface from './types/skytunes'
+import type * as Interface from './types/skytunes'
+import type { GlobalContext } from './global'
+import type { SkyCanvas } from './draw'
 import globalContext from './global'
 import { CacheItem } from './cache'
 import colors from 'tailwindcss/colors'
@@ -166,12 +168,8 @@ class Star implements Interface.Star {
   }
 
   // TODO shouldn't run if none of the options here have changed
-  recalculate({
-    date,
-    long,
-    lat,
-    speed,
-  }: Partial<Interface.GlobalContext>): Star {
+  /** recalculate the star's properties based on what global data has changed */
+  recalculate({ date, long, lat, speed }: Partial<GlobalContext>): Star {
     if (date !== undefined || long !== undefined) {
       this.#hourAngle.clear()
     }
@@ -201,6 +199,7 @@ class Star implements Interface.Star {
     return this
   }
 
+  /** queue a synth for the star's next high transit */
   queueSynth() {
     let queueTime = Math.floor(this.nextTransit) - 1000
     this.#queuedSynth = setTimeout(() => {
@@ -221,6 +220,7 @@ class Star implements Interface.Star {
     return this
   }
 
+  /** log data about the star's current position */
   log() {
     let { ref, hourAngle, altitude, azimuth, theta, rho } = this
     const toDegrees = (r: number) => (r * 180) / Math.PI
@@ -234,7 +234,8 @@ class Star implements Interface.Star {
     })
   }
 
-  draw(canvas: Interface.SkyCanvas): Star {
+  /** draw the star's position on a canvas */
+  draw(canvas: SkyCanvas): Star {
     let { context, center, radius } = canvas
     let x = Math.cos(this.theta) * this.rho,
       y = Math.sin(this.theta) * this.rho
@@ -263,20 +264,20 @@ class Star implements Interface.Star {
   }
 }
 
-class StarManager extends Array<Interface.Star> {
+class StarManager extends Array<Star> {
   static context = globalContext
 
-  #ref: Interface.Star[] = []
-  #visible: Interface.Star[] = []
-  #nextToRise: Interface.Star[] = []
+  #ref: Star[] = []
+  #visible: Star[] = []
+  #nextToRise: Star[] = []
 
-  constructor(stars: Interface.Star[]) {
+  constructor(stars: Star[]) {
     super()
     this.push(...stars) // maybe return only visible
     this.#ref = stars.reduce((indexed, star) => {
       indexed[star.ref] = star
       return indexed
-    }, [] as Interface.Star[])
+    }, [] as Star[])
 
     this.updateStars(StarManager.context)
     Star.context.addEventListener('update', ((event: CustomEvent) => {
@@ -286,19 +287,19 @@ class StarManager extends Array<Interface.Star> {
     Object.setPrototypeOf(this, StarManager.prototype)
   }
 
-  getStar(ref: Interface.Star['ref']): Interface.Star {
+  getStar(ref: Star['ref']): Star {
     return this.#ref[ref]
   }
 
-  get visible(): Interface.Star[] {
+  get visible(): Star[] {
     return this.#visible
   }
 
-  setVisible(star: Interface.Star) {
+  setVisible(star: Star) {
     this.#visible.push(star)
   }
 
-  queueRise(star: Interface.Star) {
+  queueRise(star: Star) {
     // binary search stars to find insertion point
     let target = star.angleToRise
     let left = 0
@@ -329,7 +330,7 @@ class StarManager extends Array<Interface.Star> {
     this.#nextToRise.splice(insert, 0, star)
   }
 
-  updateStars(props: Partial<Interface.GlobalContext> = {}) {
+  updateStars(props: Partial<GlobalContext> = {}) {
     this.#visible = []
     this.#nextToRise = []
     for (let star of this) {
@@ -346,8 +347,8 @@ class StarManager extends Array<Interface.Star> {
 
   // assuming no empty elements in visible array
   // fastest way to remove elements that have become no longer visible
-  eachVisible(callback: (star: Interface.Star) => void) {
-    const stillVisible: Interface.Star[] = []
+  eachVisible(callback: (star: Star) => void) {
+    const stillVisible: Star[] = []
     for (let star of this.#visible) {
       star.recalculate({ date: StarManager.context.date })
 

@@ -88,39 +88,4 @@ export interface Star {
    * will be NaN for stars that don't cross the horizon
    */
   readonly horizonTransit: number | NaN
-
-  /** recalculate the star's properties based on what global data has changed */
-  recalculate: (options: Partial<GlobalContext>) => Star
-
-  /** queue a synth for the star's next high transit */
-  queueSynth: () => Star
-
-  /** draw the star's position on a canvas */
-  draw: (canvas: SkyCanvas) => Star
-
-  /** log data about the star's current position */
-  log?: () => void
-}
-
-export interface SkyCanvas {
-  canvas: HTMLCanvasElement
-  context: CanvasRenderingContext2D
-  radius: number
-  center: {
-    x: number
-    y: number
-  }
-  speed: number
-
-  /** adjusts the canvas width and height to match the screen sice and pixel ratio */
-  setCanvasSize: () => SkyCanvas
-  /** draws the sky background */
-  drawBackground: () => SkyCanvas
-  /** starts an animation, running the callback on each frame */
-  animate: (callback: (canvas: SkyCanvas) => void) => SkyCanvas
-}
-
-export interface GlobalContext extends TimeAndPlace {
-  canvas?: SkyCanvas
-  speed: number
 }
