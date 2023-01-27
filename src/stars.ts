@@ -299,6 +299,11 @@ class StarManager extends Array<Star> {
     this.#visible.push(star)
   }
 
+  /**
+   * mark a star as hidden (below the horizon)
+   * uses a binary search algorithm to insert it in an array of hidden stars
+   * reverse sorted by the order in which they will rise
+   */
   queueRise(star: Star) {
     // binary search stars to find insertion point
     let target = star.angleToRise
@@ -330,6 +335,7 @@ class StarManager extends Array<Star> {
     this.#nextToRise.splice(insert, 0, star)
   }
 
+  /** update all stars; recalculate visible and #nextToRise sort order */
   updateStars(props: Partial<GlobalContext> = {}) {
     this.#visible = []
     this.#nextToRise = []
@@ -345,25 +351,31 @@ class StarManager extends Array<Star> {
     this.#nextToRise.sort((a, b) => b.angleToRise - a.angleToRise)
   }
 
-  // assuming no empty elements in visible array
-  // fastest way to remove elements that have become no longer visible
+  /**
+   * iterate through only the visible stars
+   * updates the internal list of visible stars while executing
+   * @param callback - function to be executed on each visible star
+   */
   eachVisible(callback: (star: Star) => void) {
+    // create new array to track visible stars
     const stillVisible: Star[] = []
+
+    // loop through the current list of visible stars
+    // execute callback on any that are still visible
+    // insert the rest into #nextToRise ordered array
     for (let star of this.#visible) {
       star.recalculate({ date: StarManager.context.date })
-
-      // treat stars as visible if they are rising / have passed the antimeridian
-      // this allows treating stars that are 'about to rise' as 'visible'
-      // and to work with the setInvisible timeout
       if (star.altitude > 0) {
         callback(star)
-        stillVisible.push(star)
-      } else if (star.hourAngle < 0) {
         stillVisible.push(star)
       } else {
         this.queueRise(star)
       }
     }
+
+    // reverse iterate the #nextToRise array
+    // if a star has risen, execute callback mark it as visible, and continue
+    // break on the first star that is still under the horizon
     for (let i = this.#nextToRise.length - 1; i > -1; i--) {
       let star = this.#nextToRise[i]
       star.recalculate({ date: StarManager.context.date })
@@ -375,6 +387,8 @@ class StarManager extends Array<Star> {
         break
       }
     }
+
+    // update list of visible stars
     this.#visible = stillVisible
   }
 }
