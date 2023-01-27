@@ -45,6 +45,7 @@ class SkyCanvas {
 
   #minMsPerFrame: number = 0
   #lastFrameTime: number = 0
+  #repaint: boolean = false
   #fps: number = 0
 
   constructor(container: HTMLElement) {
@@ -69,6 +70,7 @@ class SkyCanvas {
       if (resizeTimeout) clearTimeout(resizeTimeout)
       resizeTimeout = setTimeout(() => {
         this.setCanvasSize()
+        this.#repaint = true
         requestAnimationFrame(() => this.drawBackground())
       }, 100)
     })
@@ -133,19 +135,24 @@ class SkyCanvas {
     this.logFps()
     const frame = (timestamp: DOMHighResTimeStamp) => {
       let elapsed = timestamp - this.#lastFrameTime
-      if (elapsed > this.#minMsPerFrame) {
+      if (this.#repaint || elapsed > this.#minMsPerFrame) {
         let last: number = SkyCanvas.globalContext.date.getTime()
         SkyCanvas.globalContext.update({
           date: new Date(last + elapsed * SkyCanvas.globalContext.speed),
         })
         eachFrame(this)
         this.#lastFrameTime = timestamp
+        this.#repaint = false
         this.#fps++
       }
       requestAnimationFrame(frame)
     }
     requestAnimationFrame(frame)
     return this
+  }
+
+  repaint() {
+    this.#repaint = true
   }
 
   logFps() {
