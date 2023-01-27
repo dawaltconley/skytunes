@@ -1,4 +1,3 @@
-import type { SkyCanvas } from './draw'
 import { getLST } from './utilities'
 
 class GlobalContext extends EventTarget {
@@ -9,7 +8,6 @@ class GlobalContext extends EventTarget {
   sinLat: number = 0
   cosLat: number = 1
 
-  canvas?: SkyCanvas
   audio: AudioContext
   speed: number = 1
 
@@ -21,11 +19,10 @@ class GlobalContext extends EventTarget {
   }
 
   update(options: Partial<GlobalContext>) {
-    let { date, long, lat, canvas, speed } = options
+    let { date, long, lat, speed } = options
     this.date = date ?? this.date ?? new Date()
     this.long = long ?? this.long
     this.lat = lat ?? this.lat
-    this.canvas = canvas ?? this.canvas
     this.speed = speed ?? this.speed
 
     if (date !== undefined || long !== undefined) {
@@ -37,7 +34,7 @@ class GlobalContext extends EventTarget {
       this.cosLat = Math.cos(this.lat)
     }
 
-    if (long ?? lat ?? canvas ?? speed ?? false) {
+    if (long ?? lat ?? speed ?? false) {
       const updateEvent = new CustomEvent('update', {
         detail: options,
       })
