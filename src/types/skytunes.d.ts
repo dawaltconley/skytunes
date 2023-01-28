@@ -12,9 +12,9 @@ interface TimeAndPlace {
   date: Date
   long: number
   lat: number
-  lst: number
-  sinLat: number
-  cosLat: number
+  readonly lst: number
+  readonly sinLat: number
+  readonly cosLat: number
 }
 
 export interface Star {

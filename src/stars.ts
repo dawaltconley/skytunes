@@ -3,7 +3,79 @@ import type { GlobalContext } from './global'
 import type { SkyCanvas } from './draw'
 import globalContext from './global'
 import { CacheItem } from './cache'
+import { getLST } from './utilities'
 import colors from 'tailwindcss/colors'
+
+class TimeAndPlace implements Interface.TimeAndPlace {
+  constructor(
+    date: Date = new Date(),
+    longitude: number = 0,
+    latitude: number = 0
+  ) {
+    this.date = date
+    this.long = longitude
+    this.lat = latitude
+  }
+
+  // should be start / end date
+  #date = new CacheItem(() => new Date())
+  get date(): Date {
+    return this.#date.get()
+  }
+  set date(d: Date) {
+    this.#date.set(d)
+  }
+
+  #long = new CacheItem(() => 0)
+  get long(): number {
+    return this.#long.get()
+  }
+  set long(n: number) {
+    this.#long.set(n)
+  }
+
+  #lat = new CacheItem(() => 0)
+  get lat(): number {
+    return this.#lat.get()
+  }
+  set lat(n: number) {
+    this.#lat.set(n)
+  }
+
+  #lst = new CacheItem(
+    () => getLST(this.date, this.long),
+    [this.#date, this.#long]
+  )
+  get lst(): number {
+    return this.#lst.get()
+  }
+
+  #sinLat = new CacheItem(() => Math.sin(this.lat), [this.#lat])
+  get sinLat() {
+    return this.#sinLat.get()
+  }
+
+  #cosLat = new CacheItem(() => Math.cos(this.lat), [this.#lat])
+  get cosLat() {
+    return this.#cosLat.get()
+  }
+
+  cache = Object.freeze({
+    date: this.#date,
+    long: this.#long,
+    lat: this.#lat,
+    lst: this.#lst,
+    sinLat: this.#sinLat,
+    cosLat: this.#cosLat,
+  })
+
+  update(options: Partial<{ date: Date; long: number; lat: number }>) {
+    let { date, long, lat } = options
+    this.date = date ?? this.date
+    this.long = long ?? this.long
+    this.lat = lat ?? this.lat
+  }
+}
 
 interface Envelope {
   attack: number
@@ -394,4 +466,4 @@ class StarManager extends Array<Star> {
   }
 }
 
-export { Star, StarManager }
+export { Star, StarManager, TimeAndPlace }
