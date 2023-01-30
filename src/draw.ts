@@ -48,6 +48,7 @@ class SkyCanvas {
   #lastFrameTime: number = 0
   #repaint: boolean = false
   #fps: number = 0
+  #fpsLogger?: number
 
   constructor(container: HTMLElement) {
     this.container = container
@@ -141,7 +142,7 @@ class SkyCanvas {
         eachFrame(this)
         this.#lastFrameTime = timestamp
         this.#repaint = false
-        this.#fps++
+        if (this.#fpsLogger !== undefined) this.#fps++
       }
       requestAnimationFrame(frame)
     }
@@ -154,7 +155,7 @@ class SkyCanvas {
   }
 
   logFps() {
-    setInterval(() => {
+    this.#fpsLogger = setInterval(() => {
       console.log(`${this.#fps} frames per second`)
       this.#fps = 0
     }, 1000)
