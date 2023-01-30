@@ -29,13 +29,11 @@ skyCanvas.animate(canvas => {
 })
 
 navigator.geolocation.getCurrentPosition(({ coords, timestamp }) => {
-  const hereAndNow = {
+  stars.updateStars({
     date: new Date(timestamp),
     long: coords.longitude * (Math.PI / 180),
     lat: coords.latitude * (Math.PI / 180),
-  }
-  Star.pov.update(hereAndNow)
-  stars.updateStars(hereAndNow)
+  })
   skyCanvas.repaint()
 })
 

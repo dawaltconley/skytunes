@@ -373,7 +373,6 @@ class StarManager extends Array<Star> {
 
     this.updateStars(StarManager.context)
     Star.context.addEventListener('update', ((event: CustomEvent) => {
-      Star.pov.update(event.detail)
       this.updateStars(event.detail)
     }) as EventListener)
 
@@ -430,6 +429,7 @@ class StarManager extends Array<Star> {
 
   /** update all stars; recalculate visible and #nextToRise sort order */
   updateStars(props: Partial<GlobalContext> = {}) {
+    Star.pov.update(props)
     this.#visible = []
     this.#nextToRise = []
     for (let star of this) {
