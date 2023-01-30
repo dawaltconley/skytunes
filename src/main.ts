@@ -28,6 +28,7 @@ skyCanvas.animate(canvas => {
     if (star.hourAngle < 0 && !star.hasQueuedSynth) star.queueSynth()
   })
 })
+skyCanvas.logFps()
 
 navigator.geolocation.getCurrentPosition(({ coords, timestamp }) => {
   stars.updateStars({

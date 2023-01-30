@@ -133,7 +133,6 @@ class SkyCanvas {
 
   /** starts an animation, running the callback on each frame */
   animate(eachFrame: (canvas: SkyCanvas) => void): SkyCanvas {
-    this.logFps()
     const frame = (timestamp: DOMHighResTimeStamp) => {
       let elapsed = timestamp - this.#lastFrameTime
       if (this.#repaint || elapsed > this.#minMsPerFrame) {
