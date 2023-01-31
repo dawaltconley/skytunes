@@ -81,3 +81,4 @@ speedSlider.addEventListener('input', () => {
   globalContext.update({ speed: Number(speedSlider.value) ** 2 })
 })
 ;(window as any).context = globalContext
+;(window as any).canvas = skyCanvas
