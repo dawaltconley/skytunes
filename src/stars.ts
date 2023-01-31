@@ -139,14 +139,9 @@ class Star implements Interface.Star {
   readonly dec: number
   readonly mag: number
 
-  highTransit: number = 0
-  lowTransit: number = 0
-  horizonTransit: number = 0
-
   #sinDec: number
   #cosDec: number
 
-  #highNote: number = 0
   #queuedSynth: number | null = null
   #playingUntil?: number
 
@@ -232,8 +227,28 @@ class Star implements Interface.Star {
     return this.#rho.get()
   }
 
-  get nextTransit() {
-    return (this.hourAngle * (-43200000 / Math.PI)) / Star.context.speed
+  #highTransit = new CacheItem(
+    () => Math.asin(Math.cos(this.dec - Star.pov.lat)),
+    [Star.pov.cache.lat]
+  )
+  get highTransit() {
+    return this.#highTransit.get()
+  }
+
+  #lowTransit = new CacheItem(
+    () => Math.asin(-Math.cos(this.dec + Star.pov.lat)),
+    [Star.pov.cache.lat]
+  )
+  get lowTransit() {
+    return this.#lowTransit.get()
+  }
+
+  #horizonTransit = new CacheItem(
+    () => Math.PI - Math.acos(Math.tan(this.dec) * Math.tan(Star.pov.lat)),
+    [Star.pov.cache.lat]
+  )
+  get horizonTransit() {
+    return this.#horizonTransit.get()
   }
 
   #angleToRise = new CacheItem(() => {
@@ -245,26 +260,21 @@ class Star implements Interface.Star {
     return this.#angleToRise.get()
   }
 
+  #highNote = new CacheItem(() => {
+    let highNote = 1 - Math.abs(1 - this.highTransit / (Math.PI / 2))
+    return 40 + highNote * 360
+  }, [this.#highTransit])
+  get highNote() {
+    return this.#highNote.get()
+  }
+
+  get nextTransit() {
+    return (this.hourAngle * (-43200000 / Math.PI)) / Star.context.speed
+  }
+
   // TODO shouldn't run if none of the options here have changed
   /** recalculate the star's properties based on what global data has changed */
-  recalculate({ date, long, lat, speed }: Partial<GlobalContext>): Star {
-    if (date !== undefined || long !== undefined) {
-      this.#hourAngle.clear()
-    }
-
-    if (lat !== undefined) {
-      this.#altitude.clear()
-
-      // source: https://kalobs.org/more/altitudes-at-transit/
-      this.highTransit = Math.asin(Math.cos(this.dec - Star.pov.lat))
-      this.lowTransit = Math.asin(-Math.cos(this.dec + Star.pov.lat))
-      let highNote = 1 - Math.abs(1 - this.highTransit / (Math.PI / 2))
-      this.#highNote = highNote = 40 + highNote * 360
-
-      this.horizonTransit =
-        Math.PI - Math.acos(Math.tan(this.dec) * Math.tan(Star.pov.lat))
-    }
-
+  recalculate({ long, speed }: Partial<GlobalContext>): Star {
     // queue a synth for when the star transits
     if (
       this.highTransit > 0 &&
@@ -286,7 +296,7 @@ class Star implements Interface.Star {
         this.#queuedSynth = null
         return
       }
-      let synthEnd = this.synth.play(this.#highNote, {
+      let synthEnd = this.synth.play(this.#highNote.get(), {
         start: transit / 1000,
         speed: 10 / Star.context.speed,
       })
