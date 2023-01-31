@@ -1,5 +1,6 @@
 import context from './global'
 import colors from 'tailwindcss/colors'
+import { Star } from './stars'
 
 class CanvasLayer {
   canvas: HTMLCanvasElement
@@ -136,10 +137,10 @@ class SkyCanvas {
     const frame = (timestamp: DOMHighResTimeStamp) => {
       let elapsed = timestamp - this.#lastFrameTime
       if (this.#repaint || elapsed > this.#minMsPerFrame) {
-        let last: number = SkyCanvas.globalContext.date.getTime()
-        SkyCanvas.globalContext.update({
-          date: new Date(last + elapsed * SkyCanvas.globalContext.speed),
-        })
+        let last: number = Star.timeAndPlace.date.getTime()
+        Star.timeAndPlace.date = new Date(
+          last + elapsed * SkyCanvas.globalContext.speed
+        )
         eachFrame(this)
         this.#lastFrameTime = timestamp
         this.#repaint = false

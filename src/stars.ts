@@ -132,6 +132,7 @@ class StarSynth {
 
 class Star implements Interface.Star {
   static context = globalContext
+  static timeAndPlace = new TimeAndPlace()
 
   readonly ref: number
   readonly ra: number
@@ -167,9 +168,9 @@ class Star implements Interface.Star {
 
     this.recalculate = this.recalculate.bind(this)
     this.recalculate({
-      date: Star.context.date,
-      long: Star.context.long,
-      lat: Star.context.lat,
+      date: Star.timeAndPlace.date,
+      long: Star.timeAndPlace.long,
+      lat: Star.timeAndPlace.lat,
     })
 
     this.synth = new StarSynth(Star.context.audio, {
@@ -184,10 +185,10 @@ class Star implements Interface.Star {
   }
 
   #hourAngle = new CacheItem(() => {
-    let hourAngle = (Star.context.lst - this.ra) % (2 * Math.PI)
+    let hourAngle = (Star.timeAndPlace.lst - this.ra) % (2 * Math.PI)
     if (hourAngle > Math.PI) hourAngle -= 2 * Math.PI
     return hourAngle
-  })
+  }, [Star.timeAndPlace.cache.lst])
   get hourAngle(): number {
     return this.#hourAngle.get()
   }
@@ -195,10 +196,14 @@ class Star implements Interface.Star {
   #altitude = new CacheItem(
     () =>
       Math.asin(
-        this.#sinDec * Star.context.sinLat +
-          this.#cosDec * Star.context.cosLat * Math.cos(this.hourAngle)
+        this.#sinDec * Star.timeAndPlace.sinLat +
+          this.#cosDec * Star.timeAndPlace.cosLat * Math.cos(this.hourAngle)
       ),
-    [this.#hourAngle]
+    [
+      this.#hourAngle,
+      Star.timeAndPlace.cache.sinLat,
+      Star.timeAndPlace.cache.cosLat,
+    ]
   )
   get altitude(): number {
     return this.#altitude.get()
@@ -206,12 +211,17 @@ class Star implements Interface.Star {
 
   #azimuth = new CacheItem(() => {
     let azimuth = Math.acos(
-      (this.#sinDec - Math.sin(this.altitude) * Star.context.sinLat) /
-        (Math.cos(this.altitude) * Star.context.cosLat)
+      (this.#sinDec - Math.sin(this.altitude) * Star.timeAndPlace.sinLat) /
+        (Math.cos(this.altitude) * Star.timeAndPlace.cosLat)
     )
     if (this.hourAngle > 0) azimuth = Math.PI * 2 - azimuth
     return azimuth
-  }, [this.#hourAngle, this.#altitude])
+  }, [
+    this.#hourAngle,
+    this.#altitude,
+    Star.timeAndPlace.cache.sinLat,
+    Star.timeAndPlace.cache.cosLat,
+  ])
   get azimuth(): number {
     return this.#azimuth.get()
   }
@@ -250,13 +260,14 @@ class Star implements Interface.Star {
       this.#altitude.clear()
 
       // source: https://kalobs.org/more/altitudes-at-transit/
-      this.highTransit = Math.asin(Math.cos(this.dec - Star.context.lat))
-      this.lowTransit = Math.asin(-Math.cos(this.dec + Star.context.lat))
+      this.highTransit = Math.asin(Math.cos(this.dec - Star.timeAndPlace.lat))
+      this.lowTransit = Math.asin(-Math.cos(this.dec + Star.timeAndPlace.lat))
       let highNote = 1 - Math.abs(1 - this.highTransit / (Math.PI / 2))
       this.#highNote = highNote = 40 + highNote * 360
 
       this.horizonTransit =
-        Math.PI - Math.acos(Math.tan(this.dec) * Math.tan(Star.context.lat))
+        Math.PI -
+        Math.acos(Math.tan(this.dec) * Math.tan(Star.timeAndPlace.lat))
     }
 
     // queue a synth for when the star transits
@@ -286,7 +297,7 @@ class Star implements Interface.Star {
       })
       setTimeout(() => {
         this.#queuedSynth = null
-        this.#playingUntil = Star.context.date.getTime() + synthEnd * 1000
+        this.#playingUntil = Star.timeAndPlace.date.getTime() + synthEnd * 1000
       }, Math.ceil(transit))
     }, queueTime)
     return this
@@ -321,7 +332,7 @@ class Star implements Interface.Star {
     if (this.#playingUntil) {
       r += 2
       context.fillStyle = colors.blue[100]
-      if (Star.context.date.getTime() > this.#playingUntil) {
+      if (Star.timeAndPlace.date.getTime() > this.#playingUntil) {
         this.#playingUntil = undefined
       } else {
         requestAnimationFrame(() => this.draw(canvas))
@@ -354,6 +365,7 @@ class StarManager extends Array<Star> {
 
     this.updateStars(StarManager.context)
     Star.context.addEventListener('update', ((event: CustomEvent) => {
+      Star.timeAndPlace.update(event.detail)
       this.updateStars(event.detail)
     }) as EventListener)
 
@@ -387,7 +399,7 @@ class StarManager extends Array<Star> {
     while (true) {
       let i = (((1 + right - left) / 2) | 0) + left // equivalent to Math.ceil((right - left) / 2) + left
       let star = this.#nextToRise[i]
-      star.recalculate({ date: StarManager.context.date })
+      star.recalculate({ date: Star.timeAndPlace.date })
       if (star.angleToRise > target) {
         // search right
         if (right - left < 2) {
@@ -413,7 +425,7 @@ class StarManager extends Array<Star> {
     this.#visible = []
     this.#nextToRise = []
     for (let star of this) {
-      star.recalculate({ ...props, date: StarManager.context.date })
+      star.recalculate({ ...props, date: Star.timeAndPlace.date })
       if (star.highTransit < 0) continue
       if (star.altitude > 0) {
         this.setVisible(star)
@@ -437,7 +449,7 @@ class StarManager extends Array<Star> {
     // execute callback on any that are still visible
     // insert the rest into #nextToRise ordered array
     for (let star of this.#visible) {
-      star.recalculate({ date: StarManager.context.date })
+      star.recalculate({ date: Star.timeAndPlace.date })
       if (star.altitude > 0) {
         callback(star)
         stillVisible.push(star)
@@ -451,7 +463,7 @@ class StarManager extends Array<Star> {
     // break on the first star that is still under the horizon
     for (let i = this.#nextToRise.length - 1; i > -1; i--) {
       let star = this.#nextToRise[i]
-      star.recalculate({ date: StarManager.context.date })
+      star.recalculate({ date: Star.timeAndPlace.date })
       if (star.altitude > 0) {
         callback(star)
         stillVisible.push(star)

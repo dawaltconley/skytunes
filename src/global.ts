@@ -1,12 +1,7 @@
-import { getLST } from './utilities'
-
 class GlobalContext extends EventTarget {
   date: Date = new Date()
   long: number = 0
   lat: number = 0
-  lst: number = 0
-  sinLat: number = 0
-  cosLat: number = 1
 
   audio: AudioContext
   speed: number = 1
@@ -25,16 +20,7 @@ class GlobalContext extends EventTarget {
     this.lat = lat ?? this.lat
     this.speed = speed ?? this.speed
 
-    if (date !== undefined || long !== undefined) {
-      this.lst = getLST(this.date, this.long)
-    }
-
-    if (lat !== undefined) {
-      this.sinLat = Math.sin(this.lat)
-      this.cosLat = Math.cos(this.lat)
-    }
-
-    if (long ?? lat ?? speed ?? false) {
+    if (date ?? long ?? lat ?? speed ?? false) {
       const updateEvent = new CustomEvent('update', {
         detail: options,
       })
