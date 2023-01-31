@@ -54,11 +54,12 @@ class SkyCanvas {
     }
 
     // frame rate based on the globalContext speed
-    this.speed = SkyCanvas.globalContext.speed
+    this.calculateMsPerFrame(SkyCanvas.globalContext.speed)
     SkyCanvas.globalContext.addEventListener('update', ((
       event: CustomEvent
     ) => {
-      if (event.detail.speed !== undefined) this.speed = event.detail.speed
+      if (event.detail.speed !== undefined)
+        this.calculateMsPerFrame(event.detail.speed)
     }) as EventListener)
 
     // recalculate canvas size when resized
@@ -77,15 +78,16 @@ class SkyCanvas {
     requestAnimationFrame(() => this.drawBackground())
   }
 
-  set speed(rate: number) {
+  /**
+   * sets a private #minMsPerFrame property based on the rotation speed, with an optional frame cap
+   * @param speed - rotation speed
+   * @param frameCap - default frame cap is approximately 60 fps
+   */
+  calculateMsPerFrame(speed: number, frameCap = 16.5) {
     let pixelsPerDegree = 0.01745240643728351 * this.radius // approximate
-    let pixelsPerSecond = pixelsPerDegree * (rate / 240)
-    let frameCap = pixelsPerSecond * 10
-    this.#minMsPerFrame = 1000 / frameCap
-  }
-
-  get speed() {
-    return SkyCanvas.globalContext.speed
+    let pixelsPerSecond = pixelsPerDegree * (speed / 240)
+    this.#minMsPerFrame = Math.max(100 / pixelsPerSecond, frameCap)
+    return this.#minMsPerFrame
   }
 
   /** adjusts the canvas width and height to match the screen sice and pixel ratio */
@@ -98,7 +100,7 @@ class SkyCanvas {
     Object.values(this.layers).forEach(layer => layer.setSize(width, height))
 
     this.radius = Math.min(width, height) / 2
-    this.speed = SkyCanvas.globalContext.speed
+    this.calculateMsPerFrame(SkyCanvas.globalContext.speed)
     this.center = {
       x: width / 2,
       y: height / 2,
@@ -132,7 +134,7 @@ class SkyCanvas {
       if (elapsed > this.#minMsPerFrame) {
         let last: number = SkyCanvas.globalContext.date.getTime()
         SkyCanvas.globalContext.update({
-          date: new Date(last + elapsed * this.speed),
+          date: new Date(last + elapsed * SkyCanvas.globalContext.speed),
         })
         eachFrame(this)
         this.#lastFrameTime = timestamp
