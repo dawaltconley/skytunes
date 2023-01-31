@@ -34,7 +34,7 @@ navigator.geolocation.getCurrentPosition(({ coords, timestamp }) => {
     long: coords.longitude * (Math.PI / 180),
     lat: coords.latitude * (Math.PI / 180),
   })
-  requestAnimationFrame(skyCanvas.drawBackground)
+  skyCanvas.repaint()
 })
 
 const speedSlider = document.getElementById('speed-control') as HTMLInputElement
