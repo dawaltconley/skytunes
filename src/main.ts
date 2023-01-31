@@ -191,3 +191,5 @@ navigator.geolocation.getCurrentPosition(({ coords, timestamp }) => {
   })
 })
 ;(window as any).context = globalContext
+;(window as any).canvas = skyCanvas
+;(window as any).stars = stars
