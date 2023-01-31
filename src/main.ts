@@ -25,6 +25,7 @@ skyCanvas.animate(canvas => {
   canvas.layers.stars.clear()
   stars.eachVisible(star => {
     star.draw(canvas)
+    if (star.hourAngle < 0 && !star.hasQueuedSynth) star.queueSynth()
   })
 })
 

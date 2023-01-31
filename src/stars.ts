@@ -142,7 +142,7 @@ class Star implements Interface.Star {
   #sinDec: number
   #cosDec: number
 
-  #queuedSynth: number | null = null
+  #queuedSynth?: number
   #playingUntil?: number
 
   synth: StarSynth
@@ -160,13 +160,6 @@ class Star implements Interface.Star {
 
     this.#sinDec = Math.sin(declination)
     this.#cosDec = Math.cos(declination)
-
-    this.recalculate = this.recalculate.bind(this)
-    this.recalculate({
-      date: Star.pov.date,
-      long: Star.pov.long,
-      lat: Star.pov.lat,
-    })
 
     this.synth = new StarSynth(Star.context.audio, {
       env: {
@@ -272,28 +265,13 @@ class Star implements Interface.Star {
     return (this.hourAngle * (-43200000 / Math.PI)) / Star.context.speed
   }
 
-  // TODO shouldn't run if none of the options here have changed
-  /** recalculate the star's properties based on what global data has changed */
-  recalculate({ long, speed }: Partial<GlobalContext>): Star {
-    // queue a synth for when the star transits
-    if (
-      this.highTransit > 0 &&
-      (this.#queuedSynth === null || speed !== undefined || long !== undefined)
-    ) {
-      if (this.#queuedSynth) clearTimeout(this.#queuedSynth)
-      if (this.hourAngle < 0) this.queueSynth()
-    }
-
-    return this
-  }
-
   /** queue a synth for the star's next high transit */
   queueSynth() {
     let queueTime = Math.floor(this.nextTransit) - 1000
     this.#queuedSynth = setTimeout(() => {
       let transit = this.nextTransit
       if (transit < 0) {
-        this.#queuedSynth = null
+        this.#queuedSynth = undefined
         return
       }
       let synthEnd = this.synth.play(this.#highNote.get(), {
@@ -301,11 +279,20 @@ class Star implements Interface.Star {
         speed: 10 / Star.context.speed,
       })
       setTimeout(() => {
-        this.#queuedSynth = null
+        this.#queuedSynth = undefined
         this.#playingUntil = Star.pov.date.getTime() + synthEnd * 1000
       }, Math.ceil(transit))
     }, queueTime)
     return this
+  }
+
+  clearSynth() {
+    clearTimeout(this.#queuedSynth)
+    this.#queuedSynth = undefined
+  }
+
+  get hasQueuedSynth(): boolean {
+    return this.#queuedSynth !== undefined
   }
 
   /** log data about the star's current position */
@@ -406,7 +393,6 @@ class StarManager extends Array<Star> {
     while (true) {
       let i = (((1 + right - left) / 2) | 0) + left // equivalent to Math.ceil((right - left) / 2) + left
       let star = this.#nextToRise[i]
-      star.recalculate({ date: Star.pov.date })
       if (star.angleToRise > target) {
         // search right
         if (right - left < 2) {
@@ -433,7 +419,7 @@ class StarManager extends Array<Star> {
     this.#visible = []
     this.#nextToRise = []
     for (let star of this) {
-      star.recalculate({ ...props, date: Star.pov.date })
+      star.clearSynth()
       if (star.highTransit < 0) continue
       if (star.altitude > 0) {
         this.setVisible(star)
@@ -457,7 +443,6 @@ class StarManager extends Array<Star> {
     // execute callback on any that are still visible
     // insert the rest into #nextToRise ordered array
     for (let star of this.#visible) {
-      star.recalculate({ date: Star.pov.date })
       if (star.altitude > 0) {
         callback(star)
         stillVisible.push(star)
@@ -471,7 +456,6 @@ class StarManager extends Array<Star> {
     // break on the first star that is still under the horizon
     for (let i = this.#nextToRise.length - 1; i > -1; i--) {
       let star = this.#nextToRise[i]
-      star.recalculate({ date: Star.pov.date })
       if (star.altitude > 0) {
         callback(star)
         stillVisible.push(star)
