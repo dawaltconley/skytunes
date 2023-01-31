@@ -44,6 +44,11 @@ class CacheItem<Value = any> {
       this.#value = null
     }
   }
+
+  /** alias for CacheItem.get(), allows coercion */
+  valueOf(): Value {
+    return this.get()
+  }
 }
 
 export { CacheItem }
