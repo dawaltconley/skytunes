@@ -31,12 +31,14 @@ loop.animate((elapsed, repaint) => {
 
   timeSinceStarFrame += elapsed
   if (repaint || timeSinceStarFrame > minMsPerFrame) {
+    console.time('animation frame')
     skyCanvas.layers.stars.clear()
     stars.eachVisible(star => {
       star.draw(skyCanvas)
       if (star.hourAngle < 0 && !star.hasQueuedSynth) star.queueSynth()
     })
     timeSinceStarFrame = 0
+    console.timeEnd('animation frame')
   }
 })
 loop.repaint()
