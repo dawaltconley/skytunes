@@ -34,7 +34,7 @@ navigator.geolocation.getCurrentPosition(({ coords, timestamp }) => {
     long: coords.longitude * (Math.PI / 180),
     lat: coords.latitude * (Math.PI / 180),
   }
-  Star.timeAndPlace.update(hereAndNow)
+  Star.pov.update(hereAndNow)
   stars.updateStars(hereAndNow)
   skyCanvas.repaint()
 })
