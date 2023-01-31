@@ -45,6 +45,7 @@ class SkyCanvas {
 
   #minMsPerFrame: number = 0
   #lastFrameTime: number = 0
+  #fps: number = 0
 
   constructor(container: HTMLElement) {
     this.container = container
@@ -129,6 +130,7 @@ class SkyCanvas {
 
   /** starts an animation, running the callback on each frame */
   animate(eachFrame: (canvas: SkyCanvas) => void): SkyCanvas {
+    this.logFps()
     const frame = (timestamp: DOMHighResTimeStamp) => {
       let elapsed = timestamp - this.#lastFrameTime
       if (elapsed > this.#minMsPerFrame) {
@@ -138,11 +140,19 @@ class SkyCanvas {
         })
         eachFrame(this)
         this.#lastFrameTime = timestamp
+        this.#fps++
       }
       requestAnimationFrame(frame)
     }
     requestAnimationFrame(frame)
     return this
+  }
+
+  logFps() {
+    setInterval(() => {
+      console.log(`${this.#fps} frames per second`)
+      this.#fps = 0
+    }, 1000)
   }
 }
 
