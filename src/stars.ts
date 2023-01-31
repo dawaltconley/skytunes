@@ -236,7 +236,8 @@ class Star implements Interface.Star {
 
   /** draw the star's position on a canvas */
   draw(canvas: SkyCanvas): Star {
-    let { context, center, radius } = canvas
+    let { context } = canvas.layers.stars
+    let { center, radius } = canvas
     let x = Math.cos(this.theta) * this.rho,
       y = Math.sin(this.theta) * this.rho
     x = x * radius + center.x

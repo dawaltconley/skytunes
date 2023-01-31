@@ -18,12 +18,12 @@ let stars = new StarManager(
   )
 )
 
-const canvas = document.getElementById('canvas') as HTMLCanvasElement
+const canvas = document.getElementById('canvas')!
 const skyCanvas = new SkyCanvas(canvas)
 globalContext.update({ canvas: skyCanvas }) // remove?
 
 skyCanvas.animate(canvas => {
-  canvas.drawBackground()
+  canvas.layers.stars.clear()
   stars.eachVisible(star => {
     star.draw(canvas)
   })

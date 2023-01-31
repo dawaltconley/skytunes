@@ -1,11 +1,42 @@
 import context from './global'
 import colors from 'tailwindcss/colors'
 
+class CanvasLayer {
+  canvas: HTMLCanvasElement
+  context: CanvasRenderingContext2D
+
+  constructor(container: HTMLElement) {
+    const canvas = document.createElement('canvas')
+    canvas.classList.add(
+      'absolute',
+      'inset-0',
+      'w-full',
+      'h-full',
+      'rounded-full'
+    )
+    container.append(canvas)
+    this.canvas = canvas
+    this.context = canvas.getContext('2d')!
+  }
+
+  setSize(width: number, height: number) {
+    this.canvas.width = width
+    this.canvas.height = height
+  }
+
+  clear() {
+    this.context.clearRect(0, 0, this.canvas.width, this.canvas.height)
+  }
+}
+
 class SkyCanvas {
   static globalContext = context
 
-  canvas: HTMLCanvasElement
-  context: CanvasRenderingContext2D
+  container: HTMLElement
+  layers: {
+    background: CanvasLayer
+    stars: CanvasLayer
+  }
   radius: number = 0
   center: {
     x: number
@@ -15,11 +46,12 @@ class SkyCanvas {
   #minMsPerFrame: number = 0
   #lastFrameTime: number = 0
 
-  constructor(canvas: HTMLCanvasElement) {
-    this.canvas = canvas
-    this.context = canvas.getContext('2d')!
-
-    this.drawBackground = this.drawBackground.bind(this)
+  constructor(container: HTMLElement) {
+    this.container = container
+    this.layers = {
+      background: new CanvasLayer(container),
+      stars: new CanvasLayer(container),
+    }
 
     // frame rate based on the globalContext speed
     this.speed = SkyCanvas.globalContext.speed
@@ -35,14 +67,14 @@ class SkyCanvas {
       if (resizeTimeout) clearTimeout(resizeTimeout)
       resizeTimeout = setTimeout(() => {
         this.setCanvasSize()
-        requestAnimationFrame(this.drawBackground)
+        requestAnimationFrame(() => this.drawBackground())
       }, 100)
     })
-    observer.observe(canvas)
+    observer.observe(container)
 
     // set the canvas size
     this.setCanvasSize()
-    requestAnimationFrame(this.drawBackground)
+    requestAnimationFrame(() => this.drawBackground())
   }
 
   set speed(rate: number) {
@@ -58,12 +90,13 @@ class SkyCanvas {
 
   /** adjusts the canvas width and height to match the screen sice and pixel ratio */
   setCanvasSize(): SkyCanvas {
-    let { width, height } = this.canvas.getBoundingClientRect()
+    let { width, height } = this.container.getBoundingClientRect()
     let scale = window.devicePixelRatio
     width = width * scale
     height = height * scale
-    this.canvas.width = width
-    this.canvas.height = height
+
+    Object.values(this.layers).forEach(layer => layer.setSize(width, height))
+
     this.radius = Math.min(width, height) / 2
     this.speed = SkyCanvas.globalContext.speed
     this.center = {
@@ -75,7 +108,8 @@ class SkyCanvas {
 
   /** draws the sky background */
   drawBackground(): SkyCanvas {
-    let { canvas, context, center, radius } = this
+    let { canvas, context } = this.layers.background
+    let { center, radius } = this
     let height = canvas.height
     let skyTop = (height - 2 * radius) / 2
     context.clearRect(0, 0, canvas.width, canvas.height)
@@ -110,4 +144,4 @@ class SkyCanvas {
   }
 }
 
-export { SkyCanvas }
+export { SkyCanvas, CanvasLayer }
