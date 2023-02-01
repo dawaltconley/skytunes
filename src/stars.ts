@@ -248,7 +248,7 @@ class Star implements Interface.Star {
     let ha = this.hourAngle
     if (ha > 0) ha = Math.PI * 2 - ha
     return Math.abs(ha) - Math.abs(this.horizonTransit)
-  }, [this.#hourAngle])
+  }, [this.#hourAngle, this.#horizonTransit])
   get angleToRise() {
     return this.#angleToRise.get()
   }
