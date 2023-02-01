@@ -83,6 +83,78 @@ interface Envelope {
   release: number
 }
 
+// class EnvNode extends GainNode {
+//   env: Envelope
+//   amp: number = 1
+//   constructor(
+//     context: AudioContext,
+//     { env, amp = 1, start }: { env: Envelope; amp?: number; start?: number }
+//   ) {
+//     super(context)
+//     this.env = env
+//     this.amp = amp
+//
+//     if (start !== undefined) this.start(start)
+//   }
+//
+//   start(when: number = 0) {
+//     this.gain.cancelScheduledValues(0)
+//     let { attack, decay, sustain, release } = this.env
+//     attack = when + attack
+//     decay = attack + decay
+//     release = decay + release
+//     this.gain
+//       .setValueAtTime(0, when)
+//       .linearRampToValueAtTime(this.amp, attack)
+//       .linearRampToValueAtTime(this.amp * sustain, decay)
+//       .linearRampToValueAtTime(0, release)
+//   }
+// }
+
+// interface EnvOscillatorOptions extends OscillatorOptions {
+//   env: Envelope
+//   amp?: number
+// }
+//
+// class EnvOscillatorNode extends OscillatorNode {
+//   env: Envelope
+//   amp: number = 1
+//   constructor(
+//     context: AudioContext,
+//     { env, amp = 1, ...options }: EnvOscillatorOptions
+//   ) {
+//     super(context, options)
+//     this.env = env
+//     this.amp = amp
+//     this.start()
+//   }
+//
+//   start(when?: number, speed: number = 1) {
+//     const { context, amp } = this
+//     const start = context.currentTime + (when ?? 0)
+//     let { attack, decay, sustain, release } = this.env
+//     decay = decay * speed
+//     release = release * speed
+//
+//     let oscillator = context.createOscillator()
+//     oscillator.frequency.setValueAtTime(note, 0)
+//
+//     let gainNode = context.createGain()
+//     gainNode.gain
+//       .setValueAtTime(0, start)
+//       .linearRampToValueAtTime(amp, attack)
+//       .linearRampToValueAtTime(amp * sustain, decay)
+//       .linearRampToValueAtTime(0, release)
+//
+//     oscillator.connect(gainNode).connect(context.destination)
+//     oscillator.start(start)
+//     oscillator.stop(release + 1)
+//
+//     // this.stop()
+//     return super.start(when)
+//   }
+// }
+
 class StarSynth {
   ctx: AudioContext
   env: Envelope
@@ -127,6 +199,8 @@ class StarSynth {
 
     return release
   }
+
+  // queue(note: number, start: number, { speed = 1 }: { speed?: number }) {}
 }
 
 class Star implements Interface.Star {
