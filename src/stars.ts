@@ -382,6 +382,10 @@ class Star implements Interface.Star {
     })
   }
 
+  logVega() {
+    if (this.ref === 7001) this.log()
+  }
+
   /** draw the star's position on a canvas */
   draw(canvas: SkyCanvas): Star {
     let { context } = canvas.layers.stars
@@ -402,6 +406,9 @@ class Star implements Interface.Star {
       } else {
         requestAnimationFrame(() => this.draw(canvas))
       }
+    } else if (this.ref === 7001) {
+      // vega
+      context.fillStyle = 'red'
     } else {
       context.fillStyle = colors.yellow[200]
     }
