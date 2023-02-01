@@ -374,10 +374,6 @@ class StarManager extends Array<Star> {
     return this.#visible
   }
 
-  setVisible(star: Star) {
-    this.#visible.push(star)
-  }
-
   /**
    * mark a star as hidden (below the horizon)
    * uses a binary search algorithm to insert it in an array of hidden stars
@@ -422,7 +418,7 @@ class StarManager extends Array<Star> {
       star.clearSynth()
       if (star.highTransit < 0) continue
       if (star.altitude > 0) {
-        this.setVisible(star)
+        this.#visible.push(star)
       } else {
         this.#nextToRise.push(star)
       }
