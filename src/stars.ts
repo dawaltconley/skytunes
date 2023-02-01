@@ -380,6 +380,15 @@ class StarManager extends Array<Star> {
    * reverse sorted by the order in which they will rise
    */
   queueRise(star: Star) {
+    // ignore stars that never rise
+    if (star.highTransit < 0) return
+
+    // handle an empty nextToRise array
+    if (this.#nextToRise.length === 0) {
+      this.#nextToRise.push(star)
+      return
+    }
+
     // binary search stars to find insertion point
     let target = star.angleToRise
     let left = 0
