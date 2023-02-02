@@ -84,3 +84,4 @@ speedSlider.addEventListener('input', () => {
 })
 ;(window as any).context = globalContext
 ;(window as any).canvas = skyCanvas
+;(window as any).stars = stars
