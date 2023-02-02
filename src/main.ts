@@ -21,6 +21,14 @@ let stars = new StarManager(
 const canvas = document.getElementById('canvas')!
 const skyCanvas = new SkyCanvas(canvas)
 
+globalContext.addEventListener('update', ((event: CustomEvent) => {
+  Star.pov.update(event.detail)
+  stars.unsetVisible()
+  stars.forEach(star => {
+    star.clearSynth()
+  })
+}) as EventListener)
+
 skyCanvas.animate(canvas => {
   canvas.layers.stars.clear()
   stars.eachVisible(star => {
@@ -31,7 +39,7 @@ skyCanvas.animate(canvas => {
 skyCanvas.logFps()
 
 navigator.geolocation.getCurrentPosition(({ coords, timestamp }) => {
-  stars.updateStars({
+  globalContext.update({
     date: new Date(timestamp),
     long: coords.longitude * (Math.PI / 180),
     lat: coords.latitude * (Math.PI / 180),

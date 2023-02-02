@@ -1,5 +1,4 @@
 import type * as Interface from './types/skytunes'
-import type { GlobalContext } from './global'
 import type { SkyCanvas } from './draw'
 import globalContext from './global'
 import { CacheItem } from './cache'
@@ -357,11 +356,7 @@ class StarManager extends Array<Star> {
       indexed[star.ref] = star
       return indexed
     }, [] as Star[])
-
-    this.updateStars(StarManager.context)
-    Star.context.addEventListener('update', ((event: CustomEvent) => {
-      this.updateStars(event.detail)
-    }) as EventListener)
+    this.updateVisible()
 
     Object.setPrototypeOf(this, StarManager.prototype)
   }
@@ -370,8 +365,29 @@ class StarManager extends Array<Star> {
     return this.#ref[ref]
   }
 
+  /**
+   * list of currently visible stars
+   * returns an empty array if unknown
+   */
   get visible(): Star[] {
     return this.#visible
+  }
+
+  /**
+   * deletes the internal list of visible stars
+   * this forces a full recalculation on the next eachVisible loop
+   */
+  unsetVisible() {
+    this.#visible = []
+    this.#nextToRise = []
+  }
+
+  /**
+   * recalculates the internal list of visible stars
+   * this is slower than StarManager.unsetVisible, but recalculates visibility immediately
+   */
+  updateVisible() {
+    this.eachStar(() => {})
   }
 
   /**
@@ -418,21 +434,19 @@ class StarManager extends Array<Star> {
     this.#nextToRise.splice(insert, 0, star)
   }
 
-  /** update all stars; recalculate visible and #nextToRise sort order */
-  updateStars(props: Partial<GlobalContext> = {}) {
-    Star.pov.update(props)
+  /** mimics StarManager.forEach but recalculates the visibility of all stars while looping */
+  eachStar(...[callback, thisArg]: Parameters<Array<Star>['forEach']>) {
     this.#visible = []
     this.#nextToRise = []
-    for (let star of this) {
-      star.clearSynth()
-      if (star.highTransit < 0) continue
+
+    this.forEach((star, i, array) => {
+      callback.call(thisArg, star, i, array)
       if (star.altitude > 0) {
         this.#visible.push(star)
       } else {
-        this.#nextToRise.push(star)
+        this.queueRise(star)
       }
-    }
-    this.#nextToRise.sort((a, b) => b.angleToRise - a.angleToRise)
+    })
   }
 
   /**
@@ -447,7 +461,7 @@ class StarManager extends Array<Star> {
     // loop through the current list of visible stars
     // execute callback on any that are still visible
     // insert the rest into #nextToRise ordered array
-    for (let star of this.#visible) {
+    for (let star of this.#visible.length ? this.#visible : this) {
       if (star.altitude > 0) {
         callback(star)
         stillVisible.push(star)
