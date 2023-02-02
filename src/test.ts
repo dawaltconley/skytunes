@@ -1,3 +1,4 @@
+import { EnvOscillatorNode } from './stars'
 import './tailwind.css'
 
 const canvas = document.getElementById('canvas') as HTMLCanvasElement
@@ -23,34 +24,48 @@ analyser.fftSize = 64
 // analyser.maxDecibels = -10
 const bufferLength = analyser.frequencyBinCount
 
+let oscillator = new EnvOscillatorNode(audio, {
+  frequency: 300,
+  env: {
+    attack: 0.05,
+    decay: 0.15,
+    sustain: 0.66,
+    release: 5,
+  },
+  amp: 0.5,
+})
+// oscillator.frequency.setValueAtTime(hz, 0)
+// // let gainControl = audio.createOscillator()
+// // gainControl.frequency.setValueAtTime(hz / 128, 0)
+// let gainNode = audio.createGain()
+// gainNode.gain
+//   .setValueAtTime(0, playTime)
+//   .linearRampToValueAtTime(0.5, playTime + 0.05)
+//   .linearRampToValueAtTime(0.3, playTime + 0.15)
+//   .linearRampToValueAtTime(0, playTime + 5)
+
+// let freqControl = audio.createOscillator()
+// freqControl.frequency.setValueAtTime(8, 0)
+let freqControl = new OscillatorNode(audio, {
+  type: 'square',
+  frequency: 2,
+})
+let freqControlGain = audio.createGain()
+freqControlGain.gain.setValueAtTime(12, 0) // cents detune
+freqControl.connect(freqControlGain).connect(oscillator.detune)
+// freqControl.connect(oscillator.detune)
+
+oscillator.connect(analyser) // .connect(audio.destination)
 playButton.addEventListener('click', () => {
   const hz = 440
   const playTime = audio.currentTime
-  let oscillator = audio.createOscillator()
-  oscillator.frequency.setValueAtTime(hz, 0)
-  // let gainControl = audio.createOscillator()
-  // gainControl.frequency.setValueAtTime(hz / 128, 0)
-  let gainNode = audio.createGain()
-  gainNode.gain
-    .setValueAtTime(0, playTime)
-    .linearRampToValueAtTime(0.5, playTime + 0.05)
-    .linearRampToValueAtTime(0.3, playTime + 0.15)
-    .linearRampToValueAtTime(0, playTime + 5)
-
-  // let freqControl = audio.createOscillator()
-  // freqControl.frequency.setValueAtTime(8, 0)
-  let freqControl = new OscillatorNode(audio, {
-    type: 'square',
-    frequency: 2,
+  console.table({
+    oscillator: oscillator.context.currentTime,
+    freqControl: freqControl.context.currentTime,
+    audio: audio.currentTime,
   })
-  let freqControlGain = audio.createGain()
-  freqControlGain.gain.setValueAtTime(12, 0) // cents detune
-  freqControl.connect(freqControlGain).connect(oscillator.detune)
-  // freqControl.connect(oscillator.detune)
-
-  oscillator.connect(gainNode).connect(analyser).connect(audio.destination)
-  oscillator.start(0)
-  oscillator.stop(playTime + 5.2)
+  oscillator.start.call(oscillator, 0)
+  // oscillator.stop(playTime + 5.2)
   freqControl.start()
 
   // const data = new Uint8Array(bufferLength)
