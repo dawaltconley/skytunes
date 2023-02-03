@@ -433,7 +433,6 @@ class Star implements Interface.Star {
 }
 
 class StarManager extends Array<Star> {
-  static context = globalContext
   static get pov() {
     return Star.pov
   }
