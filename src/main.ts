@@ -23,16 +23,13 @@ const skyCanvas = new SkyCanvas(canvas)
 const loop = new FrameLoop(60)
 
 let timeSinceStarFrame = 0
+let minMsPerFrame = calculateMsPerFrame(globalContext.speed, skyCanvas.radius)
 loop.animate((elapsed, repaint) => {
   let last: number = Star.pov.date.getTime()
   Star.pov.date = new Date(last + elapsed * globalContext.speed)
 
   timeSinceStarFrame += elapsed
-  if (
-    repaint ||
-    timeSinceStarFrame >
-      calculateMsPerFrame(globalContext.speed, skyCanvas.radius)
-  ) {
+  if (repaint || timeSinceStarFrame > minMsPerFrame) {
     skyCanvas.layers.stars.clear()
     stars.eachVisible(star => {
       star.draw(skyCanvas)
@@ -49,6 +46,8 @@ globalContext.addEventListener('update', ((event: CustomEvent) => {
   stars.forEach(star => {
     star.clearSynth()
   })
+  if (event.detail.speed !== undefined)
+    minMsPerFrame = calculateMsPerFrame(event.detail.speed, skyCanvas.radius)
 }) as EventListener)
 
 navigator.geolocation.getCurrentPosition(({ coords, timestamp }) => {
