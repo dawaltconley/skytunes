@@ -40,6 +40,18 @@ loop.animate((elapsed, repaint) => {
 })
 loop.repaint()
 
+// recalculate canvas size when resized
+let resizeTimeout: number
+const observer = new ResizeObserver(() => {
+  if (resizeTimeout) clearTimeout(resizeTimeout)
+  resizeTimeout = setTimeout(() => {
+    skyCanvas.setCanvasSize()
+    requestAnimationFrame(() => skyCanvas.drawBackground())
+    loop.repaint()
+  }, 100)
+})
+observer.observe(skyCanvas.container)
+
 globalContext.addEventListener('update', ((event: CustomEvent) => {
   Star.pov.update(event.detail)
   stars.unsetVisible()

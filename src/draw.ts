@@ -46,19 +46,6 @@ class SkyCanvas {
       background: new CanvasLayer(container),
       stars: new CanvasLayer(container),
     }
-
-    // recalculate canvas size when resized
-    let resizeTimeout: number
-    const observer = new ResizeObserver(() => {
-      if (resizeTimeout) clearTimeout(resizeTimeout)
-      resizeTimeout = setTimeout(() => {
-        this.setCanvasSize()
-        requestAnimationFrame(() => this.drawBackground())
-      }, 100)
-    })
-    observer.observe(container)
-
-    // set the canvas size
     this.setCanvasSize()
     requestAnimationFrame(() => this.drawBackground())
   }
