@@ -1,6 +1,4 @@
-import context from './global'
 import colors from 'tailwindcss/colors'
-import { Star } from './stars'
 
 class CanvasLayer {
   canvas: HTMLCanvasElement
@@ -31,8 +29,6 @@ class CanvasLayer {
 }
 
 class SkyCanvas {
-  static globalContext = context
-
   container: HTMLElement
   layers: {
     background: CanvasLayer
@@ -44,12 +40,6 @@ class SkyCanvas {
     y: number
   } = { x: 0, y: 0 }
 
-  #minMsPerFrame: number = 0
-  #lastFrameTime: number = 0
-  #repaint: boolean = false
-  #fps: number = 0
-  #fpsLogger?: number
-
   constructor(container: HTMLElement) {
     this.container = container
     this.layers = {
@@ -57,22 +47,12 @@ class SkyCanvas {
       stars: new CanvasLayer(container),
     }
 
-    // frame rate based on the globalContext speed
-    this.calculateMsPerFrame(SkyCanvas.globalContext.speed)
-    SkyCanvas.globalContext.addEventListener('update', ((
-      event: CustomEvent
-    ) => {
-      if (event.detail.speed !== undefined)
-        this.calculateMsPerFrame(event.detail.speed)
-    }) as EventListener)
-
     // recalculate canvas size when resized
     let resizeTimeout: number
     const observer = new ResizeObserver(() => {
       if (resizeTimeout) clearTimeout(resizeTimeout)
       resizeTimeout = setTimeout(() => {
         this.setCanvasSize()
-        this.#repaint = true
         requestAnimationFrame(() => this.drawBackground())
       }, 100)
     })
@@ -81,18 +61,6 @@ class SkyCanvas {
     // set the canvas size
     this.setCanvasSize()
     requestAnimationFrame(() => this.drawBackground())
-  }
-
-  /**
-   * sets a private #minMsPerFrame property based on the rotation speed, with an optional frame cap
-   * @param speed - rotation speed
-   * @param frameCap - default frame cap is approximately 60 fps
-   */
-  calculateMsPerFrame(speed: number, frameCap = 16.5) {
-    let pixelsPerDegree = 0.01745240643728351 * this.radius // approximate
-    let pixelsPerSecond = pixelsPerDegree * (speed / 240)
-    this.#minMsPerFrame = Math.max(100 / pixelsPerSecond, frameCap)
-    return this.#minMsPerFrame
   }
 
   /** adjusts the canvas width and height to match the screen sice and pixel ratio */
@@ -105,7 +73,6 @@ class SkyCanvas {
     Object.values(this.layers).forEach(layer => layer.setSize(width, height))
 
     this.radius = Math.min(width, height) / 2
-    this.calculateMsPerFrame(SkyCanvas.globalContext.speed)
     this.center = {
       x: width / 2,
       y: height / 2,
@@ -131,29 +98,71 @@ class SkyCanvas {
     context.stroke()
     return this
   }
+}
+
+/**
+ * @param speed - rotation speed
+ * @param radius - radius of the skybox in pixels
+ * @return minimum milliseconds per frame needed to animate smoothly
+ */
+const calculateMsPerFrame = (speed: number, radius: number) => {
+  let pixelsPerDegree = 0.01745240643728351 * radius // approximate
+  let pixelsPerSecond = pixelsPerDegree * (speed / 240)
+  return 100 / pixelsPerSecond
+}
+
+/** manages an animation frame loop with an optional frameCap */
+class FrameLoop {
+  #frameCap: number | null = 60
+  #minMsPerFrame = 0
+  #repaint = false
+  #lastFrameTime?: number
+  #fps: number = 0
+  #fpsLogger?: number
+  #nextFrame?: number
+
+  /** @param frameCap - maximum fps, or null to uncap */
+  constructor(frameCap: number | null = null) {
+    this.frameCap = frameCap
+  }
+
+  /** maximum fps, or null to uncap */
+  set frameCap(fps: number | null) {
+    this.#minMsPerFrame = fps ? 1000 / fps - 0.1 : 0
+    this.#frameCap = fps
+  }
+
+  get frameCap(): number | null {
+    return this.#frameCap
+  }
 
   /** starts an animation, running the callback on each frame */
-  animate(eachFrame: (canvas: SkyCanvas) => void): SkyCanvas {
+  animate(eachFrame: (elapsed: number, repaint: boolean) => void) {
     const frame = (timestamp: DOMHighResTimeStamp) => {
+      if (this.#lastFrameTime === undefined) this.#lastFrameTime = timestamp
       let elapsed = timestamp - this.#lastFrameTime
       if (this.#repaint || elapsed > this.#minMsPerFrame) {
-        let last: number = Star.pov.date.getTime()
-        Star.pov.date = new Date(last + elapsed * SkyCanvas.globalContext.speed)
-        eachFrame(this)
+        eachFrame(elapsed, this.#repaint)
         this.#lastFrameTime = timestamp
         this.#repaint = false
         if (this.#fpsLogger !== undefined) this.#fps++
       }
-      requestAnimationFrame(frame)
+      this.#nextFrame = requestAnimationFrame(frame)
     }
-    requestAnimationFrame(frame)
-    return this
+    this.#nextFrame = requestAnimationFrame(frame)
   }
 
+  /** cancel the animation loop */
+  cancel() {
+    if (this.#nextFrame !== undefined) cancelAnimationFrame(this.#nextFrame)
+  }
+
+  /** force an animation repaint */
   repaint() {
     this.#repaint = true
   }
 
+  /** log actual fps to the console */
   logFps() {
     this.#fpsLogger = setInterval(() => {
       console.log(`${this.#fps} frames per second`)
@@ -162,4 +171,4 @@ class SkyCanvas {
   }
 }
 
-export { SkyCanvas, CanvasLayer }
+export { SkyCanvas, CanvasLayer, FrameLoop, calculateMsPerFrame }

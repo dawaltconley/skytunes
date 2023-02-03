@@ -4,7 +4,7 @@ import { radianFromRa, radianFromDec } from './utilities'
 import './tailwind.css'
 import bsc from './bsc.json'
 import { Star, StarManager } from './stars'
-import { SkyCanvas } from './draw'
+import { SkyCanvas, FrameLoop, calculateMsPerFrame } from './draw'
 
 let stars = new StarManager(
   bsc.map(
@@ -20,6 +20,28 @@ let stars = new StarManager(
 
 const canvas = document.getElementById('canvas')!
 const skyCanvas = new SkyCanvas(canvas)
+const loop = new FrameLoop(60)
+
+let timeSinceStarFrame = 0
+loop.animate((elapsed, repaint) => {
+  let last: number = Star.pov.date.getTime()
+  Star.pov.date = new Date(last + elapsed * globalContext.speed)
+
+  timeSinceStarFrame += elapsed
+  if (
+    repaint ||
+    timeSinceStarFrame >
+      calculateMsPerFrame(globalContext.speed, skyCanvas.radius)
+  ) {
+    skyCanvas.layers.stars.clear()
+    stars.eachVisible(star => {
+      star.draw(skyCanvas)
+      if (star.hourAngle < 0 && !star.hasQueuedSynth) star.queueSynth()
+    })
+    timeSinceStarFrame = 0
+  }
+})
+loop.repaint()
 
 globalContext.addEventListener('update', ((event: CustomEvent) => {
   Star.pov.update(event.detail)
@@ -29,22 +51,13 @@ globalContext.addEventListener('update', ((event: CustomEvent) => {
   })
 }) as EventListener)
 
-skyCanvas.animate(canvas => {
-  canvas.layers.stars.clear()
-  stars.eachVisible(star => {
-    star.draw(canvas)
-    if (star.hourAngle < 0 && !star.hasQueuedSynth) star.queueSynth()
-  })
-})
-skyCanvas.logFps()
-
 navigator.geolocation.getCurrentPosition(({ coords, timestamp }) => {
   globalContext.update({
     date: new Date(timestamp),
     long: coords.longitude * (Math.PI / 180),
     lat: coords.latitude * (Math.PI / 180),
   })
-  skyCanvas.repaint()
+  loop.repaint()
 })
 
 const speedSlider = document.getElementById('speed-control') as HTMLInputElement
