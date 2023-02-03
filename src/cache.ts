@@ -37,6 +37,8 @@ class CacheItem<Value = any> {
     return v
   }
 
+  // TODO instead of looping through dependents, might be better to loop dependencies
+  // check whether each is valid (has a .isValid flag) and if any is invalid, invalidate this cache
   /** clears the cache of this item and all of its dependents */
   clear() {
     if (this.#value !== null) {
