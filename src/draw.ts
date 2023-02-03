@@ -47,7 +47,7 @@ class SkyCanvas {
       stars: new CanvasLayer(container),
     }
     this.setCanvasSize()
-    requestAnimationFrame(() => this.drawBackground())
+    this.drawBackground()
   }
 
   /** adjusts the canvas width and height to match the screen sice and pixel ratio */
@@ -73,16 +73,18 @@ class SkyCanvas {
     let { center, radius } = this
     let height = canvas.height
     let skyTop = (height - 2 * radius) / 2
-    context.clearRect(0, 0, canvas.width, canvas.height)
-    context.beginPath()
-    context.arc(center.x, center.y, radius, 0, 2 * Math.PI)
-    context.fillStyle = colors.blue['900']
-    context.fill()
-    context.beginPath()
-    context.moveTo(center.x, skyTop)
-    context.lineTo(center.x, height - skyTop)
-    context.strokeStyle = 'rgba(255, 255, 255, 0.2)'
-    context.stroke()
+    requestAnimationFrame(() => {
+      context.clearRect(0, 0, canvas.width, canvas.height)
+      context.beginPath()
+      context.arc(center.x, center.y, radius, 0, 2 * Math.PI)
+      context.fillStyle = colors.blue['900']
+      context.fill()
+      context.beginPath()
+      context.moveTo(center.x, skyTop)
+      context.lineTo(center.x, height - skyTop)
+      context.strokeStyle = 'rgba(255, 255, 255, 0.2)'
+      context.stroke()
+    })
     return this
   }
 }
