@@ -94,18 +94,21 @@ class EnvNode extends GainNode {
     this.envelope = envelope
   }
 
-  start(when = 0, amp = 1) {
+  start(when = 0, amp = 1): number {
     const { context } = this
-    const start = context.currentTime + (when ?? 0)
+    const start = context.currentTime + when
     let { attack, decay, sustain, release } = this.envelope
     attack = start + attack
     decay = attack + decay
     release = decay + release
     this.gain
-      .setValueAtTime(0, when ?? 0)
+      .setValueAtTime(0, start)
       .linearRampToValueAtTime(amp, attack)
       .linearRampToValueAtTime(amp * sustain, decay)
       .linearRampToValueAtTime(0, release)
+    console.log('playing')
+    console.log({ start, attack, decay, release })
+    return release
   }
 }
 
@@ -117,17 +120,8 @@ class EnvNode extends GainNode {
 // 3. expose a stop/cancel method to cancel queued audio
 //      OscillatorNode.stop()
 class StarSynth {
-  ctx: AudioContext
-  env: Envelope
-  amp: number = 1
-  constructor(
-    context: AudioContext,
-    { env, amp = 1 }: { env: Envelope; amp?: number }
-  ) {
-    this.ctx = context
-    this.env = env
-    this.amp = amp
-  }
+  static context: AudioContext = globalContext.audio
+  onended?: AudioScheduledSourceNode['onended']
 
   /**
    * play a synth
@@ -135,26 +129,42 @@ class StarSynth {
    */
   play(
     note: number,
-    { start = 0, speed = 1 }: { start?: number; speed?: number }
+    {
+      envelope,
+      start = 0,
+      amp = 1,
+    }: { envelope: Envelope; start?: number; amp?: number }
   ): number {
-    const { ctx, amp } = this
+    const { context: ctx } = StarSynth
     const play = ctx.currentTime + start
-    let { decay, release } = this.env
-    let oscillator = new OscillatorNode(ctx, { frequency: note })
-    let gainNode = new EnvNode(ctx, {
-      envelope: {
-        ...this.env,
-        decay: decay * speed,
-        release: release * speed,
-      },
-    })
+    // let gainNode = new EnvNode(ctx, {
+    //   envelope,
+    // })
+    let { attack, decay, sustain, release } = envelope
+    attack = play + attack
+    decay = attack + decay
+    release = decay + release
+    console.log('playing')
+    console.log({ start, attack, decay, release })
+
+    // let oscillator = new OscillatorNode(ctx, { frequency: note })
+    let oscillator = ctx.createOscillator()
+    oscillator.frequency.setValueAtTime(note, 0)
+
+    let gainNode = new EnvNode(ctx, { envelope })
+    // gainNode.gain
+    //   .setValueAtTime(0, play)
+    //   .linearRampToValueAtTime(amp, attack)
+    //   .linearRampToValueAtTime(amp * sustain, decay)
+    //   .linearRampToValueAtTime(0, release)
 
     oscillator.connect(gainNode).connect(ctx.destination)
-    oscillator.start(play)
-    gainNode.start(play, amp)
-    oscillator.stop(release + 1)
+    oscillator.start(start)
+    let gainEnd = gainNode.start(play, amp)
+    // let gainEnd = release
+    oscillator.stop(gainEnd + 1)
 
-    return release
+    return gainEnd
   }
 }
 
@@ -189,15 +199,7 @@ class Star implements Interface.Star {
     this.#sinDec = Math.sin(declination)
     this.#cosDec = Math.cos(declination)
 
-    this.synth = new StarSynth(Star.context.audio, {
-      env: {
-        attack: 0.05,
-        decay: 0.15,
-        sustain: 0.66,
-        release: 5,
-      },
-      amp: 0.3,
-    })
+    this.synth = new StarSynth()
   }
 
   #hourAngle = new CacheItem(() => {
@@ -302,9 +304,16 @@ class Star implements Interface.Star {
         this.#queuedSynth = undefined
         return
       }
+      let speed = 10 / Star.context.speed
       let synthEnd = this.synth.play(this.#highNote.get(), {
+        envelope: {
+          attack: 0.05,
+          decay: 0.15 * speed,
+          sustain: 0.66,
+          release: 5 * speed,
+        },
+        amp: 0.3,
         start: transit / 1000,
-        speed: 10 / Star.context.speed,
       })
       setTimeout(() => {
         this.#queuedSynth = undefined

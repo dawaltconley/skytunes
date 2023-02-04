@@ -35,6 +35,9 @@ loop.animate((elapsed, repaint) => {
     skyCanvas.layers.stars.clear()
     stars.eachVisible(star => {
       star.draw(skyCanvas)
+      // just need Star.synth.onended and Star.synth.byteFrequencyData
+      // should work to return some kind of synth object from queueSynth()
+      // and a cancel method
       if (star.hourAngle < 0 && !star.hasQueuedSynth) star.queueSynth()
     })
     timeSinceStarFrame = 0

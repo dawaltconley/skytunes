@@ -1,4 +1,4 @@
-import { EnvOscillatorNode } from './stars'
+// import { EnvOscillatorNode } from './stars'
 import './tailwind.css'
 
 const canvas = document.getElementById('canvas') as HTMLCanvasElement
@@ -64,8 +64,8 @@ playButton.addEventListener('click', () => {
     freqControl: freqControl.context.currentTime,
     audio: audio.currentTime,
   })
-  oscillator.start.call(oscillator, 0)
-  // oscillator.stop(playTime + 5.2)
+  oscillator.start(0)
+  oscillator.stop(playTime + 1)
   freqControl.start()
 
   // const data = new Uint8Array(bufferLength)
