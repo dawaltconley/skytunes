@@ -84,17 +84,7 @@ interface Envelope {
 }
 
 class StarSynth {
-  ctx: AudioContext
-  env: Envelope
-  amp: number = 1
-  constructor(
-    context: AudioContext,
-    { env, amp = 1 }: { env: Envelope; amp?: number }
-  ) {
-    this.ctx = context
-    this.env = env
-    this.amp = amp
-  }
+  static context: AudioContext = globalContext.audio
 
   /**
    * play a synth
@@ -102,26 +92,30 @@ class StarSynth {
    */
   play(
     note: number,
-    { start = 0, speed = 1 }: { start?: number; speed?: number }
+    {
+      envelope,
+      amp = 1,
+      start = 0,
+    }: { envelope: Envelope; amp?: number; start?: number }
   ): number {
-    const { ctx, amp } = this
-    const play = ctx.currentTime + start
-    let { attack, decay, sustain, release } = this.env
+    const { context } = StarSynth
+    const play = context.currentTime + start
+    let { attack, decay, sustain, release } = envelope
     attack = play + attack
-    decay = attack + decay * speed
-    release = decay + release * speed
+    decay = attack + decay
+    release = decay + release
 
-    let oscillator = ctx.createOscillator()
+    let oscillator = context.createOscillator()
     oscillator.frequency.setValueAtTime(note, 0)
 
-    let gainNode = ctx.createGain()
+    let gainNode = context.createGain()
     gainNode.gain
       .setValueAtTime(0, play)
       .linearRampToValueAtTime(amp, attack)
       .linearRampToValueAtTime(amp * sustain, decay)
       .linearRampToValueAtTime(0, release)
 
-    oscillator.connect(gainNode).connect(ctx.destination)
+    oscillator.connect(gainNode).connect(context.destination)
     oscillator.start(play)
     oscillator.stop(release + 1)
 
@@ -160,15 +154,7 @@ class Star implements Interface.Star {
     this.#sinDec = Math.sin(declination)
     this.#cosDec = Math.cos(declination)
 
-    this.synth = new StarSynth(Star.context.audio, {
-      env: {
-        attack: 0.05,
-        decay: 0.15,
-        sustain: 0.66,
-        release: 5,
-      },
-      amp: 0.3,
-    })
+    this.synth = new StarSynth()
   }
 
   #hourAngle = new CacheItem(() => {
@@ -273,9 +259,16 @@ class Star implements Interface.Star {
         this.#queuedSynth = undefined
         return
       }
+      let speed = 10 / Star.context.speed
       let synthEnd = this.synth.play(this.#highNote.get(), {
+        envelope: {
+          attack: 0.05,
+          decay: 0.15 * speed,
+          sustain: 0.66,
+          release: 5 * speed,
+        },
+        amp: 0.3,
         start: transit / 1000,
-        speed: 10 / Star.context.speed,
       })
       setTimeout(() => {
         this.#queuedSynth = undefined
