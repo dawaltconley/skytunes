@@ -86,11 +86,31 @@ interface Envelope {
 class StarSynth {
   static context: AudioContext = globalContext.audio
   readonly analyser: AnalyserNode
+  #oscillator?: OscillatorNode
+  #gain?: GainNode
+  #queued?: number
+  #isPlaying: boolean = false
 
   constructor() {
     this.analyser = new AnalyserNode(StarSynth.context, {
       fftSize: 32,
     })
+  }
+
+  get oscillator(): OscillatorNode | undefined {
+    return this.#oscillator
+  }
+
+  get gain(): GainNode | undefined {
+    return this.#gain
+  }
+
+  get isQueued(): boolean {
+    return this.#queued !== undefined
+  }
+
+  get isPlaying(): boolean {
+    return this.#isPlaying
   }
 
   /**
@@ -104,7 +124,7 @@ class StarSynth {
       amp = 1,
       start = 0,
     }: { envelope: Envelope; amp?: number; start?: number }
-  ): number {
+  ): void {
     const { context } = StarSynth
     const play = context.currentTime + start
     let { attack, decay, sustain, release } = envelope
@@ -112,24 +132,53 @@ class StarSynth {
     decay = attack + decay
     release = decay + release
 
-    let oscillator = context.createOscillator()
-    oscillator.frequency.setValueAtTime(note, 0)
+    this.#queued = setTimeout(() => {
+      this.#oscillator = new OscillatorNode(context, {
+        frequency: note,
+      })
+      this.#gain = new GainNode(context, { gain: 0 })
+      this.#gain.gain
+        .setValueAtTime(0, play)
+        .linearRampToValueAtTime(amp, attack)
+        .linearRampToValueAtTime(amp * sustain, decay)
+        .linearRampToValueAtTime(0, release)
 
-    let gainNode = context.createGain()
-    gainNode.gain
-      .setValueAtTime(0, play)
-      .linearRampToValueAtTime(amp, attack)
-      .linearRampToValueAtTime(amp * sustain, decay)
-      .linearRampToValueAtTime(0, release)
+      this.#oscillator
+        .connect(this.#gain)
+        .connect(this.analyser)
+        .connect(context.destination)
+      this.#oscillator.start(play)
+      this.#oscillator.stop(release + 0.1)
 
-    oscillator
-      .connect(gainNode)
-      .connect(this.analyser)
-      .connect(context.destination)
-    oscillator.start(play)
-    oscillator.stop(release + 1)
+      this.#oscillator.addEventListener('ended', () => {
+        this.#isPlaying = false
+      })
+      this.#queued = setTimeout(() => {
+        this.#queued = undefined
+        this.#isPlaying = true
+      }, (play - context.currentTime) * 1000)
+    }, Math.floor((start - 1) * 1000))
+  }
 
-    return release
+  cancel(when?: number) {
+    const { context } = StarSynth
+    const start = context.currentTime + (when ?? 0)
+
+    clearTimeout(this.#queued)
+    this.#queued = undefined
+    this.#gain?.gain
+      .linearRampToValueAtTime(0, start + 0.2)
+      .cancelScheduledValues(start + 0.21)
+    this.#oscillator?.stop(start + 0.4)
+
+    // remove references to prevent subsequent calls to the cancelled objects
+    this.#oscillator = undefined
+    this.#gain = undefined
+  }
+
+  /** adds an event listener to the underlying oscillator */
+  addEventListener(...args: Parameters<OscillatorNode['addEventListener']>) {
+    this.#oscillator?.addEventListener.call(this, ...args)
   }
 }
 
@@ -144,9 +193,6 @@ class Star implements Interface.Star {
 
   #sinDec: number
   #cosDec: number
-
-  #queuedSynth?: number
-  #playingUntil?: number
 
   synth: StarSynth
 
@@ -262,39 +308,25 @@ class Star implements Interface.Star {
 
   /** queue a synth for the star's next high transit */
   queueSynth() {
-    let queueTime = Math.floor(this.nextTransit) - 1000
-    this.#queuedSynth = setTimeout(() => {
-      let transit = this.nextTransit
-      if (transit < 0) {
-        this.#queuedSynth = undefined
-        return
-      }
-      let speed = 10 / Star.context.speed
-      let synthEnd = this.synth.play(this.#highNote.get(), {
-        envelope: {
-          attack: 0.05,
-          decay: 0.15 * speed,
-          sustain: 0.66,
-          release: 5 * speed,
-        },
-        amp: 0.3,
-        start: transit / 1000,
-      })
-      setTimeout(() => {
-        this.#queuedSynth = undefined
-        this.#playingUntil = Star.pov.date.getTime() + synthEnd * 1000
-      }, Math.ceil(transit))
-    }, queueTime)
-    return this
+    let speed = 10 / Star.context.speed
+    this.synth.play(this.#highNote.get(), {
+      envelope: {
+        attack: 0.05,
+        decay: 0.15 * speed,
+        sustain: 0.66,
+        release: 5 * speed,
+      },
+      amp: 0.3,
+      start: this.nextTransit / 1000,
+    })
   }
 
   clearSynth() {
-    clearTimeout(this.#queuedSynth)
-    this.#queuedSynth = undefined
+    this.synth.cancel()
   }
 
   get hasQueuedSynth(): boolean {
-    return this.#queuedSynth !== undefined
+    return this.synth.isQueued
   }
 
   /** log data about the star's current position */
@@ -323,14 +355,10 @@ class Star implements Interface.Star {
 
     context.beginPath()
 
-    if (this.#playingUntil) {
+    if (this.synth.isPlaying) {
       r += 2
       context.fillStyle = colors.blue[100]
-      if (Star.pov.date.getTime() > this.#playingUntil) {
-        this.#playingUntil = undefined
-      } else {
-        requestAnimationFrame(() => this.draw(canvas))
-      }
+      requestAnimationFrame(() => this.draw(canvas))
     } else {
       context.fillStyle = colors.yellow[200]
     }
