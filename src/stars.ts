@@ -83,90 +83,39 @@ interface Envelope {
   release: number
 }
 
-// class EnvNode extends GainNode {
-//   env: Envelope
-//   amp: number = 1
-//   constructor(
-//     context: AudioContext,
-//     { env, amp = 1, start }: { env: Envelope; amp?: number; start?: number }
-//   ) {
-//     super(context)
-//     this.env = env
-//     this.amp = amp
-//
-//     if (start !== undefined) this.start(start)
-//   }
-//
-//   start(when: number = 0) {
-//     this.gain.cancelScheduledValues(0)
-//     let { attack, decay, sustain, release } = this.env
-//     attack = when + attack
-//     decay = attack + decay
-//     release = decay + release
-//     this.gain
-//       .setValueAtTime(0, when)
-//       .linearRampToValueAtTime(this.amp, attack)
-//       .linearRampToValueAtTime(this.amp * sustain, decay)
-//       .linearRampToValueAtTime(0, release)
-//   }
-// }
-
-interface EnvOscillatorOptions extends OscillatorOptions {
-  env: Envelope
-  amp?: number
+interface EnvNodeOptions extends GainOptions {
+  envelope: Envelope
 }
 
-// nice about this:
-// 1. extending gives direct access to the 'ended' event
-// 2. extending gives direct access to the stop method
-//
-// problems
-// 1.
-class EnvOscillatorNode extends OscillatorNode {
-  env: Envelope
-  amp: number = 1
-  constructor(
-    context: AudioContext,
-    { env, amp = 1, ...options }: EnvOscillatorOptions
-  ) {
+class EnvNode extends GainNode {
+  envelope: Envelope
+  constructor(context: AudioContext, { envelope, ...options }: EnvNodeOptions) {
     super(context, options)
-    this.env = env
-    this.amp = amp
-    // this.start()
-    ;(window as any).context = context
-    ;(window as any).envNode = this
+    this.envelope = envelope
   }
 
-  start(when?: number, speed: number = 1) {
-    const { context, amp } = this
+  start(when = 0, amp = 1) {
+    const { context } = this
     const start = context.currentTime + (when ?? 0)
-    // console.log(context, context.currentTime, amp)
-    let { attack, decay, sustain, release } = this.env
+    let { attack, decay, sustain, release } = this.envelope
     attack = start + attack
-    decay = attack + decay * speed
-    release = decay + release * speed
-
-    // console.log({ context, start, attack, decay, release })
-
-    let gainNode = context.createGain()
-    gainNode.gain
-      .setValueAtTime(0, start)
+    decay = attack + decay
+    release = decay + release
+    this.gain
+      .setValueAtTime(0, when ?? 0)
       .linearRampToValueAtTime(amp, attack)
       .linearRampToValueAtTime(amp * sustain, decay)
       .linearRampToValueAtTime(0, release)
-
-    this.connect(gainNode).connect(context.destination)
-    // window.setTimeout(() => super.stop(release + 0.2), 0)
-    // return super.start(start)
-    super.start(start)
-    this.stop(release + 0.2)
   }
 }
 
 // goals:
 // 1. expose ended event
+//      OscillatorNode.onended
 // 2. expose AnalyserNode or an array of analysed values for animating
+//      AnalyserNode.getByteFrequencyData
 // 3. expose a stop/cancel method to cancel queued audio
+//      OscillatorNode.stop()
 class StarSynth {
   ctx: AudioContext
   env: Envelope
@@ -190,29 +139,23 @@ class StarSynth {
   ): number {
     const { ctx, amp } = this
     const play = ctx.currentTime + start
-    let { attack, decay, sustain, release } = this.env
-    attack = play + attack
-    decay = attack + decay * speed
-    release = decay + release * speed
-
-    let oscillator = ctx.createOscillator()
-    oscillator.frequency.setValueAtTime(note, 0)
-
-    let gainNode = ctx.createGain()
-    gainNode.gain
-      .setValueAtTime(0, play)
-      .linearRampToValueAtTime(amp, attack)
-      .linearRampToValueAtTime(amp * sustain, decay)
-      .linearRampToValueAtTime(0, release)
+    let { decay, release } = this.env
+    let oscillator = new OscillatorNode(ctx, { frequency: note })
+    let gainNode = new EnvNode(ctx, {
+      envelope: {
+        ...this.env,
+        decay: decay * speed,
+        release: release * speed,
+      },
+    })
 
     oscillator.connect(gainNode).connect(ctx.destination)
     oscillator.start(play)
+    gainNode.start(play, amp)
     oscillator.stop(release + 1)
 
     return release
   }
-
-  // queue(note: number, start: number, { speed = 1 }: { speed?: number }) {}
 }
 
 class Star implements Interface.Star {
@@ -581,4 +524,4 @@ class StarManager extends Array<Star> {
   }
 }
 
-export { EnvOscillatorNode, Star, StarManager, TimeAndPlace }
+export { EnvNode, Star, StarManager, TimeAndPlace }
