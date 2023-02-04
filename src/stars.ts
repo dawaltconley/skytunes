@@ -85,6 +85,13 @@ interface Envelope {
 
 class StarSynth {
   static context: AudioContext = globalContext.audio
+  readonly analyser: AnalyserNode
+
+  constructor() {
+    this.analyser = new AnalyserNode(StarSynth.context, {
+      fftSize: 32,
+    })
+  }
 
   /**
    * play a synth
@@ -115,7 +122,10 @@ class StarSynth {
       .linearRampToValueAtTime(amp * sustain, decay)
       .linearRampToValueAtTime(0, release)
 
-    oscillator.connect(gainNode).connect(context.destination)
+    oscillator
+      .connect(gainNode)
+      .connect(this.analyser)
+      .connect(context.destination)
     oscillator.start(play)
     oscillator.stop(release + 1)
 
