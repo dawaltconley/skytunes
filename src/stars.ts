@@ -334,7 +334,6 @@ class Star implements Interface.Star {
     if (this.synth.isPlaying) {
       r += 2
       context.fillStyle = colors.blue[100]
-      requestAnimationFrame(() => this.draw(canvas))
     } else {
       context.fillStyle = colors.yellow[200]
     }

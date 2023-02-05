@@ -25,16 +25,21 @@ const loop = new FrameLoop(60)
 // main event loop
 let timeSinceStarFrame = 0
 let minMsPerFrame = calculateMsPerFrame(globalContext.speed, skyCanvas.radius)
+let currentlyPlaying: Star[] = []
 loop.animate((elapsed, repaint) => {
   let last: number = Star.pov.date.getTime()
   Star.pov.date = new Date(last + elapsed * globalContext.speed)
+
+  currentlyPlaying.forEach(star => {
+    if (star.synth.isPlaying) star.draw(skyCanvas)
+  })
 
   timeSinceStarFrame += elapsed
   if (repaint || timeSinceStarFrame > minMsPerFrame) {
     skyCanvas.layers.stars.clear()
     stars.eachVisible(star => {
       star.draw(skyCanvas)
-      if (star.hourAngle < 0 && !star.synth.isQueued) {
+      if (star.hourAngle > -0.1 && star.hourAngle < 0 && !star.synth.isQueued) {
         // queue a synth for the star's next high transit
         let note = noteFromAltitude(star.highTransit, 40, 400)
         let stretch = 10 / globalContext.speed
@@ -47,6 +52,10 @@ loop.animate((elapsed, repaint) => {
           },
           amp: 0.3,
           start: star.nextTransit / globalContext.speed / 1000,
+        })
+        currentlyPlaying[star.ref] = star
+        star.synth.onEnded(() => {
+          delete currentlyPlaying[star.ref]
         })
       }
     })
@@ -74,6 +83,7 @@ globalContext.addEventListener('update', ((event: CustomEvent) => {
   stars.forEach(star => {
     star.synth.cancel()
   })
+  currentlyPlaying = []
   if (event.detail.speed !== undefined)
     minMsPerFrame = calculateMsPerFrame(event.detail.speed, skyCanvas.radius)
 }) as EventListener)
