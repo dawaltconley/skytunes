@@ -147,7 +147,7 @@ class StarSynth {
         this.#queued = undefined
         this.#isPlaying = true
       }, (play - context.currentTime) * 1000)
-      this.#oscillator.addEventListener('ended', () => {
+      this.onEnded(() => {
         this.#isPlaying = false
         // remove references to prevent subsequent calls to the cancelled objects
         this.#oscillator = undefined
@@ -176,8 +176,8 @@ class StarSynth {
   }
 
   /** adds an event listener to the underlying oscillator */
-  addEventListener(...args: Parameters<OscillatorNode['addEventListener']>) {
-    this.#oscillator?.addEventListener.call(this, ...args)
+  onEnded(callback: EventListenerOrEventListenerObject) {
+    if (this.#oscillator) this.#oscillator.addEventListener('ended', callback)
   }
 }
 
