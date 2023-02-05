@@ -3,7 +3,7 @@ import globalContext from './global'
 import { radianFromRa, radianFromDec } from './utilities'
 import './tailwind.css'
 import bsc from './bsc.json'
-import { Star, StarManager } from './stars'
+import { Star, StarManager, noteFromAltitude } from './stars'
 import { SkyCanvas, FrameLoop, calculateMsPerFrame } from './draw'
 
 let stars = new StarManager(
@@ -34,7 +34,21 @@ loop.animate((elapsed, repaint) => {
     skyCanvas.layers.stars.clear()
     stars.eachVisible(star => {
       star.draw(skyCanvas)
-      if (star.hourAngle < 0 && !star.hasQueuedSynth) star.queueSynth()
+      if (star.hourAngle < 0 && !star.synth.isQueued) {
+        // queue a synth for the star's next high transit
+        let note = noteFromAltitude(star.highTransit, 40, 400)
+        let stretch = 10 / globalContext.speed
+        star.synth.play(note, {
+          envelope: {
+            attack: 0.05,
+            decay: 0.15 * stretch,
+            sustain: 0.66,
+            release: 5 * stretch,
+          },
+          amp: 0.3,
+          start: star.nextTransit / globalContext.speed / 1000,
+        })
+      }
     })
     timeSinceStarFrame = 0
   }
@@ -58,7 +72,7 @@ globalContext.addEventListener('update', ((event: CustomEvent) => {
   Star.pov.update(event.detail)
   stars.unsetVisible()
   stars.forEach(star => {
-    star.clearSynth()
+    star.synth.cancel()
   })
   if (event.detail.speed !== undefined)
     minMsPerFrame = calculateMsPerFrame(event.detail.speed, skyCanvas.radius)

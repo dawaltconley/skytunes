@@ -181,8 +181,16 @@ class StarSynth {
   }
 }
 
+const noteFromAltitude = (
+  altitude: number,
+  min: number,
+  max: number
+): number => {
+  let scale = 1 - Math.abs(1 - altitude / (Math.PI / 2))
+  return min + scale * (max - min)
+}
+
 class Star implements Interface.Star {
-  static context = globalContext
   static pov = new TimeAndPlace()
 
   readonly ref: number
@@ -293,39 +301,8 @@ class Star implements Interface.Star {
     return this.#angleToRise.get()
   }
 
-  #highNote = new CacheItem(() => {
-    let highNote = 1 - Math.abs(1 - this.highTransit / (Math.PI / 2))
-    return 40 + highNote * 360
-  }, [this.#highTransit])
-  get highNote() {
-    return this.#highNote.get()
-  }
-
   get nextTransit() {
-    return (this.hourAngle * (-43200000 / Math.PI)) / Star.context.speed
-  }
-
-  /** queue a synth for the star's next high transit */
-  queueSynth() {
-    let speed = 10 / Star.context.speed
-    this.synth.play(this.#highNote.get(), {
-      envelope: {
-        attack: 0.05,
-        decay: 0.15 * speed,
-        sustain: 0.66,
-        release: 5 * speed,
-      },
-      amp: 0.3,
-      start: this.nextTransit / 1000,
-    })
-  }
-
-  clearSynth() {
-    this.synth.cancel()
-  }
-
-  get hasQueuedSynth(): boolean {
-    return this.synth.isQueued
+    return this.hourAngle * (-43200000 / Math.PI)
   }
 
   /** log data about the star's current position */
@@ -518,4 +495,4 @@ class StarManager extends Array<Star> {
   }
 }
 
-export { Star, StarManager, TimeAndPlace }
+export { Star, StarManager, TimeAndPlace, noteFromAltitude }
