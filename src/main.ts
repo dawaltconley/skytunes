@@ -38,7 +38,7 @@ loop.animate((elapsed, repaint) => {
   if (repaint || timeSinceStarFrame > minMsPerFrame) {
     skyCanvas.layers.stars.clear()
     stars.eachVisible(star => {
-      star.draw(skyCanvas)
+      skyCanvas.drawStar(star)
       if (star.hourAngle > -0.1 && star.hourAngle < 0 && !star.synth.isQueued) {
         // queue a synth for the star's next high transit
         let note = noteFromAltitude(star.highTransit, 40, 400)

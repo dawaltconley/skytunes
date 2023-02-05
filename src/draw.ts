@@ -1,3 +1,4 @@
+import type { Star } from './stars'
 import colors from 'tailwindcss/colors'
 
 class CanvasLayer {
@@ -85,6 +86,26 @@ class SkyCanvas {
       context.strokeStyle = 'rgba(255, 255, 255, 0.2)'
       context.stroke()
     })
+    return this
+  }
+
+  plotStar(star: Star): { x: number; y: number } {
+    const { center, radius } = this
+    let x = Math.cos(star.theta) * star.rho,
+      y = Math.sin(star.theta) * star.rho
+    x = x * radius + center.x
+    y = y * radius + center.y
+    return { x, y }
+  }
+
+  drawStar(star: Star): SkyCanvas {
+    const { context } = this.layers.stars
+    const { x, y } = this.plotStar(star)
+    const r = (8 - star.mag) * (this.radius * 0.0008)
+    context.beginPath()
+    context.fillStyle = colors.yellow[200]
+    context.arc(x, y, r, 0, 2 * Math.PI)
+    context.fill()
     return this
   }
 }
