@@ -143,20 +143,23 @@ class StarSynth {
         .linearRampToValueAtTime(amp * sustain, decay)
         .linearRampToValueAtTime(0, release)
 
+      this.#queued = setTimeout(() => {
+        this.#queued = undefined
+        this.#isPlaying = true
+      }, (play - context.currentTime) * 1000)
+      this.#oscillator.addEventListener('ended', () => {
+        this.#isPlaying = false
+        // remove references to prevent subsequent calls to the cancelled objects
+        this.#oscillator = undefined
+        this.#gain = undefined
+      })
+
       this.#oscillator
         .connect(this.#gain)
         .connect(this.analyser)
         .connect(context.destination)
       this.#oscillator.start(play)
       this.#oscillator.stop(release + 0.1)
-
-      this.#oscillator.addEventListener('ended', () => {
-        this.#isPlaying = false
-      })
-      this.#queued = setTimeout(() => {
-        this.#queued = undefined
-        this.#isPlaying = true
-      }, (play - context.currentTime) * 1000)
     }, Math.floor((start - 1) * 1000))
   }
 
@@ -170,10 +173,6 @@ class StarSynth {
       .linearRampToValueAtTime(0, start + 0.2)
       .cancelScheduledValues(start + 0.21)
     this.#oscillator?.stop(start + 0.4)
-
-    // remove references to prevent subsequent calls to the cancelled objects
-    this.#oscillator = undefined
-    this.#gain = undefined
   }
 
   /** adds an event listener to the underlying oscillator */
