@@ -60,30 +60,43 @@ loop.animate((elapsed, repaint) => {
     skyCanvas.layers.stars.clear()
     stars.eachVisible(star => {
       skyCanvas.drawStar(star)
-      if (star.hourAngle < 0 && !star.synth.isQueued) {
-        // queue a synth for the star's next high transit
-        let note = noteFromAltitude(star.highTransit, 40, 400)
-        let stretch = 10 / globalContext.speed
-        star.synth.play(note, {
-          envelope: {
-            attack: 0.05,
-            decay: 0.15 * stretch,
-            sustain: 0.66,
-            release: 5 * stretch,
-          },
-          amp: 0.3,
-          start: star.nextTransit / globalContext.speed / 1000,
-        })
-        star.synth.addEventListener('started', () => {
-          currentlyPlaying.set(star.ref, {
-            star,
-            frequencyData: new Uint8Array(1),
-          })
-        })
-        star.synth.addEventListener('ended', () =>
-          currentlyPlaying.delete(star.ref)
-        )
+      if (star.synth.isQueued) return
+
+      // queue synth for upcoming transits
+      let note: number, start: number
+      if (star.hourAngle < 0) {
+        // high transit
+        note = noteFromAltitude(star.highTransit, 40, 400)
+        start = star.timeToAngle(0) / globalContext.speed / 1000
+      } else if (star.lowTransit > 0) {
+        // low transit
+        note = noteFromAltitude(star.lowTransit, 40, 400)
+        start = star.timeToAngle(Math.PI) / globalContext.speed / 1000
+      } else {
+        // no low transit
+        return
       }
+
+      const stretch = 10 / globalContext.speed
+      star.synth.play(note, {
+        envelope: {
+          attack: 0.05,
+          decay: 0.15 * stretch,
+          sustain: 0.66,
+          release: 5 * stretch,
+        },
+        amp: 0.3,
+        start,
+      })
+      star.synth.addEventListener('started', () => {
+        currentlyPlaying.set(star.ref, {
+          star,
+          frequencyData: new Uint8Array(1),
+        })
+      })
+      star.synth.addEventListener('ended', () =>
+        currentlyPlaying.delete(star.ref)
+      )
     })
     timeSinceStarFrame = 0
   }
