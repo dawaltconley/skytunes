@@ -299,6 +299,18 @@ class Star implements Interface.Star {
     return this.#angleToRise.get()
   }
 
+  cache = Object.freeze({
+    hourAngle: this.#hourAngle,
+    altitude: this.#altitude,
+    azimuth: this.#azimuth,
+    theta: this.#theta,
+    rho: this.#rho,
+    highTransit: this.#highTransit,
+    lowTransit: this.#lowTransit,
+    horizonTransit: this.#horizonTransit,
+    angleToRise: this.#angleToRise,
+  })
+
   get nextTransit() {
     return this.hourAngle * (-43200000 / Math.PI)
   }
