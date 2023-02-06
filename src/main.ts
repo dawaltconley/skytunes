@@ -23,22 +23,28 @@ const canvas = document.getElementById('canvas')!
 const skyCanvas = new SkyCanvas(canvas)
 const loop = new FrameLoop(60)
 
-// main event loop
 let timeSinceStarFrame = 0
 let minMsPerFrame = calculateMsPerFrame(globalContext.speed, skyCanvas.radius)
-let currentlyPlaying: Star[] = []
-let frequencyData: Uint8Array[] = []
+let currentlyPlaying = new Map<
+  Star['ref'],
+  {
+    star: Star
+    frequencyData: Uint8Array
+  }
+>()
+
+// main event loop
 loop.animate((elapsed, repaint) => {
   let last: number = Star.pov.date.getTime()
   Star.pov.date = new Date(last + elapsed * globalContext.speed)
 
   skyCanvas.layers.shimmer.clear()
-  currentlyPlaying.forEach(star => {
+  currentlyPlaying.forEach(({ star, frequencyData }) => {
     if (star.synth.isPlaying) {
-      const dB = frequencyData[star.ref]
-      star.synth.analyser.getByteFrequencyData(dB)
+      star.synth.analyser.getByteFrequencyData(frequencyData)
+      const dB = frequencyData[0]
       // TODO use getByteTimeDomainData as well to add pulse animation
-      const radius = (dB[0] * skyCanvas.radius * 0.008) / 256
+      const radius = (dB * skyCanvas.radius * 0.008) / 256
       skyCanvas.drawStar(star, {
         layer: skyCanvas.layers.shimmer,
         color: colors.blue[100],
@@ -52,7 +58,7 @@ loop.animate((elapsed, repaint) => {
     skyCanvas.layers.stars.clear()
     stars.eachVisible(star => {
       skyCanvas.drawStar(star)
-      if (star.hourAngle > -0.1 && star.hourAngle < 0 && !star.synth.isQueued) {
+      if (star.hourAngle < 0 && !star.synth.isQueued) {
         // queue a synth for the star's next high transit
         let note = noteFromAltitude(star.highTransit, 40, 400)
         let stretch = 10 / globalContext.speed
@@ -66,12 +72,15 @@ loop.animate((elapsed, repaint) => {
           amp: 0.3,
           start: star.nextTransit / globalContext.speed / 1000,
         })
-        currentlyPlaying[star.ref] = star
-        frequencyData[star.ref] = new Uint8Array(1)
-        star.synth.onEnded(() => {
-          delete currentlyPlaying[star.ref]
-          delete frequencyData[star.ref]
+        star.synth.addEventListener('started', () => {
+          currentlyPlaying.set(star.ref, {
+            star,
+            frequencyData: new Uint8Array(1),
+          })
         })
+        star.synth.addEventListener('ended', () =>
+          currentlyPlaying.delete(star.ref)
+        )
       }
     })
     timeSinceStarFrame = 0
@@ -98,8 +107,7 @@ globalContext.addEventListener('update', ((event: CustomEvent) => {
   stars.forEach(star => {
     star.synth.cancel()
   })
-  currentlyPlaying = []
-  frequencyData = []
+  currentlyPlaying.clear()
   if (event.detail.speed !== undefined)
     minMsPerFrame = calculateMsPerFrame(event.detail.speed, skyCanvas.radius)
   loop.repaint()

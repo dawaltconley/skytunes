@@ -81,7 +81,7 @@ interface Envelope {
   release: number
 }
 
-class StarSynth {
+class StarSynth extends EventTarget {
   static context: AudioContext = globalContext.audio
   readonly analyser: AnalyserNode
   #oscillator?: OscillatorNode
@@ -89,7 +89,11 @@ class StarSynth {
   #queued?: number
   #isPlaying: boolean = false
 
+  #startedEvent = new CustomEvent('started', { detail: this })
+  #endedEvent = new CustomEvent('ended', { detail: this })
+
   constructor() {
+    super()
     this.analyser = new AnalyserNode(StarSynth.context, {
       fftSize: 32,
     })
@@ -141,11 +145,16 @@ class StarSynth {
         .linearRampToValueAtTime(amp * sustain, decay)
         .linearRampToValueAtTime(0, release)
 
+      // on started
       this.#queued = setTimeout(() => {
+        this.dispatchEvent(this.#startedEvent)
         this.#queued = undefined
         this.#isPlaying = true
       }, (play - context.currentTime) * 1000)
-      this.onEnded(() => {
+
+      // on ended
+      this.#oscillator.addEventListener('ended', () => {
+        this.dispatchEvent(this.#endedEvent)
         this.#isPlaying = false
         // remove references to prevent subsequent calls to the cancelled objects
         this.#oscillator = undefined
@@ -171,11 +180,6 @@ class StarSynth {
       .linearRampToValueAtTime(0, start + 0.2)
       .cancelScheduledValues(start + 0.21)
     this.#oscillator?.stop(start + 0.4)
-  }
-
-  /** adds an event listener to the underlying oscillator */
-  onEnded(callback: EventListenerOrEventListenerObject) {
-    if (this.#oscillator) this.#oscillator.addEventListener('ended', callback)
   }
 }
 
