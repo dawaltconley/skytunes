@@ -319,6 +319,10 @@ class Star implements Interface.Star {
     return this.hourAngle * (-43200000 / Math.PI)
   }
 
+  timeToAngle(target: number): number {
+    return (target - this.hourAngle) * (43200000 / Math.PI)
+  }
+
   /** log data about the star's current position */
   log() {
     let { ref, hourAngle, altitude, azimuth, theta, rho } = this
