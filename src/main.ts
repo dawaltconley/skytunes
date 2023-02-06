@@ -27,14 +27,20 @@ const loop = new FrameLoop(60)
 let timeSinceStarFrame = 0
 let minMsPerFrame = calculateMsPerFrame(globalContext.speed, skyCanvas.radius)
 let currentlyPlaying: Star[] = []
+let frequencyData: Uint8Array[] = []
 loop.animate((elapsed, repaint) => {
   let last: number = Star.pov.date.getTime()
   Star.pov.date = new Date(last + elapsed * globalContext.speed)
 
+  skyCanvas.layers.shimmer.clear()
   currentlyPlaying.forEach(star => {
     if (star.synth.isPlaying) {
-      const radius = 2 + (8 - star.mag) * (skyCanvas.radius * 0.0008)
+      const dB = frequencyData[star.ref]
+      star.synth.analyser.getByteFrequencyData(dB)
+      // TODO use getByteTimeDomainData as well to add pulse animation
+      const radius = (dB[0] * skyCanvas.radius * 0.008) / 256
       skyCanvas.drawStar(star, {
+        layer: skyCanvas.layers.shimmer,
         color: colors.blue[100],
         radius,
       })
@@ -61,8 +67,10 @@ loop.animate((elapsed, repaint) => {
           start: star.nextTransit / globalContext.speed / 1000,
         })
         currentlyPlaying[star.ref] = star
+        frequencyData[star.ref] = new Uint8Array(1)
         star.synth.onEnded(() => {
           delete currentlyPlaying[star.ref]
+          delete frequencyData[star.ref]
         })
       }
     })
@@ -91,6 +99,7 @@ globalContext.addEventListener('update', ((event: CustomEvent) => {
     star.synth.cancel()
   })
   currentlyPlaying = []
+  frequencyData = []
   if (event.detail.speed !== undefined)
     minMsPerFrame = calculateMsPerFrame(event.detail.speed, skyCanvas.radius)
   loop.repaint()

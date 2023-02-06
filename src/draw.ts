@@ -34,6 +34,7 @@ class SkyCanvas {
   layers: {
     background: CanvasLayer
     stars: CanvasLayer
+    shimmer: CanvasLayer
   }
   radius: number = 0
   center: {
@@ -46,6 +47,7 @@ class SkyCanvas {
     this.layers = {
       background: new CanvasLayer(container),
       stars: new CanvasLayer(container),
+      shimmer: new CanvasLayer(container),
     }
     this.setCanvasSize()
     this.drawBackground()
