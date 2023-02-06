@@ -86,6 +86,7 @@ globalContext.addEventListener('update', ((event: CustomEvent) => {
   currentlyPlaying = []
   if (event.detail.speed !== undefined)
     minMsPerFrame = calculateMsPerFrame(event.detail.speed, skyCanvas.radius)
+  loop.repaint()
 }) as EventListener)
 
 // update geolocation when available
@@ -95,7 +96,6 @@ navigator.geolocation.getCurrentPosition(({ coords, timestamp }) => {
     long: coords.longitude * (Math.PI / 180),
     lat: coords.latitude * (Math.PI / 180),
   })
-  loop.repaint()
 })
 
 // settings controls
