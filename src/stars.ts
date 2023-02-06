@@ -315,10 +315,6 @@ class Star implements Interface.Star {
     angleToRise: this.#angleToRise,
   })
 
-  get nextTransit() {
-    return this.hourAngle * (-43200000 / Math.PI)
-  }
-
   timeToAngle(target: number): number {
     return (target - this.hourAngle) * (43200000 / Math.PI)
   }
