@@ -1,9 +1,7 @@
 import type * as Interface from './types/skytunes'
-import type { SkyCanvas } from './draw'
 import globalContext from './global'
 import { CacheItem } from './cache'
 import { getLST } from './utilities'
-import colors from 'tailwindcss/colors'
 
 class TimeAndPlace implements Interface.TimeAndPlace {
   constructor(
@@ -317,31 +315,6 @@ class Star implements Interface.Star {
       theta,
       rho,
     })
-  }
-
-  /** draw the star's position on a canvas */
-  draw(canvas: SkyCanvas): Star {
-    let { context } = canvas.layers.stars
-    let { center, radius } = canvas
-    let x = Math.cos(this.theta) * this.rho,
-      y = Math.sin(this.theta) * this.rho
-    x = x * radius + center.x
-    y = y * radius + center.y
-    let r = (8 - this.mag) * (radius * 0.0008)
-
-    context.beginPath()
-
-    if (this.synth.isPlaying) {
-      r += 2
-      context.fillStyle = colors.blue[100]
-    } else {
-      context.fillStyle = colors.yellow[200]
-    }
-
-    context.arc(x, y, r, 0, 2 * Math.PI)
-    context.fill()
-
-    return this
   }
 }
 

@@ -2,6 +2,7 @@ import { BSC } from './types/skytunes'
 import globalContext from './global'
 import { radianFromRa, radianFromDec } from './utilities'
 import './tailwind.css'
+import colors from 'tailwindcss/colors'
 import bsc from './bsc.json'
 import { Star, StarManager, noteFromAltitude } from './stars'
 import { SkyCanvas, FrameLoop, calculateMsPerFrame } from './draw'
@@ -31,7 +32,13 @@ loop.animate((elapsed, repaint) => {
   Star.pov.date = new Date(last + elapsed * globalContext.speed)
 
   currentlyPlaying.forEach(star => {
-    if (star.synth.isPlaying) star.draw(skyCanvas)
+    if (star.synth.isPlaying) {
+      const radius = 2 + (8 - star.mag) * (skyCanvas.radius * 0.0008)
+      skyCanvas.drawStar(star, {
+        color: colors.blue[100],
+        radius,
+      })
+    }
   })
 
   timeSinceStarFrame += elapsed
