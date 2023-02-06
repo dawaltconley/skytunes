@@ -35,9 +35,7 @@ let currentlyPlaying = new Map<
 
 // main event loop
 loop.animate((elapsed, repaint) => {
-  let last: number = Star.pov.date.getTime()
-  Star.pov.date = new Date(last + elapsed * globalContext.speed)
-
+  // highlight any playing stars
   skyCanvas.layers.shimmer.clear()
   currentlyPlaying.forEach(({ star, frequencyData }) => {
     if (star.synth.isPlaying) {
@@ -53,8 +51,12 @@ loop.animate((elapsed, repaint) => {
     }
   })
 
+  // draw all visible stars (only as often as needed)
   timeSinceStarFrame += elapsed
   if (repaint || timeSinceStarFrame > minMsPerFrame) {
+    let last: number = Star.pov.date.getTime()
+    Star.pov.date = new Date(last + timeSinceStarFrame * globalContext.speed)
+
     skyCanvas.layers.stars.clear()
     stars.eachVisible(star => {
       skyCanvas.drawStar(star)
@@ -103,6 +105,7 @@ observer.observe(skyCanvas.container)
 // listen for updates to the global context
 globalContext.addEventListener('update', ((event: CustomEvent) => {
   Star.pov.update(event.detail)
+  timeSinceStarFrame = 0
   stars.unsetVisible()
   stars.forEach(star => {
     star.synth.cancel()
