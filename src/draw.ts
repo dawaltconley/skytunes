@@ -98,13 +98,23 @@ class SkyCanvas {
     return { x, y }
   }
 
-  drawStar(star: Star): SkyCanvas {
-    const { context } = this.layers.stars
+  drawStar(
+    star: Star,
+    {
+      layer = this.layers.stars,
+      radius = (8 - star.mag) * (this.radius * 0.0008),
+      color = colors.yellow[200],
+    }: {
+      layer?: CanvasLayer
+      radius?: number
+      color?: string
+    } = {}
+  ): SkyCanvas {
+    const { context } = layer
     const { x, y } = this.plotStar(star)
-    const r = (8 - star.mag) * (this.radius * 0.0008)
     context.beginPath()
-    context.fillStyle = colors.yellow[200]
-    context.arc(x, y, r, 0, 2 * Math.PI)
+    context.arc(x, y, radius, 0, 2 * Math.PI)
+    context.fillStyle = color
     context.fill()
     return this
   }
