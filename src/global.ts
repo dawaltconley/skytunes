@@ -10,7 +10,7 @@ class GlobalContext extends EventTarget {
     super()
     this.update = this.update.bind(this)
     this.update({ date: new Date(), long: 0, lat: 0 })
-    this.audio = new AudioContext()
+    this.audio = new AudioContext({ latencyHint: 'interactive' })
   }
 
   update(options: Partial<GlobalContext>) {
