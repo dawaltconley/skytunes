@@ -7,8 +7,8 @@ const isMutableProperty = (
 ): p is (typeof mutableProperties)[number] =>
   mutableProperties.includes(p as (typeof mutableProperties)[number])
 
-interface UpdateEvent extends CustomEvent {
-  detail: Partial<Settings>
+interface UpdateEvent<P extends PropertyKey> extends CustomEvent {
+  detail: Partial<Settings> & Pick<Settings, Extract<keyof Settings, P>>
 }
 
 class GlobalContext extends EventTarget implements Settings {
@@ -48,9 +48,9 @@ class GlobalContext extends EventTarget implements Settings {
     return updated
   }
 
-  listen(
-    property: keyof Settings | 'update',
-    listener: (event: UpdateEvent) => void
+  listen<P extends keyof Settings | 'update'>(
+    property: P,
+    listener: (event: UpdateEvent<P>) => void
   ) {
     if (property === 'update') {
       this.addEventListener('update', listener as EventListener)
