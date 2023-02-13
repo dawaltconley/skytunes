@@ -6,7 +6,7 @@ import colors from 'tailwindcss/colors'
 import bsc from './bsc.json'
 import { Star, StarManager, noteFromAltitude } from './stars'
 import { SkyCanvas, FrameLoop, calculateMsPerFrame } from './draw'
-import './settings'
+import { updateDateDisplay } from './settings'
 
 let stars = new StarManager(
   bsc.map(
@@ -100,6 +100,7 @@ loop.animate((elapsed, repaint) => {
       )
     })
     timeSinceStarFrame = 0
+    updateDateDisplay(Star.pov.date)
   }
 })
 loop.repaint()
