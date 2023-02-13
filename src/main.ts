@@ -148,7 +148,7 @@ navigator.geolocation.getCurrentPosition(({ coords, timestamp }) => {
 
 // settings controls
 const speedSlider = document.getElementById('speed-control') as HTMLInputElement
-speedSlider.value = globalContext.speed.toString()
+speedSlider.value = Math.sqrt(globalContext.speed).toString()
 speedSlider.addEventListener('input', () => {
   globalContext.speed = Number(speedSlider.value) ** 2
 })
