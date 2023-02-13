@@ -1,4 +1,4 @@
-interface BSC {
+export interface BSC {
   'harvard_ref_#': number
   RA: string
   DEC: string
@@ -8,7 +8,7 @@ interface BSC {
   MAG: string
 }
 
-interface TimeAndPlace {
+export interface TimeAndPlace {
   date: Date
   long: number
   lat: number
