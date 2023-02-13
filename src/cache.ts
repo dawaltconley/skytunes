@@ -15,8 +15,15 @@ class CacheItem<Value = any> {
    * @param dependencies - a list of CacheItems that this depends on. this
    * items cache will be cleared whenever any dependencies are updated.
    */
-  constructor(calculate: () => Value, dependencies: CacheItem[] = []) {
-    this.#recalculate = calculate
+  // TODO pass dependencies as arguments to calculate function?
+  constructor(
+    calculate: (...args: any[]) => Value,
+    dependencies: CacheItem[] = []
+  ) {
+    this.#recalculate = () => {
+      const args = dependencies.map(d => d.get())
+      return calculate(...args)
+    }
     this.dependencies = dependencies
     dependencies.forEach(dep => dep.dependents.push(this))
   }
