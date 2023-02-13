@@ -6,6 +6,7 @@ import colors from 'tailwindcss/colors'
 import bsc from './bsc.json'
 import { Star, StarManager, noteFromAltitude } from './stars'
 import { SkyCanvas, FrameLoop, calculateMsPerFrame } from './draw'
+import './settings'
 
 let stars = new StarManager(
   bsc.map(
@@ -144,12 +145,5 @@ navigator.geolocation.getCurrentPosition(({ coords, timestamp }) => {
     long: coords.longitude * (Math.PI / 180),
     lat: coords.latitude * (Math.PI / 180),
   })
-})
-
-// settings controls
-const speedSlider = document.getElementById('speed-control') as HTMLInputElement
-speedSlider.value = Math.sqrt(globalContext.speed).toString()
-speedSlider.addEventListener('input', () => {
-  globalContext.speed = Number(speedSlider.value) ** 2
 })
 ;(window as any).context = globalContext
