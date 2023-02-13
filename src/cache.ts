@@ -32,7 +32,7 @@ class CacheItem<Value = any> {
 
   /** sets the cached value and clears its dependents */
   set(v: Value): Value {
-    this.clear()
+    if (v !== this.#value) this.clear()
     this.#value = v
     return v
   }
