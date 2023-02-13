@@ -1,78 +1,215 @@
 import type * as Interface from './types/skytunes'
+import type { Cached } from './cache'
 import globalContext from './global'
-import { CacheItem } from './cache'
+import { CacheItem, getCacheLayer } from './cache'
 import { getLST } from './utilities'
 
+// class TimeAndPlaceCache implements Readonly<Cached<Interface.TimeAndPlace>> {
+//   date = new CacheItem(() => new Date())
+//   long = new CacheItem(() => 0)
+//   lat = new CacheItem(() => 0)
+//   lst = new CacheItem(
+//     () => getLST(this.date.get(), this.long.get()),
+//     [this.date, this.long]
+//   )
+//   sinLat = new CacheItem(() => Math.sin(this.lat.get()), [this.lat])
+//   cosLat = new CacheItem(() => Math.cos(this.lat.get()), [this.lat])
+//
+//   constructor(date: Date, long: number, lat: number) {
+//     this.update({ date, long, lat })
+//   }
+//
+//   update(options: Partial<{ date: Date; long: number; lat: number }>) {
+//     let { date, long, lat } = options
+//     if (date !== undefined) this.date.set(date)
+//     if (long !== undefined) this.long.set(long)
+//     if (lat !== undefined) this.lat.set(lat)
+//   }
+// }
+
+// // const TimeAndPlace = getCacheLayer<Interface.TimeAndPlace>(new TimeAndPlaceCache(new Date(), 0, 0))
+// const TimeAndPlace = new Proxy(TimeAndPlaceCache, {
+//     get(target, p) {
+//       const value = Reflect.get(target, p)
+//       if (p === 'cache') {
+//         return target
+//       } else if (value instanceof CacheItem) {
+//         return value.get()
+//       }
+//       return value
+//     },
+//     set(target, p, value) {
+//       const obj = Reflect.get(target, p)
+//       if (obj instanceof CacheItem) {
+//         obj.set(value)
+//         return true
+//       }
+//       return Reflect.set(target, p, value)
+//     },
+// })
+
+// class TimeAndPlace implements Interface.TimeAndPlace {
+//   cache = Read
+// }
+
 class TimeAndPlace implements Interface.TimeAndPlace {
-  constructor(
-    date: Date = new Date(),
-    longitude: number = 0,
-    latitude: number = 0
-  ) {
-    this.date = date
-    this.long = longitude
-    this.lat = latitude
-  }
+  date!: Date
+  long!: number
+  lat!: number
+  readonly lst!: number
+  readonly sinLat!: number
+  readonly cosLat!: number
 
-  // should be start / end date
-  #date = new CacheItem(() => new Date())
-  get date(): Date {
-    return this.#date.get()
-  }
-  set date(d: Date) {
-    this.#date.set(d)
-  }
+  readonly cache: Readonly<Cached<Interface.TimeAndPlace>>
 
-  #long = new CacheItem(() => 0)
-  get long(): number {
-    return this.#long.get()
-  }
-  set long(n: number) {
-    this.#long.set(n)
-  }
+  constructor(datetime = new Date(), longitude = 0, latitude = 0) {
+    const date = new CacheItem(() => datetime)
+    const long = new CacheItem(() => longitude)
+    const lat = new CacheItem(() => latitude)
+    const lst = new CacheItem(
+      () => getLST(date.get(), long.get()),
+      [date, long]
+    )
+    const sinLat = new CacheItem(() => Math.sin(lat.get()), [lat])
+    const cosLat = new CacheItem(() => Math.cos(lat.get()), [lat])
+    this.cache = {
+      date,
+      long,
+      lat,
+      lst,
+      sinLat,
+      cosLat,
+    }
 
-  #lat = new CacheItem(() => 0)
-  get lat(): number {
-    return this.#lat.get()
+    return new Proxy(this, {
+      get(target, p) {
+        if (p in target.cache) {
+          return target.cache[p as keyof typeof target.cache].get()
+        }
+        return Reflect.get(target, p)
+      },
+      set(target, p, value) {
+        if (p in target.cache) {
+          target.cache[p as keyof typeof target.cache].set(value)
+          return true
+        }
+        return Reflect.set(target, p, value)
+      },
+    })
   }
-  set lat(n: number) {
-    this.#lat.set(n)
-  }
-
-  #lst = new CacheItem(
-    () => getLST(this.date, this.long),
-    [this.#date, this.#long]
-  )
-  get lst(): number {
-    return this.#lst.get()
-  }
-
-  #sinLat = new CacheItem(() => Math.sin(this.lat), [this.#lat])
-  get sinLat() {
-    return this.#sinLat.get()
-  }
-
-  #cosLat = new CacheItem(() => Math.cos(this.lat), [this.#lat])
-  get cosLat() {
-    return this.#cosLat.get()
-  }
-
-  cache = Object.freeze({
-    date: this.#date,
-    long: this.#long,
-    lat: this.#lat,
-    lst: this.#lst,
-    sinLat: this.#sinLat,
-    cosLat: this.#cosLat,
-  })
 
   update(options: Partial<{ date: Date; long: number; lat: number }>) {
     let { date, long, lat } = options
-    this.date = date ?? this.date
-    this.long = long ?? this.long
-    this.lat = lat ?? this.lat
+    if (date !== undefined) this.cache.date.set(date)
+    if (long !== undefined) this.cache.long.set(long)
+    if (lat !== undefined) this.cache.lat.set(lat)
   }
 }
+
+let pov = new TimeAndPlace()
+
+pov.lst
+
+// class TimeAndPlace /* implements Interface.TimeAndPlace */ {
+//   constructor(
+//     date: Date = new Date(),
+//     longitude: number = 0,
+//     latitude: number = 0
+//   ) {
+//     this.date.set(date)
+//     this.long.set(longitude)
+//     this.lat.set(latitude)
+//     // this.cache = Object.freeze(this)
+//
+//     return new Proxy(this, {
+//       get(target, p) {
+//         const value = Reflect.get(target, p)
+//         if (value instanceof CacheItem) {
+//           return value.get()
+//         }
+//         return value
+//       },
+//       set(target, p, value) {
+//         const obj = Reflect.get(target, p)
+//         if (obj instanceof CacheItem) {
+//           obj.set(value)
+//           return true
+//         }
+//         return Reflect.set(target, p, value)
+//       },
+//     })
+//   }
+//
+//   date = new CacheItem(() => new Date())
+//   long = new CacheItem(() => 0)
+//   lat = new CacheItem(() => 0)
+//   lst = new CacheItem(
+//     () => getLST(this.date.get(), this.long.get()),
+//     [this.date, this.long]
+//   )
+//   sinLat = new CacheItem(() => Math.sin(this.lat.get()), [this.lat])
+//   cosLat = new CacheItem(() => Math.cos(this.lat.get()), [this.lat])
+//   cache = Object.freeze(this)
+//
+//   // // should be start / end date
+//   // #date = new CacheItem(() => new Date())
+//   // get date(): Date {
+//   //   return this.#date.get()
+//   // }
+//   // set date(d: Date) {
+//   //   this.#date.set(d)
+//   // }
+//
+//   // #long = new CacheItem(() => 0)
+//   // get long(): number {
+//   //   return this.#long.get()
+//   // }
+//   // set long(n: number) {
+//   //   this.#long.set(n)
+//   // }
+//
+//   // #lat = new CacheItem(() => 0)
+//   // get lat(): number {
+//   //   return this.#lat.get()
+//   // }
+//   // set lat(n: number) {
+//   //   this.#lat.set(n)
+//   // }
+//
+//   // #lst = new CacheItem(
+//   //   () => getLST(this.date, this.long),
+//   //   [this.#date, this.#long]
+//   // )
+//   // get lst(): number {
+//   //   return this.#lst.get()
+//   // }
+//
+//   // #sinLat = new CacheItem(() => Math.sin(this.lat), [this.#lat])
+//   // get sinLat() {
+//   //   return this.#sinLat.get()
+//   // }
+//
+//   // #cosLat = new CacheItem(() => Math.cos(this.lat), [this.#lat])
+//   // get cosLat() {
+//   //   return this.#cosLat.get()
+//   // }
+//
+//   // cache = Object.freeze({
+//   //   date: this.#date,
+//   //   long: this.#long,
+//   //   lat: this.#lat,
+//   //   lst: this.#lst,
+//   //   sinLat: this.#sinLat,
+//   //   cosLat: this.#cosLat,
+//   // })
+//
+//   update(options: Partial<{ date: Date; long: number; lat: number }>) {
+//     let { date, long, lat } = options
+//     if (date !== undefined) this.date.set(date)
+//     if (long !== undefined) this.long.set(long)
+//     if (lat !== undefined) this.lat.set(lat)
+//   }
+// }
 
 interface Envelope {
   attack: number
