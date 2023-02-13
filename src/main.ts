@@ -116,18 +116,26 @@ const observer = new ResizeObserver(() => {
 observer.observe(skyCanvas.container)
 
 // listen for updates to the global context
-globalContext.addEventListener('update', ((event: CustomEvent) => {
-  Star.pov.update(event.detail)
-  timeSinceStarFrame = 0
-  stars.unsetVisible()
+globalContext.listen('update', event => {
+  const { date, lat, long, speed } = event.detail
+  if (date ?? lat ?? long ?? false) {
+    Star.pov.update(event.detail)
+    stars.unsetVisible()
+  }
+  if (date ?? speed ?? false) {
+    timeSinceStarFrame = 0
+  }
   stars.forEach(star => {
     star.synth.cancel()
   })
   currentlyPlaying.clear()
-  if (event.detail.speed !== undefined)
-    minMsPerFrame = calculateMsPerFrame(event.detail.speed, skyCanvas.radius)
   loop.repaint()
-}) as EventListener)
+})
+
+globalContext.listen('speed', event => {
+  const { speed } = event.detail
+  minMsPerFrame = calculateMsPerFrame(speed, skyCanvas.radius)
+})
 
 // update geolocation when available
 navigator.geolocation.getCurrentPosition(({ coords, timestamp }) => {
@@ -142,6 +150,6 @@ navigator.geolocation.getCurrentPosition(({ coords, timestamp }) => {
 const speedSlider = document.getElementById('speed-control') as HTMLInputElement
 speedSlider.value = globalContext.speed.toString()
 speedSlider.addEventListener('input', () => {
-  globalContext.update({ speed: Number(speedSlider.value) ** 2 })
+  globalContext.speed = Number(speedSlider.value) ** 2
 })
 ;(window as any).context = globalContext
