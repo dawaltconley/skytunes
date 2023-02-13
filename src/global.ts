@@ -23,6 +23,21 @@ class GlobalContext extends EventTarget implements Settings {
     super()
     this.audio = new AudioContext({ latencyHint: 'interactive' })
     this.update = this.update.bind(this)
+
+    // dispatches 'update' and 'update.[property]' events whenever a property is changed
+    return new Proxy(this, {
+      get(target, property) {
+        const value = Reflect.get(target, property)
+        return typeof value === 'function' ? value.bind(target) : value
+      },
+      set(target, property, value) {
+        if (isMutableProperty(property.toString())) {
+          target.update({ [property.toString()]: value })
+          return true
+        }
+        return Reflect.set(target, property, value)
+      },
+    })
   }
 
   /**
@@ -60,20 +75,5 @@ class GlobalContext extends EventTarget implements Settings {
   }
 }
 
-/** dispatches 'update' and 'update.[property]' events whenever a property is changed */
-const globalContext = new Proxy(new GlobalContext(), {
-  get(target, property) {
-    const value = Reflect.get(target, property)
-    return typeof value === 'function' ? value.bind(target) : value
-  },
-  set(target, property, value) {
-    if (isMutableProperty(property.toString())) {
-      target.update({ [property.toString()]: value })
-      return true
-    }
-    return Reflect.set(target, property, value)
-  },
-})
-
-export default globalContext
+export default new GlobalContext()
 export type { GlobalContext }
