@@ -1,10 +1,11 @@
-interface Settings {
-  date: Date
-  long: number
-  lat: number
-  speed: number
-  audio: AudioContext
-}
+const mutableProperties = ['date', 'long', 'lat', 'speed', 'audio'] as const
+
+type Settings = Pick<GlobalContext, (typeof mutableProperties)[number]>
+
+const isMutableProperty = (
+  p: string
+): p is (typeof mutableProperties)[number] =>
+  mutableProperties.includes(p as (typeof mutableProperties)[number])
 
 interface UpdateEvent extends CustomEvent {
   detail: Partial<Settings>
@@ -66,15 +67,11 @@ const globalContext = new Proxy(new GlobalContext(), {
     return typeof value === 'function' ? value.bind(target) : value
   },
   set(target, property, value) {
-    // TODO could be more DRY by calling the update method
-    // IF I can verify that the properties being set are valid input (keyof Settings)
-    const set = Reflect.set(target, property, value)
-    const event: CustomEventInit = { detail: { [property.toString()]: value } }
-    target.dispatchEvent(new CustomEvent('update', event))
-    target.dispatchEvent(
-      new CustomEvent(`update.${property.toString()}`, event)
-    )
-    return set
+    if (isMutableProperty(property.toString())) {
+      target.update({ [property.toString()]: value })
+      return true
+    }
+    return Reflect.set(target, property, value)
   },
 })
 
