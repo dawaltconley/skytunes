@@ -52,8 +52,9 @@ class GlobalContext extends EventTarget implements Settings {
         ([p, value]) => value !== this[p as keyof Settings]
       )
     )
-    const event: CustomEventInit = { detail: updated }
+    if (Object.keys(updated).length === 0) return updated
 
+    const event: CustomEventInit = { detail: updated }
     Object.assign(this, updated)
     this.dispatchEvent(new CustomEvent('update', event))
     Object.entries(updated).forEach(([property]) => {
