@@ -68,9 +68,9 @@ class TimeAndPlace implements Interface.TimeAndPlace {
 
   update(options: Partial<{ date: Date; long: number; lat: number }>) {
     let { date, long, lat } = options
-    this.date = date ?? this.date
-    this.long = long ?? this.long
-    this.lat = lat ?? this.lat
+    if (date !== undefined) this.date = date
+    if (long !== undefined) this.long = long
+    if (lat !== undefined) this.lat = lat
   }
 }
 
