@@ -102,6 +102,7 @@ customElements.define('multi-input', MultiInput)
 const speedControl = document.getElementById('speed-control') as MultiInput
 speedControl.value = globalContext.speed.toString()
 
+let speedControlTimeout: number
 speedControl.addEventListener('input', event => {
   if (!speedControl.value) return
   let speed = Number(speedControl.value)
@@ -118,7 +119,10 @@ speedControl.addEventListener('input', event => {
       input.value = Math.sqrt(speed).toString()
     }
   })
-  globalContext.speed = speed
+  clearTimeout(speedControlTimeout)
+  speedControlTimeout = setTimeout(() => {
+    globalContext.speed = speed
+  }, 100)
 })
 
 export { updateDateDisplay }
