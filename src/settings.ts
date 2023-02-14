@@ -100,7 +100,17 @@ customElements.define('multi-input', MultiInput)
 
 // Speed slider
 const speedControl = document.getElementById('speed-control') as MultiInput
-speedControl.value = globalContext.speed.toString()
+
+const setSpeedControl = (speed: number): void => {
+  const step = speedControl.step.split('.')[1].length || 0
+  speedControl.value = speed.toFixed(step)
+  speedControl.inputs.forEach(input => {
+    if (input.type === 'range') {
+      input.value = Math.sqrt(speed).toString()
+    }
+  })
+}
+setSpeedControl(globalContext.speed)
 
 let speedControlTimeout: number
 speedControl.addEventListener('input', event => {
@@ -111,18 +121,15 @@ speedControl.addEventListener('input', event => {
   }
 
   const target = event.target as InputElement
-  const step = speedControl.step.split('.')[1].length || 0
   if (target.type === 'range') speed = speed ** 2
-  speedControl.value = speed.toFixed(step)
-  speedControl.inputs.forEach(input => {
-    if (input.type === 'range') {
-      input.value = Math.sqrt(speed).toString()
-    }
-  })
+  setSpeedControl(speed)
   clearTimeout(speedControlTimeout)
   speedControlTimeout = setTimeout(() => {
     globalContext.speed = speed
   }, 100)
+})
+globalContext.listen('speed', event => {
+  setSpeedControl(event.detail.speed)
 })
 
 export { updateDateDisplay }
