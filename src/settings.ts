@@ -122,6 +122,7 @@ class IconToggle extends HTMLElement {
 }
 customElements.define('icon-toggle', IconToggle)
 
+// type InputElement = HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement
 type InputElement = HTMLInputElement
 class MultiInput extends HTMLElement {
   inputs: InputElement[] = []
@@ -193,6 +194,39 @@ class MultiInput extends HTMLElement {
 }
 customElements.define('multi-input', MultiInput)
 
+// class NumberControl extends HTMLElement {
+//   elements: {
+//     label: HTMLLabelElement
+//     labelName: HTMLSpanElement
+//     field: HTMLInputElement
+//     slider: HTMLInputElement
+//   }
+//
+//   constructor() {
+//     super()
+//     this.elements = {
+//       label: document.createElement('label'),
+//       labelName: document.createElement('span'),
+//       field: document.createElement('input'),
+//       slider: document.createElement('input'),
+//     }
+//
+//     const e = this.elements
+//
+//     e.field.type = 'number'
+//     e.slider.type = 'range'
+//
+//     e.label.classList.add('flex')
+//     e.labelName.classList.add('mr-4')
+//     e.field.classList.add('mr-4')
+//
+//     e.label.append(e.labelName, e.field, e.slider)
+//     this.append(e.label)
+//   }
+//
+//   connectedCallback() {}
+// }
+
 const clamp = (n: number, min: number, max: number): number =>
   Math.max(Math.min(n, max), min)
 const toFixed = (n: number, d: number): string =>
@@ -206,6 +240,9 @@ const longitudeControl = document.getElementById(
 const latitudeControl = document.getElementById(
   'latitude-control'
 ) as MultiInput
+
+// longitudeControl.value = globalContext.long.toString()
+// latitudeControl.value = globalContext.lat.toString()
 
 longitudeControl.addEventListener('input', event => {
   const target = event.target as InputElement | null
