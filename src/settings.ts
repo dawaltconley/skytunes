@@ -98,6 +98,50 @@ class MultiInput extends HTMLElement {
 }
 customElements.define('multi-input', MultiInput)
 
+// Longitude / Latitude
+
+const longitudeControl = document.getElementById(
+  'longitude-control'
+) as MultiInput
+const latitudeControl = document.getElementById(
+  'latitude-control'
+) as MultiInput
+
+longitudeControl.addEventListener('input', event => {
+  const target = event.target as InputElement | null
+  if (!target?.value) return
+  const value = Number(longitudeControl.value)
+  if (
+    isNaN(value) ||
+    value < Number(longitudeControl.min) ||
+    value > Number(longitudeControl.max)
+  ) {
+    return
+  }
+  globalContext.long = value * (Math.PI / 180)
+})
+latitudeControl.addEventListener('input', event => {
+  const target = event.target as InputElement | null
+  if (!target?.value) return
+  const value = Number(latitudeControl.value)
+  if (
+    isNaN(value) ||
+    value < Number(latitudeControl.min) ||
+    value > Number(latitudeControl.max)
+  ) {
+    return
+  }
+  globalContext.lat = value * (Math.PI / 180)
+})
+
+globalContext.listen('update', event => {
+  const { long, lat } = event.detail
+  if (long !== undefined)
+    longitudeControl.value = (long * (180 / Math.PI)).toString()
+  if (lat !== undefined)
+    latitudeControl.value = (lat * (180 / Math.PI)).toString()
+})
+
 // Speed slider
 const speedControl = document.getElementById('speed-control') as MultiInput
 
