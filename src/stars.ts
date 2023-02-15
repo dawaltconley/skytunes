@@ -224,6 +224,7 @@ class Star implements Interface.Star {
 
   #hourAngle = new CacheItem(() => {
     let hourAngle = (Star.pov.lst - this.ra) % (2 * Math.PI)
+    if (hourAngle < 0) hourAngle += 2 * Math.PI
     if (hourAngle > Math.PI) hourAngle -= 2 * Math.PI
     return hourAngle
   }, [Star.pov.cache.lst])
