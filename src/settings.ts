@@ -10,6 +10,7 @@ const dateTimeInput = document.getElementById(
 
 const dateTimePicker = new TempusDominus(dateTimeElement)
 dateTimePicker.subscribe('change.td', ({ date }) => {
+  dateTimeInput.blur()
   if (date.getTime() !== Star.pov.date.getTime()) {
     globalContext.date = date
   }
@@ -23,6 +24,7 @@ dateTimePicker.subscribe('show.td', () => {
 })
 
 const updateDateDisplay = (date: Date): void => {
+  if (dateTimeInput === document.activeElement) return
   let datestr = dateTimePicker.dates.formatInput(DateTime.convert(date))
   dateTimeInput.value = datestr
 }
