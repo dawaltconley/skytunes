@@ -98,6 +98,8 @@ class MultiInput extends HTMLElement {
 }
 customElements.define('multi-input', MultiInput)
 
+const clamp = (n: number, min: number, max: number): number =>
+  Math.max(Math.min(n, max), min)
 const toFixed = (n: number, d: number): string =>
   n.toFixed(d).replace(/\.?0+$/, '')
 
@@ -126,7 +128,7 @@ longitudeControl.addEventListener('input', event => {
 latitudeControl.addEventListener('input', event => {
   const target = event.target as InputElement | null
   if (!target?.value) return
-  const value = Number(latitudeControl.value)
+  let value = Number(latitudeControl.value)
   if (
     isNaN(value) ||
     value < Number(latitudeControl.min) ||
@@ -134,6 +136,7 @@ latitudeControl.addEventListener('input', event => {
   ) {
     return
   }
+  value = clamp(value, -89.99999999, 89.99999999)
   globalContext.lat = value * (Math.PI / 180)
 })
 
