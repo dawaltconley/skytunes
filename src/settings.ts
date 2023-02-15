@@ -26,7 +26,7 @@ dateTimePicker.subscribe('show.td', () => {
 const updateDateDisplay = (date: Date): void => {
   if (dateTimeInput === document.activeElement) return
   let datestr = dateTimePicker.dates.formatInput(DateTime.convert(date))
-  dateTimeInput.value = datestr
+  if (dateTimeInput.value !== datestr) dateTimeInput.value = datestr
 }
 
 type InputElement = HTMLInputElement
