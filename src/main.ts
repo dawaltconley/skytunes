@@ -9,7 +9,7 @@ import { SkyCanvas, FrameLoop, calculateMsPerFrame } from './draw'
 import { updateDateDisplay } from './settings'
 
 let stars = new StarManager(
-  bsc.map(
+  ...bsc.map(
     (star: BSC) =>
       new Star(
         star['harvard_ref_#'],

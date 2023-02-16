@@ -344,9 +344,8 @@ class StarManager extends Array<Star> {
   #visible: Star[] = []
   #nextToRise: Star[] = []
 
-  constructor(stars: Star[]) {
-    super()
-    this.push(...stars) // maybe return only visible
+  constructor(...stars: Star[]) {
+    super(...stars)
     this.#ref = stars.reduce((indexed, star) => {
       indexed[star.ref] = star
       return indexed
