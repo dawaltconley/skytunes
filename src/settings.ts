@@ -29,6 +29,94 @@ const updateDateDisplay = (date: Date): void => {
   if (dateTimeInput.value !== datestr) dateTimeInput.value = datestr
 }
 
+class IconToggle extends HTMLElement {
+  private label = document.createElement('label')
+  readonly checkbox = document.createElement('input')
+  readonly icon = document.createElement('i')
+  private labelSpan?: HTMLSpanElement
+
+  get isOn(): boolean {
+    return this.hasAttribute('on')
+  }
+  set isOn(on: boolean) {
+    if (on) this.setAttribute('on', '')
+    else this.removeAttribute('on')
+  }
+  toggle(): void {
+    this.isOn = !this.isOn
+  }
+
+  constructor() {
+    super()
+    this.checkbox.setAttribute('type', 'checkbox')
+    this.label.append(this.icon, this.checkbox)
+    this.append(this.label)
+    this.label.style.cursor = 'pointer'
+    this.style.display = 'relative'
+    Object.assign(this.checkbox.style, {
+      position: 'absolute',
+      width: '0px',
+      height: '0px',
+      opacity: '0',
+    })
+    this.checkbox.addEventListener('change', () => {
+      this.isOn = this.checkbox.checked
+    })
+  }
+
+  private iconClasses: {
+    on?: string[]
+    off?: string[]
+  } = {}
+  private labelText: {
+    on?: string
+    off?: string
+  } = {}
+  connectedCallback() {
+    this.iconClasses = {
+      on: (this.getAttribute('on-icon') ?? '').split(' '),
+      off: (this.getAttribute('off-icon') ?? '').split(' '),
+    }
+    this.labelText = {
+      on: this.getAttribute('on-label') ?? undefined,
+      off: this.getAttribute('off-label') ?? undefined,
+    }
+    if (this.labelText.on || this.labelText.off) {
+      this.labelSpan = document.createElement('span')
+      this.label.prepend(this.labelSpan)
+    }
+
+    this.update(this.isOn)
+  }
+
+  update(state: boolean): void {
+    const remove = this.iconClasses[state ? 'off' : 'on'] ?? []
+    const add = this.iconClasses[state ? 'on' : 'off'] ?? []
+    this.icon.classList.remove(...remove)
+    this.icon.classList.add(...add)
+    if (this.labelSpan)
+      this.labelSpan.innerText =
+        (this.labelText[state ? 'on' : 'off'] ?? '') + ' '
+  }
+
+  static get observedAttributes() {
+    return ['on'] as const
+  }
+
+  attributeChangedCallback(
+    name: (typeof IconToggle.observedAttributes)[number],
+    oldValue: string,
+    newValue: string
+  ) {
+    if (oldValue === newValue) return
+    if (name === 'on') {
+      const state = newValue !== null
+      this.update(state)
+    }
+  }
+}
+customElements.define('icon-toggle', IconToggle)
+
 type InputElement = HTMLInputElement
 class MultiInput extends HTMLElement {
   inputs: InputElement[] = []
