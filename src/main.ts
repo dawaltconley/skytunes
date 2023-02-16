@@ -4,11 +4,11 @@ import { radianFromRa, radianFromDec } from './utilities'
 import './tailwind.css'
 import colors from 'tailwindcss/colors'
 import bsc from './bsc.json'
-import { Star, StarArray, noteFromAltitude } from './stars'
+import { Star, StarSynth, StarArray, noteFromAltitude } from './stars'
 import { SkyCanvas, FrameLoop, calculateMsPerFrame } from './draw'
 import { updateDateDisplay } from './settings'
 
-let stars = new StarArray(
+const stars = new StarArray(
   ...bsc.map(
     (star: BSC) =>
       new Star(
@@ -20,6 +20,10 @@ let stars = new StarArray(
   )
 )
 
+const synths = new Map<Star['ref'], StarSynth>(
+  stars.map(star => [star.ref, new StarSynth()])
+)
+
 const canvas = document.getElementById('canvas')!
 const skyCanvas = new SkyCanvas(canvas)
 const loop = new FrameLoop(60)
@@ -29,7 +33,7 @@ let minMsPerFrame = calculateMsPerFrame(globalContext.speed, skyCanvas.radius)
 let currentlyPlaying = new Map<
   Star['ref'],
   {
-    star: Star
+    synth: StarSynth
     frequencyData: Uint8Array
   }
 >()
@@ -38,13 +42,13 @@ let currentlyPlaying = new Map<
 loop.animate((elapsed, repaint) => {
   // highlight any playing stars
   skyCanvas.layers.shimmer.clear()
-  currentlyPlaying.forEach(({ star, frequencyData }) => {
-    if (star.synth.isPlaying) {
-      star.synth.analyser.getByteFrequencyData(frequencyData)
+  currentlyPlaying.forEach(({ synth, frequencyData }, starRef) => {
+    if (synth.isPlaying) {
+      synth.analyser.getByteFrequencyData(frequencyData)
       const dB = frequencyData[0]
       // TODO use getByteTimeDomainData as well to add pulse animation
       const radius = (dB * skyCanvas.radius * 0.008) / 256
-      skyCanvas.drawStar(star, {
+      skyCanvas.drawStar(stars.getStar(starRef), {
         layer: skyCanvas.layers.shimmer,
         color: colors.blue[100],
         radius,
@@ -61,7 +65,8 @@ loop.animate((elapsed, repaint) => {
     skyCanvas.layers.stars.clear()
     stars.eachVisible(star => {
       skyCanvas.drawStar(star)
-      if (star.synth.isQueued) return
+      const synth = synths.get(star.ref)
+      if (!synth || synth.isQueued) return
 
       // queue synth for upcoming transits
       let note: number, start: number
@@ -79,7 +84,7 @@ loop.animate((elapsed, repaint) => {
       }
 
       const stretch = 10 / globalContext.speed
-      star.synth.play(note, {
+      synth.play(note, {
         envelope: {
           attack: 0.05,
           decay: 0.15 * stretch,
@@ -89,15 +94,13 @@ loop.animate((elapsed, repaint) => {
         amp: 0.3,
         start,
       })
-      star.synth.addEventListener('started', () => {
+      synth.addEventListener('started', () => {
         currentlyPlaying.set(star.ref, {
-          star,
+          synth,
           frequencyData: new Uint8Array(1),
         })
       })
-      star.synth.addEventListener('ended', () =>
-        currentlyPlaying.delete(star.ref)
-      )
+      synth.addEventListener('ended', () => currentlyPlaying.delete(star.ref))
     })
     timeSinceStarFrame = 0
     updateDateDisplay(Star.pov.date)
@@ -127,9 +130,7 @@ globalContext.listen('update', event => {
   if (date ?? speed ?? false) {
     timeSinceStarFrame = 0
   }
-  stars.forEach(star => {
-    star.synth.cancel()
-  })
+  synths.forEach(synth => synth.cancel())
   currentlyPlaying.clear()
   loop.repaint()
 })

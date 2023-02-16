@@ -203,8 +203,6 @@ class Star implements Interface.Star {
   #sinDec: number
   #cosDec: number
 
-  synth: StarSynth
-
   constructor(
     harvardReferenceNumber: number,
     rightAscension: number,
@@ -218,8 +216,6 @@ class Star implements Interface.Star {
 
     this.#sinDec = Math.sin(declination)
     this.#cosDec = Math.cos(declination)
-
-    this.synth = new StarSynth()
   }
 
   #hourAngle = new CacheItem(() => {
@@ -483,4 +479,4 @@ class StarArray extends Array<Star> {
   }
 }
 
-export { Star, StarArray, TimeAndPlace, noteFromAltitude }
+export { Star, StarSynth, StarArray, TimeAndPlace, noteFromAltitude }
