@@ -1,5 +1,4 @@
 import type * as Interface from './types/skytunes'
-import globalContext from './global'
 import { CacheItem } from './cache'
 import { getLST } from './utilities'
 
@@ -82,7 +81,7 @@ interface Envelope {
 }
 
 class StarSynth extends EventTarget {
-  static context: AudioContext = globalContext.audio
+  readonly context: AudioContext
   readonly analyser: AnalyserNode
   #oscillator?: OscillatorNode
   #gain?: GainNode
@@ -92,9 +91,10 @@ class StarSynth extends EventTarget {
   #startedEvent = new CustomEvent('started', { detail: this })
   #endedEvent = new CustomEvent('ended', { detail: this })
 
-  constructor() {
+  constructor(context: AudioContext) {
     super()
-    this.analyser = new AnalyserNode(StarSynth.context, {
+    this.context = context
+    this.analyser = new AnalyserNode(context, {
       fftSize: 32,
     })
   }
@@ -127,7 +127,7 @@ class StarSynth extends EventTarget {
       start = 0,
     }: { envelope: Envelope; amp?: number; start?: number }
   ): void {
-    const { context } = StarSynth
+    const { context } = this
     const play = context.currentTime + start
     let { attack, decay, sustain, release } = envelope
     attack = play + attack
@@ -171,7 +171,7 @@ class StarSynth extends EventTarget {
   }
 
   cancel(when?: number) {
-    const { context } = StarSynth
+    const { context } = this
     const start = context.currentTime + (when ?? 0)
 
     clearTimeout(this.#queued)

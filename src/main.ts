@@ -21,7 +21,7 @@ const stars = new StarArray(
 )
 
 const synths = new Map<Star['ref'], StarSynth>(
-  stars.map(star => [star.ref, new StarSynth()])
+  stars.map(star => [star.ref, new StarSynth(globalContext.audio)])
 )
 
 const canvas = document.getElementById('canvas')!
