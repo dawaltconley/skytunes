@@ -276,4 +276,23 @@ globalContext.listen('speed', event => {
   setSpeedControl(event.detail.speed)
 })
 
+// Volume control
+const volumeControl = document.getElementById('volume-control') as IconToggle
+
+volumeControl.addEventListener('change', () => {
+  const newState = volumeControl.isOn
+  if (newState) {
+    if (globalContext.audio) {
+      globalContext.audio.resume()
+    } else {
+      globalContext.audio = new AudioContext({
+        latencyHint: 'interactive',
+      })
+    }
+  } else {
+    globalContext.audio?.suspend()
+  }
+  globalContext.update({ isMuted: !newState })
+})
+
 export { updateDateDisplay }

@@ -1,4 +1,11 @@
-const mutableProperties = ['date', 'long', 'lat', 'speed', 'audio'] as const
+const mutableProperties = [
+  'date',
+  'long',
+  'lat',
+  'speed',
+  'audio',
+  'isMuted',
+] as const
 
 type Settings = Pick<GlobalContext, (typeof mutableProperties)[number]>
 
@@ -15,13 +22,13 @@ class GlobalContext extends EventTarget implements Settings {
   date: Date = new Date()
   long: number = 0
   lat: number = 0
-
-  audio: AudioContext
   speed: number = 1
+
+  audio?: AudioContext
+  isMuted: boolean = false
 
   constructor() {
     super()
-    this.audio = new AudioContext({ latencyHint: 'interactive' })
     this.update = this.update.bind(this)
 
     // dispatches 'update' and 'update.[property]' events whenever a property is changed

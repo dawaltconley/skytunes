@@ -20,9 +20,22 @@ const stars = new StarArray(
   )
 )
 
-const synths = new Map<Star['ref'], StarSynth>(
-  stars.map(star => [star.ref, new StarSynth(globalContext.audio)])
-)
+const synths = new Map<Star['ref'], StarSynth>()
+const currentlyPlaying = new Map<
+  Star['ref'],
+  {
+    synth: StarSynth
+    frequencyData: Uint8Array
+  }
+>()
+
+globalContext.listen('audio', event => {
+  const { audio } = event.detail
+  if (audio)
+    stars.forEach(star => {
+      synths.set(star.ref, new StarSynth(audio))
+    })
+})
 
 const canvas = document.getElementById('canvas')!
 const skyCanvas = new SkyCanvas(canvas)
@@ -30,13 +43,6 @@ const loop = new FrameLoop(60)
 
 let timeSinceStarFrame = 0
 let minMsPerFrame = calculateMsPerFrame(globalContext.speed, skyCanvas.radius)
-let currentlyPlaying = new Map<
-  Star['ref'],
-  {
-    synth: StarSynth
-    frequencyData: Uint8Array
-  }
->()
 
 // main event loop
 loop.animate((elapsed, repaint) => {
@@ -59,31 +65,41 @@ loop.animate((elapsed, repaint) => {
   // draw all visible stars (only as often as needed)
   timeSinceStarFrame += elapsed
   if (repaint || timeSinceStarFrame > minMsPerFrame) {
+    const { audio, speed } = globalContext
+
     let last: number = Star.pov.date.getTime()
-    Star.pov.date = new Date(last + timeSinceStarFrame * globalContext.speed)
+    Star.pov.date = new Date(last + timeSinceStarFrame * speed)
 
     skyCanvas.layers.stars.clear()
     stars.eachVisible(star => {
       skyCanvas.drawStar(star)
+
       const synth = synths.get(star.ref)
-      if (!synth || synth.isQueued) return
+      if (
+        !synth ||
+        synth.isQueued ||
+        currentlyPlaying.has(star.ref) ||
+        audio?.state !== 'running' ||
+        globalContext.isMuted
+      )
+        return
 
       // queue synth for upcoming transits
       let note: number, start: number
       if (star.hourAngle < 0) {
         // high transit
         note = noteFromAltitude(star.highTransit, 40, 400)
-        start = star.timeToAngle(0) / globalContext.speed / 1000
+        start = star.timeToAngle(0) / speed / 1000
       } else if (star.lowTransit > 0) {
         // low transit
         note = noteFromAltitude(star.lowTransit, 40, 400)
-        start = star.timeToAngle(Math.PI) / globalContext.speed / 1000
+        start = star.timeToAngle(Math.PI) / speed / 1000
       } else {
         // no low transit
         return
       }
 
-      const stretch = 10 / globalContext.speed
+      const stretch = 10 / speed
       synth.play(note, {
         envelope: {
           attack: 0.05,
@@ -125,7 +141,7 @@ const any = (...args: any[]): boolean => args.some(arg => arg !== undefined)
 
 // listen for updates to the global context
 globalContext.listen('update', event => {
-  const { date, lat, long, speed } = event.detail
+  const { date, lat, long, speed, isMuted } = event.detail
   if (any(date, lat, long)) {
     Star.pov.update({ date, lat, long })
     stars.unsetVisible()
@@ -133,9 +149,11 @@ globalContext.listen('update', event => {
   if (any(date, speed)) {
     timeSinceStarFrame = 0
   }
-  if (any(date, lat, long, speed)) {
+  if (any(date, lat, long, speed, isMuted)) {
     synths.forEach(synth => synth.cancel())
     currentlyPlaying.clear()
+  }
+  if (any(date, lat, long, speed)) {
     loop.repaint()
   }
 })
