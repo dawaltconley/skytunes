@@ -4,11 +4,11 @@ import { radianFromRa, radianFromDec } from './utilities'
 import './tailwind.css'
 import colors from 'tailwindcss/colors'
 import bsc from './bsc.json'
-import { Star, StarManager, noteFromAltitude } from './stars'
+import { Star, StarArray, noteFromAltitude } from './stars'
 import { SkyCanvas, FrameLoop, calculateMsPerFrame } from './draw'
 import { updateDateDisplay } from './settings'
 
-let stars = new StarManager(
+let stars = new StarArray(
   ...bsc.map(
     (star: BSC) =>
       new Star(

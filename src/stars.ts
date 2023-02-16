@@ -335,7 +335,7 @@ class Star implements Interface.Star {
   }
 }
 
-class StarManager extends Array<Star> {
+class StarArray extends Array<Star> {
   static get pov() {
     return Star.pov
   }
@@ -352,7 +352,7 @@ class StarManager extends Array<Star> {
     }, [] as Star[])
     this.updateVisible()
 
-    Object.setPrototypeOf(this, StarManager.prototype)
+    Object.setPrototypeOf(this, StarArray.prototype)
   }
 
   getStar(ref: Star['ref']): Star {
@@ -378,7 +378,7 @@ class StarManager extends Array<Star> {
 
   /**
    * recalculates the internal list of visible stars
-   * this is slower than StarManager.unsetVisible, but recalculates visibility immediately
+   * this is slower than StarArray.unsetVisible, but recalculates visibility immediately
    */
   updateVisible() {
     this.eachStar(() => {})
@@ -428,7 +428,7 @@ class StarManager extends Array<Star> {
     this.#nextToRise.splice(insert, 0, star)
   }
 
-  /** mimics StarManager.forEach but recalculates the visibility of all stars while looping */
+  /** mimics StarArray.forEach but recalculates the visibility of all stars while looping */
   eachStar(...[callback, thisArg]: Parameters<Array<Star>['forEach']>) {
     this.#visible = []
     this.#nextToRise = []
@@ -483,4 +483,4 @@ class StarManager extends Array<Star> {
   }
 }
 
-export { Star, StarManager, TimeAndPlace, noteFromAltitude }
+export { Star, StarArray, TimeAndPlace, noteFromAltitude }
