@@ -211,8 +211,25 @@ const noteFromAltitude = (
   return min + scale * (max - min)
 }
 
+const ampFromMagnitude = (
+  magnitude: number,
+  options: {
+    min?: number
+    max?: number
+    brightest?: number
+    dimmest?: number
+  } = {}
+): number => {
+  const { min = 0, max = 1, brightest = 0, dimmest = 8 } = options
+  let range = dimmest - brightest
+  let scale = (dimmest - magnitude) / range
+  return min + scale * (max - min)
+}
+
 class Star implements Interface.Star {
   static pov = new TimeAndPlace()
+  static brightest = 0
+  static dimmest = 0
 
   readonly ref: number
   readonly ra: number
@@ -235,6 +252,9 @@ class Star implements Interface.Star {
 
     this.#sinDec = Math.sin(declination)
     this.#cosDec = Math.cos(declination)
+
+    if (magnitude < Star.brightest) Star.brightest = magnitude
+    if (magnitude > Star.dimmest) Star.dimmest = magnitude
   }
 
   #hourAngle = new CacheItem(() => {
@@ -498,4 +518,11 @@ class StarArray extends Array<Star> {
   }
 }
 
-export { Star, StarSynth, StarArray, TimeAndPlace, noteFromAltitude }
+export {
+  Star,
+  StarSynth,
+  StarArray,
+  TimeAndPlace,
+  noteFromAltitude,
+  ampFromMagnitude,
+}

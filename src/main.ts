@@ -4,7 +4,13 @@ import { radianFromRa, radianFromDec } from './utilities'
 import './tailwind.css'
 import colors from 'tailwindcss/colors'
 import bsc from './bsc.json'
-import { Star, StarSynth, StarArray, noteFromAltitude } from './stars'
+import {
+  Star,
+  StarSynth,
+  StarArray,
+  noteFromAltitude,
+  ampFromMagnitude,
+} from './stars'
 import { SkyCanvas, FrameLoop, calculateMsPerFrame } from './draw'
 import { updateDateDisplay } from './settings'
 
@@ -112,7 +118,11 @@ loop.animate((elapsed, repaint) => {
           sustain: 0.66,
           release: 5 * stretch,
         },
-        amp: 0.3,
+        amp: ampFromMagnitude(star.mag, {
+          max: 0.4,
+          brightest: Star.brightest,
+          dimmest: Star.dimmest,
+        }),
         start,
       })
       synth.addEventListener('started', () => {
