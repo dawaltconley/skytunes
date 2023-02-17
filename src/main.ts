@@ -120,19 +120,24 @@ const observer = new ResizeObserver(() => {
 })
 observer.observe(skyCanvas.container)
 
+/** @return true if any of the arguments are not undefined */
+const any = (...args: any[]): boolean => args.some(arg => arg !== undefined)
+
 // listen for updates to the global context
 globalContext.listen('update', event => {
   const { date, lat, long, speed } = event.detail
-  if (date ?? lat ?? long ?? false) {
-    Star.pov.update(event.detail)
+  if (any(date, lat, long)) {
+    Star.pov.update({ date, lat, long })
     stars.unsetVisible()
   }
-  if (date ?? speed ?? false) {
+  if (any(date, speed)) {
     timeSinceStarFrame = 0
   }
-  synths.forEach(synth => synth.cancel())
-  currentlyPlaying.clear()
-  loop.repaint()
+  if (any(date, lat, long, speed)) {
+    synths.forEach(synth => synth.cancel())
+    currentlyPlaying.clear()
+    loop.repaint()
+  }
 })
 
 globalContext.listen('speed', event => {
