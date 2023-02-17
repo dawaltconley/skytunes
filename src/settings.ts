@@ -83,7 +83,7 @@ class IconToggle extends HTMLElement {
     }
     if (this.labelText.on || this.labelText.off) {
       this.labelSpan = document.createElement('span')
-      this.label.prepend(this.labelSpan)
+      this.label.append(this.labelSpan)
     }
 
     this.update(this.isOn)
@@ -96,7 +96,7 @@ class IconToggle extends HTMLElement {
     this.icon.classList.add(...add)
     if (this.labelSpan)
       this.labelSpan.innerText =
-        (this.labelText[state ? 'on' : 'off'] ?? '') + ' '
+        ' ' + (this.labelText[state ? 'on' : 'off'] ?? '')
   }
 
   static get observedAttributes() {
