@@ -86,6 +86,7 @@ interface StarSynthOptions {
    * the longer the buffer, the more AudioNodes connected at any given time
    */
   queueBuffer?: number
+  output?: AudioNode
 }
 
 class StarSynth extends EventTarget {
@@ -96,15 +97,19 @@ class StarSynth extends EventTarget {
   #analyser?: AnalyserNode
   #queued?: number
   #isPlaying: boolean = false
+  output: AudioNode
 
   #startedEvent = new CustomEvent('started', { detail: this })
   #endedEvent = new CustomEvent('ended', { detail: this })
 
-  constructor(context: AudioContext, options: StarSynthOptions = {}) {
-    const { queueBuffer = 1 } = options
+  constructor(
+    context: AudioContext,
+    { queueBuffer = 1, output = context.destination }: StarSynthOptions = {}
+  ) {
     super()
     this.context = context
     this.queueBuffer = queueBuffer
+    this.output = output
   }
 
   get oscillator(): OscillatorNode | undefined {
@@ -183,7 +188,7 @@ class StarSynth extends EventTarget {
       this.#oscillator
         .connect(this.#gain)
         .connect(this.#analyser)
-        .connect(context.destination)
+        .connect(this.output)
       this.#oscillator.start(play)
       this.#oscillator.stop(release + 0.1)
     }, Math.floor((start - this.queueBuffer) * 1000))

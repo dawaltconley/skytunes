@@ -37,15 +37,19 @@ const currentlyPlaying = new Map<
 
 globalContext.listen('audio', event => {
   const { audio } = event.detail
-  if (audio)
+  if (audio) {
+    const compressor = new DynamicsCompressorNode(audio)
+    compressor.connect(audio.destination)
     stars.forEach(star => {
       synths.set(
         star.ref,
         new StarSynth(audio, {
           queueBuffer: 0.2,
+          output: compressor,
         })
       )
     })
+  }
 })
 
 const canvas = document.getElementById('canvas')!
