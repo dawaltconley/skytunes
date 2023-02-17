@@ -80,9 +80,18 @@ interface Envelope {
   release: number
 }
 
+interface StarSynthOptions {
+  /**
+   * maximum seconds to schedule a new AudioNode ahead of play time
+   * the longer the buffer, the more AudioNodes connected at any given time
+   */
+  queueBuffer?: number
+}
+
 class StarSynth extends EventTarget {
   readonly context: AudioContext
   readonly analyser: AnalyserNode
+  readonly queueBuffer: number
   #oscillator?: OscillatorNode
   #gain?: GainNode
   #queued?: number
@@ -91,12 +100,15 @@ class StarSynth extends EventTarget {
   #startedEvent = new CustomEvent('started', { detail: this })
   #endedEvent = new CustomEvent('ended', { detail: this })
 
-  constructor(context: AudioContext) {
+  constructor(context: AudioContext, options: StarSynthOptions = {}) {
+    const { queueBuffer = 1 } = options
     super()
     this.context = context
     this.analyser = new AnalyserNode(context, {
       fftSize: 32,
     })
+
+    this.queueBuffer = queueBuffer
   }
 
   get oscillator(): OscillatorNode | undefined {
@@ -170,7 +182,7 @@ class StarSynth extends EventTarget {
         .connect(context.destination)
       this.#oscillator.start(play)
       this.#oscillator.stop(release + 0.1)
-    }, Math.floor((start - 1) * 1000))
+    }, Math.floor((start - this.queueBuffer) * 1000))
   }
 
   cancel(when?: number) {

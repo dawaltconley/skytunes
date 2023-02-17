@@ -33,7 +33,12 @@ globalContext.listen('audio', event => {
   const { audio } = event.detail
   if (audio)
     stars.forEach(star => {
-      synths.set(star.ref, new StarSynth(audio))
+      synths.set(
+        star.ref,
+        new StarSynth(audio, {
+          queueBuffer: 0.2,
+        })
+      )
     })
 })
 
