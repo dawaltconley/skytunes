@@ -73,6 +73,11 @@ class IconToggle extends HTMLElement {
     off?: string
   } = {}
   connectedCallback() {
+    const inputId = this.getAttribute('input-id')
+    if (inputId) this.checkbox.id = inputId
+    this.label.setAttribute('class', this.getAttribute('class') ?? '')
+    this.removeAttribute('class')
+
     this.iconClasses = {
       on: (this.getAttribute('on-icon') ?? '').split(' '),
       off: (this.getAttribute('off-icon') ?? '').split(' '),
