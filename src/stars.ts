@@ -90,10 +90,10 @@ interface StarSynthOptions {
 
 class StarSynth extends EventTarget {
   readonly context: AudioContext
-  readonly analyser: AnalyserNode
   readonly queueBuffer: number
   #oscillator?: OscillatorNode
   #gain?: GainNode
+  #analyser?: AnalyserNode
   #queued?: number
   #isPlaying: boolean = false
 
@@ -104,10 +104,6 @@ class StarSynth extends EventTarget {
     const { queueBuffer = 1 } = options
     super()
     this.context = context
-    this.analyser = new AnalyserNode(context, {
-      fftSize: 32,
-    })
-
     this.queueBuffer = queueBuffer
   }
 
@@ -117,6 +113,10 @@ class StarSynth extends EventTarget {
 
   get gain(): GainNode | undefined {
     return this.#gain
+  }
+
+  get analyser(): AnalyserNode | undefined {
+    return this.#analyser
   }
 
   get isQueued(): boolean {
@@ -159,6 +159,9 @@ class StarSynth extends EventTarget {
         .linearRampToValueAtTime(amp, attack)
         .linearRampToValueAtTime(amp * sustain, decay)
         .linearRampToValueAtTime(0, release)
+      this.#analyser = new AnalyserNode(context, {
+        fftSize: 32,
+      })
 
       // on started
       this.#queued = setTimeout(() => {
@@ -174,11 +177,12 @@ class StarSynth extends EventTarget {
         // remove references to prevent subsequent calls to the cancelled objects
         this.#oscillator = undefined
         this.#gain = undefined
+        this.#analyser = undefined
       })
 
       this.#oscillator
         .connect(this.#gain)
-        .connect(this.analyser)
+        .connect(this.#analyser)
         .connect(context.destination)
       this.#oscillator.start(play)
       this.#oscillator.stop(release + 0.1)

@@ -54,7 +54,7 @@ loop.animate((elapsed, repaint) => {
   // highlight any playing stars
   skyCanvas.layers.shimmer.clear()
   currentlyPlaying.forEach(({ synth, frequencyData }, starRef) => {
-    if (synth.isPlaying) {
+    if (synth.isPlaying && synth.analyser) {
       synth.analyser.getByteFrequencyData(frequencyData)
       const dB = frequencyData[0]
       // TODO use getByteTimeDomainData as well to add pulse animation
