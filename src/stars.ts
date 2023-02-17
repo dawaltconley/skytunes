@@ -135,6 +135,9 @@ class StarSynth extends EventTarget {
     release = decay + release
 
     this.#queued = setTimeout(() => {
+      // skip playing if missed queue (can happen when changing speed)
+      if (play < context.currentTime) return this.cancel()
+
       this.#oscillator = new OscillatorNode(context, {
         frequency: note,
       })
