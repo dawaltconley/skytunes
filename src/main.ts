@@ -3,7 +3,6 @@ import globalContext from './global'
 import { radianFromRa, radianFromDec } from './utilities'
 import './tailwind.css'
 import colors from 'tailwindcss/colors'
-import bsc from './bsc.json'
 import {
   Star,
   StarSynth,
@@ -14,17 +13,22 @@ import {
 import { SkyCanvas, FrameLoop, calculateMsPerFrame } from './draw'
 import { updateDateDisplay } from './settings'
 
-const stars = new StarArray(
-  ...bsc.map(
-    (star: BSC) =>
-      new Star(
-        star['harvard_ref_#'],
-        radianFromRa(star.RA),
-        radianFromDec(star.DEC),
-        Number(star.MAG)
-      )
+let stars = new StarArray()
+
+import('./bsc.json').then(data => {
+  const bsc = data.default
+  stars = new StarArray(
+    ...bsc.map(
+      (star: BSC) =>
+        new Star(
+          star['harvard_ref_#'],
+          radianFromRa(star.RA),
+          radianFromDec(star.DEC),
+          Number(star.MAG)
+        )
+    )
   )
-)
+})
 
 const synths = new Map<Star['ref'], StarSynth>()
 const currentlyPlaying = new Map<
