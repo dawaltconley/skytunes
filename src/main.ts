@@ -120,8 +120,8 @@ loop.animate((elapsed, repaint) => {
         },
         amp: ampFromMagnitude(star.mag, {
           max: 0.4,
-          brightest: Star.brightest,
-          dimmest: Star.dimmest,
+          brightest: stars.brightest.mag,
+          dimmest: stars.dimmest.mag,
         }),
         start,
       })

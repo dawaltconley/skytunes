@@ -228,8 +228,6 @@ const ampFromMagnitude = (
 
 class Star implements Interface.Star {
   static pov = new TimeAndPlace()
-  static brightest = 0
-  static dimmest = 0
 
   readonly ref: number
   readonly ra: number
@@ -252,9 +250,6 @@ class Star implements Interface.Star {
 
     this.#sinDec = Math.sin(declination)
     this.#cosDec = Math.cos(declination)
-
-    if (magnitude < Star.brightest) Star.brightest = magnitude
-    if (magnitude > Star.dimmest) Star.dimmest = magnitude
   }
 
   #hourAngle = new CacheItem(() => {
@@ -375,16 +370,21 @@ class StarArray extends Array<Star> {
     return Star.pov
   }
 
+  readonly brightest: Star
+  readonly dimmest: Star
   #ref: Star[] = []
   #visible: Star[] = []
   #nextToRise: Star[] = []
 
   constructor(...stars: Star[]) {
     super(...stars)
-    this.#ref = stars.reduce((indexed, star) => {
-      indexed[star.ref] = star
-      return indexed
-    }, [] as Star[])
+    this.brightest = stars[0]
+    this.dimmest = stars[0]
+    for (const star of stars) {
+      this.#ref[star.ref] = star
+      if (star.mag < this.brightest.mag) this.brightest = star
+      if (star.mag > this.dimmest.mag) this.dimmest = star
+    }
     this.updateVisible()
 
     Object.setPrototypeOf(this, StarArray.prototype)
