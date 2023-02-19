@@ -27,6 +27,8 @@
   },
   "dependencies": {
     "@eonasdan/tempus-dominus": "^6.2.10",
+    "@fortawesome/fontawesome-svg-core": "^6.3.0",
+    "@fortawesome/pro-solid-svg-icons": "^6.3.0",
     "@popperjs/core": "^2.11.6"
   }
 }

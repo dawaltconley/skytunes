@@ -1,5 +1,26 @@
 import type { Star } from './stars'
 import colors from 'tailwindcss/colors'
+// import { faSpinner } from '@fortawesome/pro-solid-svg-icons'
+import { faSpinner } from '@fortawesome/pro-solid-svg-icons/faSpinner'
+
+const foo = faSpinner.icon[4]
+const faSpinnerPath = new Path2D(faSpinner.icon[4])
+;(window as any).faSpinnerPath = faSpinnerPath
+const drawFaSpinner = (
+  icon: typeof faSpinner,
+  path: Path2D,
+  skyCanvas: SkyCanvas
+): void => {
+  const { canvas, context } = skyCanvas.layers.background
+  const { width, height } = canvas
+  context.save()
+  context.translate(width / 2 - icon.icon[0] / 2, height / 2 - icon.icon[1] / 2)
+  context.fillStyle = 'white'
+  context.strokeStyle = 'white'
+  context.fill(path)
+  context.stroke(path)
+  context.restore()
+}
 
 class CanvasLayer {
   canvas: HTMLCanvasElement
@@ -87,6 +108,22 @@ class SkyCanvas {
       context.lineTo(center.x, height - skyTop)
       context.strokeStyle = 'rgba(255, 255, 255, 0.2)'
       context.stroke()
+    })
+    return this
+  }
+
+  drawLoading(): SkyCanvas {
+    let { canvas, context } = this.layers.background
+    let { center, radius } = this
+    const path = new Path2D(faSpinnerPathData)
+    requestAnimationFrame(() => {
+      context.save()
+      context.translate(p1x, 0)
+      context.fillStyle = 'white'
+      context.strokeStyle = 'white'
+      context.fill(path)
+      context.stroke(path)
+      context.restore()
     })
     return this
   }

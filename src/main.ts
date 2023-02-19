@@ -154,6 +154,7 @@ const observer = new ResizeObserver(() => {
   resizeTimeout = setTimeout(() => {
     skyCanvas.setCanvasSize()
     skyCanvas.drawBackground()
+    // skyCanvas.drawLoading()
     loop.repaint()
   }, 100)
 })
