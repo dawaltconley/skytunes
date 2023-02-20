@@ -138,14 +138,21 @@ export class StarSynth extends EventTarget {
   }
 }
 
+const highNote = Math.log2(Math.PI / 2)
 export const noteFromAltitude = (
   altitude: number,
   min: number,
   max: number,
 ): number => {
-  let scale = 1 - Math.abs(1 - altitude / (Math.PI / 2))
+  let scale = 1 - Math.abs(1 - Math.log2(altitude) / highNote)
+  console.log(scale)
   return min + scale * (max - min)
 }
+
+// 40 hz = 1
+// 80 hz = 2
+// 160 hz = 3
+// 320 hz = 4
 
 export const ampFromMagnitude = (
   magnitude: number,
