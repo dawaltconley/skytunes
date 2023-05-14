@@ -84,6 +84,7 @@ loop.animate((elapsed, repaint) => {
   // draw all visible stars (only as often as needed)
   timeSinceStarFrame += elapsed
   if (repaint || timeSinceStarFrame > minMsPerFrame) {
+    console.time('event loop') // usually between 13-16ms
     const { audio, speed } = globalContext
 
     let last: number = Star.pov.date.getTime()
@@ -143,6 +144,7 @@ loop.animate((elapsed, repaint) => {
     })
     timeSinceStarFrame = 0
     updateDateDisplay(Star.pov.date)
+    console.timeEnd('event loop')
   }
 })
 loop.repaint()
