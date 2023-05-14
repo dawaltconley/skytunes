@@ -1,5 +1,4 @@
 import type * as Interface from './types/skytunes'
-import { CacheItem } from './cache'
 import { getLST } from './utilities'
 
 class TimeAndPlace implements Interface.TimeAndPlace {
@@ -13,57 +12,56 @@ class TimeAndPlace implements Interface.TimeAndPlace {
     this.lat = latitude
   }
 
-  // should be start / end date
-  #date = new CacheItem(() => new Date())
+  isEqual(other: TimeAndPlace): boolean {
+    return (
+      this.date.getTime() === other.date.getTime() &&
+      this.long === other.long &&
+      this.lat === other.lat
+    )
+  }
+
+  #date?: Date
   get date(): Date {
-    return this.#date.get()
+    return this.#date ?? new Date()
   }
   set date(d: Date) {
-    this.#date.set(d)
+    this.#lst = undefined
+    this.#date = d
   }
 
-  #long = new CacheItem(() => 0)
+  #long?: number
   get long(): number {
-    return this.#long.get()
+    return this.#long ?? 0
   }
   set long(n: number) {
-    this.#long.set(n)
+    this.#lst = undefined
+    this.#long = n
   }
 
-  #lat = new CacheItem(() => 0)
+  #lat?: number
   get lat(): number {
-    return this.#lat.get()
+    return this.#lat ?? 0
   }
   set lat(n: number) {
-    this.#lat.set(n)
+    this.#sinLat = undefined
+    this.#cosLat = undefined
+    this.#lat = n
   }
 
-  #lst = new CacheItem(
-    () => getLST(this.date, this.long),
-    [this.#date, this.#long]
-  )
+  #lst?: number
   get lst(): number {
-    return this.#lst.get()
+    return this.#lst ?? (this.#lst = getLST(this.date, this.long))
   }
 
-  #sinLat = new CacheItem(() => Math.sin(this.lat), [this.#lat])
-  get sinLat() {
-    return this.#sinLat.get()
+  #sinLat?: number
+  get sinLat(): number {
+    return this.#sinLat ?? (this.#sinLat = Math.sin(this.lat))
   }
 
-  #cosLat = new CacheItem(() => Math.cos(this.lat), [this.#lat])
-  get cosLat() {
-    return this.#cosLat.get()
+  #cosLat?: number
+  get cosLat(): number {
+    return this.#cosLat ?? (this.#cosLat = Math.cos(this.lat))
   }
-
-  cache = Object.freeze({
-    date: this.#date,
-    long: this.#long,
-    lat: this.#lat,
-    lst: this.#lst,
-    sinLat: this.#sinLat,
-    cosLat: this.#cosLat,
-  })
 
   update(options: Partial<{ date: Date; long: number; lat: number }>) {
     let { date, long, lat } = options
@@ -257,99 +255,85 @@ class Star implements Interface.Star {
     this.#cosDec = Math.cos(declination)
   }
 
-  #hourAngle = new CacheItem(() => {
-    let hourAngle = (Star.pov.lst - this.ra) % (2 * Math.PI)
+  getHourAngle(pov: TimeAndPlace): number {
+    let hourAngle = (pov.lst - this.ra) % (2 * Math.PI)
     if (hourAngle < 0) hourAngle += 2 * Math.PI
     if (hourAngle > Math.PI) hourAngle -= 2 * Math.PI
     return hourAngle
-  }, [Star.pov.cache.lst])
+  }
   get hourAngle(): number {
-    return this.#hourAngle.get()
+    return this.getHourAngle(Star.pov)
   }
 
-  #altitude = new CacheItem(
-    () =>
-      Math.asin(
-        this.#sinDec * Star.pov.sinLat +
-          this.#cosDec * Star.pov.cosLat * Math.cos(this.hourAngle)
-      ),
-    [this.#hourAngle, Star.pov.cache.sinLat, Star.pov.cache.cosLat]
-  )
-  get altitude(): number {
-    return this.#altitude.get()
-  }
-
-  #azimuth = new CacheItem(() => {
-    let azimuth = Math.acos(
-      (this.#sinDec - Math.sin(this.altitude) * Star.pov.sinLat) /
-        (Math.cos(this.altitude) * Star.pov.cosLat)
+  getAltitude(pov: TimeAndPlace): number {
+    const hourAngle = this.getHourAngle(pov)
+    return Math.asin(
+      this.#sinDec * pov.sinLat +
+        this.#cosDec * pov.cosLat * Math.cos(hourAngle)
     )
-    if (this.hourAngle > 0) azimuth = Math.PI * 2 - azimuth
+  }
+  get altitude(): number {
+    return this.getAltitude(Star.pov)
+  }
+
+  getAzimuth(pov: TimeAndPlace): number {
+    const hourAngle = this.getHourAngle(pov)
+    const altitude = this.getAltitude(pov)
+    let azimuth = Math.acos(
+      (this.#sinDec - Math.sin(altitude) * pov.sinLat) /
+        (Math.cos(altitude) * pov.cosLat)
+    )
+    if (hourAngle > 0) azimuth = Math.PI * 2 - azimuth
     return azimuth
-  }, [
-    this.#hourAngle,
-    this.#altitude,
-    Star.pov.cache.sinLat,
-    Star.pov.cache.cosLat,
-  ])
+  }
   get azimuth(): number {
-    return this.#azimuth.get()
+    return this.getAzimuth(Star.pov)
   }
 
-  #theta = new CacheItem(() => Math.PI / 2 - this.azimuth, [this.#azimuth])
-  get theta() {
-    return this.#theta.get()
+  getTheta(pov: TimeAndPlace): number {
+    return Math.PI / 2 - this.getAzimuth(pov)
+  }
+  get theta(): number {
+    return this.getTheta(Star.pov)
   }
 
-  #rho = new CacheItem(() => Math.cos(this.altitude), [this.#altitude])
-  get rho() {
-    return this.#rho.get()
+  getRho(pov: TimeAndPlace): number {
+    return Math.cos(this.getAltitude(pov))
+  }
+  get rho(): number {
+    return this.getRho(Star.pov)
   }
 
-  #highTransit = new CacheItem(
-    () => Math.asin(Math.cos(this.dec - Star.pov.lat)),
-    [Star.pov.cache.lat]
-  )
-  get highTransit() {
-    return this.#highTransit.get()
+  getHighTransit(pov: TimeAndPlace): number {
+    return Math.asin(Math.cos(this.dec - pov.lat))
+  }
+  get highTransit(): number {
+    return this.getHighTransit(Star.pov)
   }
 
-  #lowTransit = new CacheItem(
-    () => Math.asin(-Math.cos(this.dec + Star.pov.lat)),
-    [Star.pov.cache.lat]
-  )
-  get lowTransit() {
-    return this.#lowTransit.get()
+  getLowTransit(pov: TimeAndPlace): number {
+    return Math.asin(-Math.cos(this.dec + pov.lat))
+  }
+  get lowTransit(): number {
+    return this.getLowTransit(Star.pov)
   }
 
-  #horizonTransit = new CacheItem(
-    () => Math.PI - Math.acos(Math.tan(this.dec) * Math.tan(Star.pov.lat)),
-    [Star.pov.cache.lat]
-  )
-  get horizonTransit() {
-    return this.#horizonTransit.get()
+  getHorizonTransit(pov: TimeAndPlace): number {
+    return Math.PI - Math.acos(Math.tan(this.dec) * Math.tan(pov.lat))
+  }
+  get horizonTransit(): number {
+    return this.getHorizonTransit(Star.pov)
   }
 
-  #angleToRise = new CacheItem(() => {
-    let ha = this.hourAngle
+  getAngleToRise(pov: TimeAndPlace): number {
+    const horizonTransit = this.getHorizonTransit(pov)
+    let ha = this.getHourAngle(pov)
     if (ha > 0) ha = Math.PI * 2 - ha
-    return Math.abs(ha) - Math.abs(this.horizonTransit)
-  }, [this.#hourAngle, this.#horizonTransit])
-  get angleToRise() {
-    return this.#angleToRise.get()
+    return Math.abs(ha) - Math.abs(horizonTransit)
   }
-
-  cache = Object.freeze({
-    hourAngle: this.#hourAngle,
-    altitude: this.#altitude,
-    azimuth: this.#azimuth,
-    theta: this.#theta,
-    rho: this.#rho,
-    highTransit: this.#highTransit,
-    lowTransit: this.#lowTransit,
-    horizonTransit: this.#horizonTransit,
-    angleToRise: this.#angleToRise,
-  })
+  get angleToRise(): number {
+    return this.getAngleToRise(Star.pov)
+  }
 
   timeToAngle(target: number): number {
     return (target - this.hourAngle) * (43200000 / Math.PI)
