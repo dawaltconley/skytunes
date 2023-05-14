@@ -63,6 +63,8 @@ const loop = new FrameLoop(60)
 let timeSinceStarFrame = 0
 let minMsPerFrame = calculateMsPerFrame(globalContext.speed, skyCanvas.radius)
 
+let loops = 0
+
 // main event loop
 loop.animate((elapsed, repaint) => {
   // highlight any playing stars
@@ -84,7 +86,8 @@ loop.animate((elapsed, repaint) => {
   // draw all visible stars (only as often as needed)
   timeSinceStarFrame += elapsed
   if (repaint || timeSinceStarFrame > minMsPerFrame) {
-    console.time('event loop') // usually between 13-16ms
+    // console.time('event loop') // usually between 13-16ms
+    performance.mark('loop start')
     const { audio, speed } = globalContext
 
     let last: number = Star.pov.date.getTime()
@@ -144,7 +147,19 @@ loop.animate((elapsed, repaint) => {
     })
     timeSinceStarFrame = 0
     updateDateDisplay(Star.pov.date)
-    console.timeEnd('event loop')
+    // console.timeEnd('event loop')
+    performance.mark('loop end')
+    performance.measure('loop', 'loop start', 'loop end')
+
+    loops++
+    if (loops > 300) {
+      loops = 0
+      const entries = performance.getEntriesByName('loop')
+      console.log(
+        entries.reduce((sum, e) => sum + e.duration, 0) / entries.length
+      )
+      performance.clearMeasures('loop')
+    }
   }
 })
 loop.repaint()
