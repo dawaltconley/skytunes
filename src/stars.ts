@@ -268,24 +268,27 @@ class Star implements Interface.Star {
     if (hourAngle > Math.PI) hourAngle -= 2 * Math.PI
     return hourAngle
   }
-  get hourAngle(): number {
-    return this.getHourAngle(Star.pov)
-  }
+  // get hourAngle(): number {
+  //   return this.getHourAngle(Star.pov)
+  // }
+  hourAngle = this.getHourAngle(Star.pov)
 
-  getAltitude(pov: TimeAndPlace): number {
-    const hourAngle = this.getHourAngle(pov)
+  getAltitude(pov: TimeAndPlace, hourAngle = this.getHourAngle(pov)): number {
     return Math.asin(
       this.#sinDec * pov.sinLat +
         this.#cosDec * pov.cosLat * Math.cos(hourAngle)
     )
   }
-  get altitude(): number {
-    return this.getAltitude(Star.pov)
-  }
+  // get altitude(): number {
+  //   return this.getAltitude(Star.pov)
+  // }
+  altitude = this.getAltitude(Star.pov)
 
-  getAzimuth(pov: TimeAndPlace): number {
-    const hourAngle = this.getHourAngle(pov)
-    const altitude = this.getAltitude(pov)
+  getAzimuth(
+    pov: TimeAndPlace,
+    hourAngle = this.getHourAngle(pov),
+    altitude = this.getAltitude(pov)
+  ): number {
     let azimuth = Math.acos(
       (this.#sinDec - Math.sin(altitude) * pov.sinLat) /
         (Math.cos(altitude) * pov.cosLat)
@@ -293,57 +296,103 @@ class Star implements Interface.Star {
     if (hourAngle > 0) azimuth = Math.PI * 2 - azimuth
     return azimuth
   }
-  get azimuth(): number {
-    return this.getAzimuth(Star.pov)
-  }
+  // get azimuth(): number {
+  //   return this.getAzimuth(Star.pov)
+  // }
+  azimuth = this.getAzimuth(Star.pov)
 
-  getTheta(pov: TimeAndPlace): number {
-    return Math.PI / 2 - this.getAzimuth(pov)
+  getTheta(pov: TimeAndPlace, azimuth = this.getAzimuth(pov)): number {
+    return Math.PI / 2 - azimuth
   }
-  get theta(): number {
-    return this.getTheta(Star.pov)
-  }
+  // get theta(): number {
+  //   return this.getTheta(Star.pov)
+  // }
+  theta = this.getTheta(Star.pov)
 
-  getRho(pov: TimeAndPlace): number {
-    return Math.cos(this.getAltitude(pov))
+  getRho(pov: TimeAndPlace, altitude = this.getAltitude(pov)): number {
+    return Math.cos(altitude)
   }
-  get rho(): number {
-    return this.getRho(Star.pov)
-  }
+  // get rho(): number {
+  //   return this.getRho(Star.pov)
+  // }
+  rho = this.getRho(Star.pov)
 
-  getHighTransit(pov: TimeAndPlace): number {
-    return Math.asin(Math.cos(this.dec - pov.lat))
+  getHighTransit({ lat }: TimeAndPlace): number {
+    return Math.asin(Math.cos(this.dec - lat))
   }
-  get highTransit(): number {
-    return this.getHighTransit(Star.pov)
-  }
+  // get highTransit(): number {
+  //   return this.getHighTransit(Star.pov)
+  // }
+  highTransit = this.getHighTransit(Star.pov)
 
-  getLowTransit(pov: TimeAndPlace): number {
-    return Math.asin(-Math.cos(this.dec + pov.lat))
+  getLowTransit({ lat }: TimeAndPlace): number {
+    return Math.asin(-Math.cos(this.dec + lat))
   }
-  get lowTransit(): number {
-    return this.getLowTransit(Star.pov)
-  }
+  // get lowTransit(): number {
+  //   return this.getLowTransit(Star.pov)
+  // }
+  lowTransit = this.getLowTransit(Star.pov)
 
-  getHorizonTransit(pov: TimeAndPlace): number {
-    return Math.PI - Math.acos(Math.tan(this.dec) * Math.tan(pov.lat))
+  getHorizonTransit({ lat }: TimeAndPlace): number {
+    return Math.PI - Math.acos(Math.tan(this.dec) * Math.tan(lat))
   }
-  get horizonTransit(): number {
-    return this.getHorizonTransit(Star.pov)
-  }
+  // get horizonTransit(): number {
+  //   return this.getHorizonTransit(Star.pov)
+  // }
+  horizonTransit = this.getHorizonTransit(Star.pov)
 
-  getAngleToRise(pov: TimeAndPlace): number {
-    const horizonTransit = this.getHorizonTransit(pov)
-    let ha = this.getHourAngle(pov)
+  getAngleToRise(
+    pov: TimeAndPlace,
+    horizonTransit = this.getHorizonTransit(pov),
+    hourAngle = this.getHourAngle(pov)
+  ): number {
+    let ha = hourAngle
     if (ha > 0) ha = Math.PI * 2 - ha
     return Math.abs(ha) - Math.abs(horizonTransit)
   }
-  get angleToRise(): number {
-    return this.getAngleToRise(Star.pov)
-  }
+  // get angleToRise(): number {
+  //   return this.getAngleToRise(Star.pov)
+  // }
+  angleToRise = this.getAngleToRise(Star.pov)
 
   timeToAngle(target: number): number {
     return (target - this.hourAngle) * (43200000 / Math.PI)
+  }
+
+  #lst?: number
+  #lat?: number
+  update(pov: TimeAndPlace): void {
+    if (pov.lst !== this.#lst) {
+      this.#lst = pov.lst
+      this.hourAngle = this.getHourAngle(pov)
+      this.altitude = this.getAltitude(pov, this.hourAngle)
+      this.azimuth = this.getAzimuth(pov, this.hourAngle, this.altitude)
+      this.theta = this.getTheta(pov, this.azimuth)
+      this.rho = this.getRho(pov, this.altitude)
+
+      this.angleToRise = this.getAngleToRise(
+        pov,
+        this.horizonTransit,
+        this.hourAngle
+      )
+    }
+    if (pov.lat !== this.#lat) {
+      this.#lat = pov.lat
+
+      this.altitude = this.getAltitude(pov, this.hourAngle)
+      this.azimuth = this.getAzimuth(pov, this.hourAngle, this.altitude)
+      this.theta = this.getTheta(pov, this.azimuth)
+      this.rho = this.getRho(pov, this.altitude)
+
+      this.highTransit = this.getHighTransit(pov)
+      this.lowTransit = this.getLowTransit(pov)
+      this.horizonTransit = this.getHorizonTransit(pov)
+      this.angleToRise = this.getAngleToRise(
+        pov,
+        this.horizonTransit,
+        this.hourAngle
+      )
+    }
   }
 
   /** log data about the star's current position */
@@ -439,6 +488,7 @@ class StarArray extends Array<Star> {
     while (true) {
       let i = (((1 + right - left) / 2) | 0) + left // equivalent to Math.ceil((right - left) / 2) + left
       let star = this.#nextToRise[i]
+      star.update(Star.pov)
       if (star.angleToRise > target) {
         // search right
         if (right - left < 2) {
@@ -466,6 +516,7 @@ class StarArray extends Array<Star> {
 
     this.forEach((star, i, array) => {
       callback.call(thisArg, star, i, array)
+      star.update(Star.pov)
       if (star.altitude > 0) {
         this.#visible.push(star)
       } else {
@@ -487,6 +538,7 @@ class StarArray extends Array<Star> {
     // execute callback on any that are still visible
     // insert the rest into #nextToRise ordered array
     for (let star of this.#visible.length ? this.#visible : this) {
+      star.update(Star.pov)
       if (star.altitude > 0) {
         callback(star)
         stillVisible.push(star)
@@ -500,6 +552,7 @@ class StarArray extends Array<Star> {
     // break on the first star that is still under the horizon
     for (let i = this.#nextToRise.length - 1; i > -1; i--) {
       let star = this.#nextToRise[i]
+      star.update(Star.pov)
       if (star.altitude > 0) {
         callback(star)
         stillVisible.push(star)
