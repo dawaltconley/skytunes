@@ -236,6 +236,39 @@ const ampFromMagnitude = (
   return min + scale * (max - min)
 }
 
+// const memoize = <A extends unknown[], R>(fn: (...args: A) => R): typeof fn => {
+//   let cache: [R, ...A] | undefined
+//   const isValid = (c: [R, ...A], args: A): boolean =>
+//     args.every((a, i) => a === c[i + 1])
+//
+//   return (...args) => {
+//     if (cache && isValid(cache, args)) {
+//       return cache[0]
+//     }
+//     cache = [fn(...args), ...args]
+//     return cache[0]
+//   }
+// }
+
+const memoize = (
+  fn: (pov: TimeAndPlace) => number,
+  keys: (keyof TimeAndPlace)[]
+): typeof fn => {
+  let cache: [number, ...unknown[]] | undefined
+  const isValid = (
+    c: Exclude<typeof cache, undefined>,
+    pov: TimeAndPlace
+  ): boolean => keys.every((k, i) => pov[k] === c[i + 1])
+
+  return pov => {
+    if (cache && isValid(cache, pov)) {
+      return cache[0]
+    }
+    cache = [fn(pov), ...keys.map(k => pov[k])]
+    return cache[0]
+  }
+}
+
 class Star implements Interface.Star {
   static pov = new TimeAndPlace()
 
@@ -262,37 +295,46 @@ class Star implements Interface.Star {
     this.#cosDec = Math.cos(declination)
   }
 
-  getHourAngle(pov: TimeAndPlace): number {
-    let hourAngle = (pov.lst - this.ra) % (2 * Math.PI)
-    if (hourAngle < 0) hourAngle += 2 * Math.PI
-    if (hourAngle > Math.PI) hourAngle -= 2 * Math.PI
-    return hourAngle
-  }
+  getHourAngle = memoize(
+    (pov: TimeAndPlace): number => {
+      let hourAngle = (pov.lst - this.ra) % (2 * Math.PI)
+      if (hourAngle < 0) hourAngle += 2 * Math.PI
+      if (hourAngle > Math.PI) hourAngle -= 2 * Math.PI
+      return hourAngle
+    },
+    ['lst']
+  )
   get hourAngle(): number {
     return this.getHourAngle(Star.pov)
   }
 
-  getAltitude(pov: TimeAndPlace): number {
-    const hourAngle = this.getHourAngle(pov)
-    return Math.asin(
-      this.#sinDec * pov.sinLat +
-        this.#cosDec * pov.cosLat * Math.cos(hourAngle)
-    )
-  }
+  getAltitude = memoize(
+    (pov: TimeAndPlace): number => {
+      const hourAngle = this.getHourAngle(pov)
+      return Math.asin(
+        this.#sinDec * pov.sinLat +
+          this.#cosDec * pov.cosLat * Math.cos(hourAngle)
+      )
+    },
+    ['lst', 'lat']
+  )
   get altitude(): number {
     return this.getAltitude(Star.pov)
   }
 
-  getAzimuth(pov: TimeAndPlace): number {
-    const hourAngle = this.getHourAngle(pov)
-    const altitude = this.getAltitude(pov)
-    let azimuth = Math.acos(
-      (this.#sinDec - Math.sin(altitude) * pov.sinLat) /
-        (Math.cos(altitude) * pov.cosLat)
-    )
-    if (hourAngle > 0) azimuth = Math.PI * 2 - azimuth
-    return azimuth
-  }
+  getAzimuth = memoize(
+    (pov: TimeAndPlace): number => {
+      const hourAngle = this.getHourAngle(pov)
+      const altitude = this.getAltitude(pov)
+      let azimuth = Math.acos(
+        (this.#sinDec - Math.sin(altitude) * pov.sinLat) /
+          (Math.cos(altitude) * pov.cosLat)
+      )
+      if (hourAngle > 0) azimuth = Math.PI * 2 - azimuth
+      return azimuth
+    },
+    ['lst', 'lat']
+  )
   get azimuth(): number {
     return this.getAzimuth(Star.pov)
   }
@@ -311,23 +353,32 @@ class Star implements Interface.Star {
     return this.getRho(Star.pov)
   }
 
-  getHighTransit(pov: TimeAndPlace): number {
-    return Math.asin(Math.cos(this.dec - pov.lat))
-  }
+  getHighTransit = memoize(
+    (pov: TimeAndPlace): number => {
+      return Math.asin(Math.cos(this.dec - pov.lat))
+    },
+    ['lat']
+  )
   get highTransit(): number {
     return this.getHighTransit(Star.pov)
   }
 
-  getLowTransit(pov: TimeAndPlace): number {
-    return Math.asin(-Math.cos(this.dec + pov.lat))
-  }
+  getLowTransit = memoize(
+    (pov: TimeAndPlace): number => {
+      return Math.asin(-Math.cos(this.dec + pov.lat))
+    },
+    ['lat']
+  )
   get lowTransit(): number {
     return this.getLowTransit(Star.pov)
   }
 
-  getHorizonTransit(pov: TimeAndPlace): number {
-    return Math.PI - Math.acos(Math.tan(this.dec) * Math.tan(pov.lat))
-  }
+  getHorizonTransit = memoize(
+    (pov: TimeAndPlace): number => {
+      return Math.PI - Math.acos(Math.tan(this.dec) * Math.tan(pov.lat))
+    },
+    ['lat']
+  )
   get horizonTransit(): number {
     return this.getHorizonTransit(Star.pov)
   }
@@ -345,6 +396,22 @@ class Star implements Interface.Star {
   timeToAngle(target: number): number {
     return (target - this.hourAngle) * (43200000 / Math.PI)
   }
+
+  update(_pov: TimeAndPlace): void {}
+
+  // // #lst?: number
+  // #lat?: number
+  // highTransit = this.getHighTransit(Star.pov)
+  // lowTransit = this.getLowTransit(Star.pov)
+  // horizonTransit = this.getHorizonTransit(Star.pov)
+  // update(pov: TimeAndPlace): void {
+  //   if (pov.lat !== this.#lat) {
+  //     this.#lat = pov.lat
+  //     this.highTransit = this.getHighTransit(pov)
+  //     this.lowTransit = this.getLowTransit(pov)
+  //     this.horizonTransit = this.getHorizonTransit(pov)
+  //   }
+  // }
 
   /** log data about the star's current position */
   log() {
