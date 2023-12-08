@@ -228,18 +228,22 @@ class Star implements Interface.Star {
     this.cosDec = Math.cos(declination)
   }
 
-  cache: StarCache = {}
+  #cache: StarCache = {}
 
   get hourAngle(): number {
-    return (this.cache.hourAngle ??= getHourAngle(this, Star.pov))
+    return (this.#cache.hourAngle ??= getHourAngle(this, Star.pov))
   }
 
   get altitude(): number {
-    return (this.cache.altitude ??= getAltitude(this, Star.pov, this.hourAngle))
+    return (this.#cache.altitude ??= getAltitude(
+      this,
+      Star.pov,
+      this.hourAngle
+    ))
   }
 
   get azimuth(): number {
-    return (this.cache.azimuth ??= getAzimuth(
+    return (this.#cache.azimuth ??= getAzimuth(
       this,
       Star.pov,
       this.hourAngle,
@@ -256,19 +260,19 @@ class Star implements Interface.Star {
   }
 
   get highTransit(): number {
-    return (this.cache.highTransit ??= getHighTransit(this, Star.pov))
+    return (this.#cache.highTransit ??= getHighTransit(this, Star.pov))
   }
 
   get lowTransit(): number {
-    return (this.cache.lowTransit ??= getLowTransit(this, Star.pov))
+    return (this.#cache.lowTransit ??= getLowTransit(this, Star.pov))
   }
 
   get horizonTransit(): number {
-    return (this.cache.horizonTransit ??= getHorizonTransit(this, Star.pov))
+    return (this.#cache.horizonTransit ??= getHorizonTransit(this, Star.pov))
   }
 
   get angleToRise(): number {
-    return (this.cache.angleToRise ??= getAngleToRise(
+    return (this.#cache.angleToRise ??= getAngleToRise(
       this,
       Star.pov,
       this.horizonTransit,
@@ -285,20 +289,20 @@ class Star implements Interface.Star {
   update(pov: TimeAndPlace): void {
     if (pov.lst !== this.#lst) {
       this.#lst = pov.lst
-      this.cache.hourAngle = undefined
-      this.cache.altitude = undefined
-      this.cache.azimuth = undefined
-      this.cache.angleToRise = undefined
+      this.#cache.hourAngle = undefined
+      this.#cache.altitude = undefined
+      this.#cache.azimuth = undefined
+      this.#cache.angleToRise = undefined
     }
     if (pov.lat !== this.#lat) {
       this.#lat = pov.lat
-      this.cache.altitude = undefined
-      this.cache.azimuth = undefined
+      this.#cache.altitude = undefined
+      this.#cache.azimuth = undefined
 
-      this.cache.highTransit = undefined
-      this.cache.lowTransit = undefined
-      this.cache.horizonTransit = undefined
-      this.cache.angleToRise = undefined
+      this.#cache.highTransit = undefined
+      this.#cache.lowTransit = undefined
+      this.#cache.horizonTransit = undefined
+      this.#cache.angleToRise = undefined
     }
   }
 
