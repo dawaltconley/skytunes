@@ -4,6 +4,7 @@ import { radianFromRa, radianFromDec } from './utilities'
 import './tailwind.css'
 import colors from 'tailwindcss/colors'
 import {
+  TimeAndPlace,
   Star,
   StarSynth,
   StarArray,
@@ -91,7 +92,11 @@ loop.animate((elapsed, repaint) => {
     const { audio, speed } = globalContext
 
     let last: number = Star.pov.date.getTime()
-    Star.pov.date = new Date(last + timeSinceStarFrame * speed)
+    Star.pov = new TimeAndPlace(
+      new Date(last + timeSinceStarFrame * speed),
+      Star.pov.long,
+      Star.pov.lat
+    )
 
     skyCanvas.layers.stars.clear()
     stars.eachVisible(star => {
@@ -183,7 +188,7 @@ const any = (...args: any[]): boolean => args.some(arg => arg !== undefined)
 globalContext.listen('update', event => {
   const { date, lat, long, speed, isMuted } = event.detail
   if (any(date, lat, long)) {
-    Star.pov.update({ date, lat, long })
+    Star.pov = new TimeAndPlace(date, long, lat)
     stars.unsetVisible()
   }
   if (any(date, speed)) {
