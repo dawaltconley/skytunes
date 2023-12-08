@@ -387,17 +387,17 @@ export function getAzimuth(
 }
 
 export function getHighTransit(
-  { dec }: Interface.Star,
-  { lat }: Interface.TimeAndPlace
+  star: Interface.Star,
+  pov: Interface.TimeAndPlace
 ): number {
-  return Math.asin(Math.cos(dec - lat))
+  return Math.asin(star.cosDec * pov.cosLat + star.sinDec * pov.sinLat)
 }
 
 export function getLowTransit(
-  { dec }: Interface.Star,
-  { lat }: Interface.TimeAndPlace
+  star: Interface.Star,
+  pov: Interface.TimeAndPlace
 ): number {
-  return Math.asin(-Math.cos(dec + lat))
+  return Math.asin(-(star.cosDec * pov.cosLat + star.sinDec * pov.sinLat))
 }
 
 export function getHorizonTransit(
