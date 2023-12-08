@@ -192,7 +192,7 @@ const ampFromMagnitude = (
 }
 
 type StarCache = {
-  -readonly [K in keyof Interface.Star]?: Interface.Star[K]
+  -readonly [K in keyof Star]?: Star[K]
 }
 
 class Star implements Interface.Star {
@@ -223,10 +223,22 @@ class Star implements Interface.Star {
 
   #cache: StarCache = {}
 
+  /**
+   * the hour angle measures the position in the stars arc through the sky
+   * it can be used to calculate when the star will cross the meridian
+   * negative hour angles = moving towards the meridian
+   * positive hour angles = moving away from meridian
+   * an hour angle of zero occurs when the star passes the meridian
+   * @see {@link https://en.wikipedia.org/wiki/Hour_angle}
+   */
   get hourAngle(): number {
     return (this.#cache.hourAngle ??= getHourAngle(this, Star.pov))
   }
 
+  /**
+   * the angle of the star's elevation from the horizon
+   * @see {@link https://en.wikipedia.org/wiki/Horizontal_coordinate_system}
+   */
   get altitude(): number {
     return (this.#cache.altitude ??= getAltitude(
       this,
@@ -235,6 +247,10 @@ class Star implements Interface.Star {
     ))
   }
 
+  /**
+   * the angle from the meridian to the star's position above the horizon
+   * @see {@link https://en.wikipedia.org/wiki/Horizontal_coordinate_system}
+   */
   get azimuth(): number {
     return (this.#cache.azimuth ??= getAzimuth(
       this,
@@ -244,26 +260,48 @@ class Star implements Interface.Star {
     ))
   }
 
+  /**
+   * the angle of the star from celestial north
+   * @see {@link https://boyce-astro.org/wp-content/uploads/BRIEF-Video-Lesson-ASTROMETRY-Theta-and-Rho.pdf}
+   */
   get theta(): number {
     return Math.PI * 0.5 - this.azimuth
   }
 
+  /**
+   * the flat distance of the star from the zenith
+   * @see {@link https://boyce-astro.org/wp-content/uploads/BRIEF-Video-Lesson-ASTROMETRY-Theta-and-Rho.pdf}
+   */
   get rho(): number {
     return Math.cos(this.altitude)
   }
 
+  /**
+   * the altitude when the star makes its high meridian transit
+   * @see {@link  https://kalobs.org/more/altitudes-at-transit/}
+   */
   get highTransit(): number {
     return (this.#cache.highTransit ??= getHighTransit(this, Star.pov))
   }
 
+  /**
+   * the altitude when the star makes its low meridian transit
+   * @see {@link  https://kalobs.org/more/altitudes-at-transit/}
+   */
   get lowTransit(): number {
     return (this.#cache.lowTransit ??= getLowTransit(this, Star.pov))
   }
 
+  /**
+   * the hour angle at which a star will cross the horizon
+   * same for setting and rising, but the rising hour angle is negative
+   * will be NaN for stars that don't cross the horizon
+   */
   get horizonTransit(): number {
     return (this.#cache.horizonTransit ??= getHorizonTransit(this, Star.pov))
   }
 
+  /** angle from where the star crosses the horizon */
   get angleToRise(): number {
     return (this.#cache.angleToRise ??= getAngleToRise(
       this,
@@ -314,7 +352,10 @@ class Star implements Interface.Star {
   }
 }
 
-export function getHourAngle(star: Star, pov: TimeAndPlace): number {
+export function getHourAngle(
+  star: Interface.Star,
+  pov: Interface.TimeAndPlace
+): number {
   let hourAngle = (pov.lst - star.ra) % PI2
   if (hourAngle < 0) hourAngle += PI2
   if (hourAngle > Math.PI) hourAngle -= PI2
@@ -322,8 +363,8 @@ export function getHourAngle(star: Star, pov: TimeAndPlace): number {
 }
 
 export function getAltitude(
-  star: Star,
-  pov: TimeAndPlace,
+  star: Interface.Star,
+  pov: Interface.TimeAndPlace,
   hourAngle = getHourAngle(star, pov)
 ): number {
   return Math.asin(
@@ -332,8 +373,8 @@ export function getAltitude(
 }
 
 export function getAzimuth(
-  star: Star,
-  pov: TimeAndPlace,
+  star: Interface.Star,
+  pov: Interface.TimeAndPlace,
   hourAngle = getHourAngle(star, pov),
   altitude = getAltitude(star, pov, hourAngle)
 ): number {
@@ -345,24 +386,30 @@ export function getAzimuth(
   return azimuth
 }
 
-export function getHighTransit({ dec }: Star, { lat }: TimeAndPlace): number {
+export function getHighTransit(
+  { dec }: Interface.Star,
+  { lat }: Interface.TimeAndPlace
+): number {
   return Math.asin(Math.cos(dec - lat))
 }
 
-export function getLowTransit({ dec }: Star, { lat }: TimeAndPlace): number {
+export function getLowTransit(
+  { dec }: Interface.Star,
+  { lat }: Interface.TimeAndPlace
+): number {
   return Math.asin(-Math.cos(dec + lat))
 }
 
 export function getHorizonTransit(
-  { dec }: Star,
-  { lat }: TimeAndPlace
+  { dec }: Interface.Star,
+  { lat }: Interface.TimeAndPlace
 ): number {
   return Math.PI - Math.acos(Math.tan(dec) * Math.tan(lat))
 }
 
 export function getAngleToRise(
-  star: Star,
-  pov: TimeAndPlace,
+  star: Interface.Star,
+  pov: Interface.TimeAndPlace,
   horizonTransit = getHorizonTransit(star, pov),
   hourAngle = getHourAngle(star, pov)
 ): number {
