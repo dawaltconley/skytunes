@@ -9,9 +9,9 @@ export interface BSC {
 }
 
 export interface TimeAndPlace {
-  date: Date
-  long: number
-  lat: number
+  readonly date: Date
+  readonly long: number
+  readonly lat: number
   readonly lst: number
   readonly sinLat: number
   readonly cosLat: number

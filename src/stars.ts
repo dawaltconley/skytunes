@@ -2,6 +2,13 @@ import type * as Interface from './types/skytunes'
 import { getLST } from './utilities'
 
 class TimeAndPlace implements Interface.TimeAndPlace {
+  readonly date: Date
+  readonly long: number
+  readonly lat: number
+  readonly lst: number
+  readonly sinLat: number
+  readonly cosLat: number
+
   constructor(
     date: Date = new Date(),
     longitude: number = 0,
@@ -10,6 +17,9 @@ class TimeAndPlace implements Interface.TimeAndPlace {
     this.date = date
     this.long = longitude
     this.lat = latitude
+    this.lst = getLST(date, longitude)
+    this.sinLat = Math.sin(latitude)
+    this.cosLat = Math.cos(latitude)
   }
 
   isEqual(other: TimeAndPlace): boolean {
@@ -18,56 +28,6 @@ class TimeAndPlace implements Interface.TimeAndPlace {
       this.long === other.long &&
       this.lat === other.lat
     )
-  }
-
-  #date?: Date
-  get date(): Date {
-    return this.#date ?? new Date()
-  }
-  set date(d: Date) {
-    this.#lst = undefined
-    this.#date = d
-  }
-
-  #long?: number
-  get long(): number {
-    return this.#long ?? 0
-  }
-  set long(n: number) {
-    this.#lst = undefined
-    this.#long = n
-  }
-
-  #lat?: number
-  get lat(): number {
-    return this.#lat ?? 0
-  }
-  set lat(n: number) {
-    this.#sinLat = undefined
-    this.#cosLat = undefined
-    this.#lat = n
-  }
-
-  #lst?: number
-  get lst(): number {
-    return this.#lst ?? (this.#lst = getLST(this.date, this.long))
-  }
-
-  #sinLat?: number
-  get sinLat(): number {
-    return this.#sinLat ?? (this.#sinLat = Math.sin(this.lat))
-  }
-
-  #cosLat?: number
-  get cosLat(): number {
-    return this.#cosLat ?? (this.#cosLat = Math.cos(this.lat))
-  }
-
-  update(options: Partial<{ date: Date; long: number; lat: number }>) {
-    let { date, long, lat } = options
-    if (date !== undefined) this.date = date
-    if (long !== undefined) this.long = long
-    if (lat !== undefined) this.lat = lat
   }
 }
 
