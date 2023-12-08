@@ -262,56 +262,47 @@ class Star implements Interface.Star {
     this.#cosDec = Math.cos(declination)
   }
 
-  #hourAngle: number[] = []
-  getHourAngle({ lst }: TimeAndPlace): number {
-    if (this.#hourAngle[1] === lst) return this.#hourAngle[0]
-    let hourAngle = (lst - this.ra) % (2 * Math.PI)
+  #hourAngle?: number
+  getHourAngle(pov: TimeAndPlace): number {
+    if (this.#hourAngle) return this.#hourAngle
+    this.#altitude = undefined
+    this.#azimuth = undefined
+
+    let hourAngle = (pov.lst - this.ra) % (2 * Math.PI)
     if (hourAngle < 0) hourAngle += 2 * Math.PI
     if (hourAngle > Math.PI) hourAngle -= 2 * Math.PI
-    this.#hourAngle = [hourAngle, lst]
-    return this.#hourAngle[0]
+    return (this.#hourAngle = hourAngle)
   }
   get hourAngle(): number {
     return this.getHourAngle(Star.pov)
   }
 
-  #altitude: Record<string, number> = {}
+  #altitude?: number
   getAltitude(pov: TimeAndPlace): number {
-    const hourAngle = this.getHourAngle(pov)
-    if (
-      this.#altitude.lat === pov.lat &&
-      this.#altitude.hourAngle === hourAngle
-    )
-      return this.#altitude.altitude
+    if (this.#altitude) return this.#altitude
+    this.#azimuth = undefined
 
-    const altitude = Math.asin(
+    const hourAngle = this.getHourAngle(pov)
+    return (this.#altitude = Math.asin(
       this.#sinDec * pov.sinLat +
         this.#cosDec * pov.cosLat * Math.cos(hourAngle)
-    )
-    this.#altitude = { altitude, hourAngle, lat: pov.lat }
-    return altitude
+    ))
   }
   get altitude(): number {
     return this.getAltitude(Star.pov)
   }
 
-  #azimuth: Record<string, number> = {}
+  #azimuth?: number
   getAzimuth(pov: TimeAndPlace): number {
+    if (this.#azimuth) return this.#azimuth
     const hourAngle = this.getHourAngle(pov)
     const altitude = this.getAltitude(pov)
-    if (
-      this.#azimuth.lat === pov.lat &&
-      this.#azimuth.hourAngle === hourAngle &&
-      this.#azimuth.altitude === altitude
-    )
-      return this.#azimuth.azimuth
     let azimuth = Math.acos(
       (this.#sinDec - Math.sin(altitude) * pov.sinLat) /
         (Math.cos(altitude) * pov.cosLat)
     )
     if (hourAngle > 0) azimuth = Math.PI * 2 - azimuth
-    this.#azimuth = { hourAngle, altitude, azimuth, lat: pov.lat }
-    return azimuth
+    return (this.#azimuth = azimuth)
   }
   get azimuth(): number {
     return this.getAzimuth(Star.pov)
@@ -331,12 +322,10 @@ class Star implements Interface.Star {
     return this.getRho(Star.pov)
   }
 
-  #highTransit: Record<string, number> = {}
-  getHighTransit({ lat }: TimeAndPlace): number {
-    if (this.#highTransit.lat === lat) return this.#highTransit.highTransit
-    const highTransit = Math.asin(Math.cos(this.dec - lat))
-    this.#highTransit = { lat, highTransit }
-    return highTransit
+  #highTransit?: number
+  getHighTransit(pov: TimeAndPlace): number {
+    if (this.#highTransit) return this.#highTransit
+    return (this.#highTransit = Math.asin(Math.cos(this.dec - pov.lat)))
   }
   get highTransit(): number {
     return this.getHighTransit(Star.pov)
@@ -361,19 +350,13 @@ class Star implements Interface.Star {
     return this.getHorizonTransit(Star.pov)
   }
 
-  #angleToRise: Record<string, number> = {}
+  #angleToRise?: number
   getAngleToRise(pov: TimeAndPlace): number {
+    if (this.#angleToRise) return this.#angleToRise
     const horizonTransit = this.getHorizonTransit(pov)
     let ha = this.getHourAngle(pov)
-    if (
-      this.#angleToRise.horizonTransit === horizonTransit &&
-      this.#angleToRise.ha === ha
-    )
-      return this.#angleToRise.angleToRise
     if (ha > 0) ha = Math.PI * 2 - ha
-    const angleToRise = Math.abs(ha) - Math.abs(horizonTransit)
-    this.#angleToRise = { horizonTransit, ha, angleToRise }
-    return angleToRise
+    return (this.#angleToRise = Math.abs(ha) - Math.abs(horizonTransit))
   }
   get angleToRise(): number {
     return this.getAngleToRise(Star.pov)
@@ -386,47 +369,47 @@ class Star implements Interface.Star {
   #lst?: number
   #lat?: number
   update(pov: TimeAndPlace): void {
-    // if (pov.lst !== this.#lst) {
-    //   this.#lst = pov.lst
-    //   this.#hourAngle = undefined
-    //   this.#altitude = undefined
-    //   this.#azimuth = undefined
-    //   // this.hourAngle = this.getHourAngle(pov)
-    //   // this.altitude = this.getAltitude(pov, this.hourAngle)
-    //   // this.azimuth = this.getAzimuth(pov, this.hourAngle, this.altitude)
-    //   // this.theta = this.getTheta(pov, this.azimuth)
-    //   // this.rho = this.getRho(pov, this.altitude)
-    //
-    //   this.#angleToRise = undefined
-    //   // this.angleToRise = this.getAngleToRise(
-    //   //   pov,
-    //   //   this.horizonTransit,
-    //   //   this.hourAngle
-    //   // )
-    // }
-    // if (pov.lat !== this.#lat) {
-    //   this.#lat = pov.lat
-    //
-    //   this.#altitude = undefined
-    //   this.#azimuth = undefined
-    //   // this.altitude = this.getAltitude(pov, this.hourAngle)
-    //   // this.azimuth = this.getAzimuth(pov, this.hourAngle, this.altitude)
-    //   // this.theta = this.getTheta(pov, this.azimuth)
-    //   // this.rho = this.getRho(pov, this.altitude)
-    //
-    //   this.#highTransit = undefined
-    //   this.#lowTransit = undefined
-    //   this.#horizonTransit = undefined
-    //   this.#angleToRise = undefined
-    //   // this.highTransit = this.getHighTransit(pov)
-    //   // this.lowTransit = this.getLowTransit(pov)
-    //   // this.horizonTransit = this.getHorizonTransit(pov)
-    //   // this.angleToRise = this.getAngleToRise(
-    //   //   pov,
-    //   //   this.horizonTransit,
-    //   //   this.hourAngle
-    //   // )
-    // }
+    if (pov.lst !== this.#lst) {
+      this.#lst = pov.lst
+      this.#hourAngle = undefined
+      this.#altitude = undefined
+      this.#azimuth = undefined
+      // this.hourAngle = this.getHourAngle(pov)
+      // this.altitude = this.getAltitude(pov, this.hourAngle)
+      // this.azimuth = this.getAzimuth(pov, this.hourAngle, this.altitude)
+      // this.theta = this.getTheta(pov, this.azimuth)
+      // this.rho = this.getRho(pov, this.altitude)
+
+      this.#angleToRise = undefined
+      // this.angleToRise = this.getAngleToRise(
+      //   pov,
+      //   this.horizonTransit,
+      //   this.hourAngle
+      // )
+    }
+    if (pov.lat !== this.#lat) {
+      this.#lat = pov.lat
+
+      this.#altitude = undefined
+      this.#azimuth = undefined
+      // this.altitude = this.getAltitude(pov, this.hourAngle)
+      // this.azimuth = this.getAzimuth(pov, this.hourAngle, this.altitude)
+      // this.theta = this.getTheta(pov, this.azimuth)
+      // this.rho = this.getRho(pov, this.altitude)
+
+      this.#highTransit = undefined
+      this.#lowTransit = undefined
+      this.#horizonTransit = undefined
+      this.#angleToRise = undefined
+      // this.highTransit = this.getHighTransit(pov)
+      // this.lowTransit = this.getLowTransit(pov)
+      // this.horizonTransit = this.getHorizonTransit(pov)
+      // this.angleToRise = this.getAngleToRise(
+      //   pov,
+      //   this.horizonTransit,
+      //   this.hourAngle
+      // )
+    }
   }
 
   /** log data about the star's current position */
