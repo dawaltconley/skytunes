@@ -196,6 +196,10 @@ const ampFromMagnitude = (
   return min + scale * (max - min)
 }
 
+type StarCache = {
+  -readonly [K in keyof Interface.Star]?: Interface.Star[K]
+}
+
 class Star implements Interface.Star {
   static pov = new TimeAndPlace()
 
@@ -204,8 +208,8 @@ class Star implements Interface.Star {
   readonly dec: number
   readonly mag: number
 
-  #sinDec: number
-  #cosDec: number
+  readonly sinDec: number
+  readonly cosDec: number
 
   constructor(
     harvardReferenceNumber: number,
@@ -218,108 +222,56 @@ class Star implements Interface.Star {
     this.dec = declination
     this.mag = magnitude
 
-    this.#sinDec = Math.sin(declination)
-    this.#cosDec = Math.cos(declination)
+    this.sinDec = Math.sin(declination)
+    this.cosDec = Math.cos(declination)
   }
 
-  #hourAngle?: number
-  getHourAngle(pov: TimeAndPlace): number {
-    if (this.#hourAngle) return this.#hourAngle
-    this.#altitude = undefined
-    this.#azimuth = undefined
+  cache: StarCache = {}
 
-    let hourAngle = (pov.lst - this.ra) % (2 * Math.PI)
-    if (hourAngle < 0) hourAngle += 2 * Math.PI
-    if (hourAngle > Math.PI) hourAngle -= 2 * Math.PI
-    return (this.#hourAngle = hourAngle)
-  }
   get hourAngle(): number {
-    return this.getHourAngle(Star.pov)
+    return (this.cache.hourAngle ??= getHourAngle(this, Star.pov))
   }
 
-  #altitude?: number
-  getAltitude(pov: TimeAndPlace): number {
-    if (this.#altitude) return this.#altitude
-    this.#azimuth = undefined
+  get altitude(): number {
+    return (this.cache.altitude ??= getAltitude(this, Star.pov, this.hourAngle))
+  }
 
-    const hourAngle = this.getHourAngle(pov)
-    return (this.#altitude = Math.asin(
-      this.#sinDec * pov.sinLat +
-        this.#cosDec * pov.cosLat * Math.cos(hourAngle)
+  get azimuth(): number {
+    return (this.cache.azimuth ??= getAzimuth(
+      this,
+      Star.pov,
+      this.hourAngle,
+      this.altitude
     ))
   }
-  get altitude(): number {
-    return this.getAltitude(Star.pov)
-  }
 
-  #azimuth?: number
-  getAzimuth(pov: TimeAndPlace): number {
-    if (this.#azimuth) return this.#azimuth
-    const hourAngle = this.getHourAngle(pov)
-    const altitude = this.getAltitude(pov)
-    let azimuth = Math.acos(
-      (this.#sinDec - Math.sin(altitude) * pov.sinLat) /
-        (Math.cos(altitude) * pov.cosLat)
-    )
-    if (hourAngle > 0) azimuth = Math.PI * 2 - azimuth
-    return (this.#azimuth = azimuth)
-  }
-  get azimuth(): number {
-    return this.getAzimuth(Star.pov)
-  }
-
-  getTheta(pov: TimeAndPlace): number {
-    return Math.PI / 2 - this.getAzimuth(pov)
-  }
   get theta(): number {
-    return this.getTheta(Star.pov)
+    return Math.PI * 0.5 - this.azimuth
   }
 
-  getRho(pov: TimeAndPlace): number {
-    return Math.cos(this.getAltitude(pov))
-  }
   get rho(): number {
-    return this.getRho(Star.pov)
+    return Math.cos(this.altitude)
   }
 
-  #highTransit?: number
-  getHighTransit(pov: TimeAndPlace): number {
-    if (this.#highTransit) return this.#highTransit
-    return (this.#highTransit = Math.asin(Math.cos(this.dec - pov.lat)))
-  }
   get highTransit(): number {
-    return this.getHighTransit(Star.pov)
+    return (this.cache.highTransit ??= getHighTransit(this, Star.pov))
   }
 
-  #lowTransit?: number
-  getLowTransit(pov: TimeAndPlace): number {
-    if (this.#lowTransit) return this.#lowTransit
-    return (this.#lowTransit = Math.asin(-Math.cos(this.dec + pov.lat)))
-  }
   get lowTransit(): number {
-    return this.getLowTransit(Star.pov)
+    return (this.cache.lowTransit ??= getLowTransit(this, Star.pov))
   }
 
-  #horizonTransit?: number
-  getHorizonTransit(pov: TimeAndPlace): number {
-    if (this.#horizonTransit) return this.#horizonTransit
-    return (this.#horizonTransit =
-      Math.PI - Math.acos(Math.tan(this.dec) * Math.tan(pov.lat)))
-  }
   get horizonTransit(): number {
-    return this.getHorizonTransit(Star.pov)
+    return (this.cache.horizonTransit ??= getHorizonTransit(this, Star.pov))
   }
 
-  #angleToRise?: number
-  getAngleToRise(pov: TimeAndPlace): number {
-    if (this.#angleToRise) return this.#angleToRise
-    const horizonTransit = this.getHorizonTransit(pov)
-    let ha = this.getHourAngle(pov)
-    if (ha > 0) ha = Math.PI * 2 - ha
-    return (this.#angleToRise = Math.abs(ha) - Math.abs(horizonTransit))
-  }
   get angleToRise(): number {
-    return this.getAngleToRise(Star.pov)
+    return (this.cache.angleToRise ??= getAngleToRise(
+      this,
+      Star.pov,
+      this.horizonTransit,
+      this.hourAngle
+    ))
   }
 
   timeToAngle(target: number): number {
@@ -331,44 +283,20 @@ class Star implements Interface.Star {
   update(pov: TimeAndPlace): void {
     if (pov.lst !== this.#lst) {
       this.#lst = pov.lst
-      this.#hourAngle = undefined
-      this.#altitude = undefined
-      this.#azimuth = undefined
-      // this.hourAngle = this.getHourAngle(pov)
-      // this.altitude = this.getAltitude(pov, this.hourAngle)
-      // this.azimuth = this.getAzimuth(pov, this.hourAngle, this.altitude)
-      // this.theta = this.getTheta(pov, this.azimuth)
-      // this.rho = this.getRho(pov, this.altitude)
-
-      this.#angleToRise = undefined
-      // this.angleToRise = this.getAngleToRise(
-      //   pov,
-      //   this.horizonTransit,
-      //   this.hourAngle
-      // )
+      this.cache.hourAngle = undefined
+      this.cache.altitude = undefined
+      this.cache.azimuth = undefined
+      this.cache.angleToRise = undefined
     }
     if (pov.lat !== this.#lat) {
       this.#lat = pov.lat
+      this.cache.altitude = undefined
+      this.cache.azimuth = undefined
 
-      this.#altitude = undefined
-      this.#azimuth = undefined
-      // this.altitude = this.getAltitude(pov, this.hourAngle)
-      // this.azimuth = this.getAzimuth(pov, this.hourAngle, this.altitude)
-      // this.theta = this.getTheta(pov, this.azimuth)
-      // this.rho = this.getRho(pov, this.altitude)
-
-      this.#highTransit = undefined
-      this.#lowTransit = undefined
-      this.#horizonTransit = undefined
-      this.#angleToRise = undefined
-      // this.highTransit = this.getHighTransit(pov)
-      // this.lowTransit = this.getLowTransit(pov)
-      // this.horizonTransit = this.getHorizonTransit(pov)
-      // this.angleToRise = this.getAngleToRise(
-      //   pov,
-      //   this.horizonTransit,
-      //   this.hourAngle
-      // )
+      this.cache.highTransit = undefined
+      this.cache.lowTransit = undefined
+      this.cache.horizonTransit = undefined
+      this.cache.angleToRise = undefined
     }
   }
 
@@ -385,6 +313,63 @@ class Star implements Interface.Star {
       rho,
     })
   }
+}
+
+export function getHourAngle(star: Star, pov: TimeAndPlace): number {
+  let hourAngle = (pov.lst - star.ra) % (2 * Math.PI)
+  if (hourAngle < 0) hourAngle += 2 * Math.PI
+  if (hourAngle > Math.PI) hourAngle -= 2 * Math.PI
+  return hourAngle
+}
+
+export function getAltitude(
+  star: Star,
+  pov: TimeAndPlace,
+  hourAngle = getHourAngle(star, pov)
+): number {
+  return Math.asin(
+    star.sinDec * pov.sinLat + star.cosDec * pov.cosLat * Math.cos(hourAngle)
+  )
+}
+
+export function getAzimuth(
+  star: Star,
+  pov: TimeAndPlace,
+  hourAngle = getHourAngle(star, pov),
+  altitude = getAltitude(star, pov, hourAngle)
+): number {
+  let azimuth = Math.acos(
+    (star.sinDec - Math.sin(altitude) * pov.sinLat) /
+      (Math.cos(altitude) * pov.cosLat)
+  )
+  if (hourAngle > 0) azimuth = Math.PI * 2 - azimuth
+  return azimuth
+}
+
+export function getHighTransit({ dec }: Star, { lat }: TimeAndPlace): number {
+  return Math.asin(Math.cos(dec - lat))
+}
+
+export function getLowTransit({ dec }: Star, { lat }: TimeAndPlace): number {
+  return Math.asin(-Math.cos(dec + lat))
+}
+
+export function getHorizonTransit(
+  { dec }: Star,
+  { lat }: TimeAndPlace
+): number {
+  return Math.PI - Math.acos(Math.tan(dec) * Math.tan(lat))
+}
+
+export function getAngleToRise(
+  star: Star,
+  pov: TimeAndPlace,
+  horizonTransit = getHorizonTransit(star, pov),
+  hourAngle = getHourAngle(star, pov)
+): number {
+  let ha = hourAngle
+  if (ha > 0) ha = Math.PI * 2 - ha
+  return Math.abs(ha) - Math.abs(horizonTransit)
 }
 
 class StarArray extends Array<Star> {
