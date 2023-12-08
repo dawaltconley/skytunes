@@ -1,6 +1,8 @@
 import type * as Interface from './types/skytunes'
 import { getLST } from './utilities'
 
+const PI2 = Math.PI * 2
+
 class TimeAndPlace implements Interface.TimeAndPlace {
   readonly date: Date
   readonly long: number
@@ -313,9 +315,9 @@ class Star implements Interface.Star {
 }
 
 export function getHourAngle(star: Star, pov: TimeAndPlace): number {
-  let hourAngle = (pov.lst - star.ra) % (2 * Math.PI)
-  if (hourAngle < 0) hourAngle += 2 * Math.PI
-  if (hourAngle > Math.PI) hourAngle -= 2 * Math.PI
+  let hourAngle = (pov.lst - star.ra) % PI2
+  if (hourAngle < 0) hourAngle += PI2
+  if (hourAngle > Math.PI) hourAngle -= PI2
   return hourAngle
 }
 
@@ -339,7 +341,7 @@ export function getAzimuth(
     (star.sinDec - Math.sin(altitude) * pov.sinLat) /
       (Math.cos(altitude) * pov.cosLat)
   )
-  if (hourAngle > 0) azimuth = Math.PI * 2 - azimuth
+  if (hourAngle > 0) azimuth = PI2 - azimuth
   return azimuth
 }
 
@@ -365,7 +367,7 @@ export function getAngleToRise(
   hourAngle = getHourAngle(star, pov)
 ): number {
   let ha = hourAngle
-  if (ha > 0) ha = Math.PI * 2 - ha
+  if (ha > 0) ha = PI2 - ha
   return Math.abs(ha) - Math.abs(horizonTransit)
 }
 
