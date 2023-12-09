@@ -78,6 +78,11 @@ loop.animate((elapsed, repaint) => {
     }
   })
 
+  // if time since last frame is > a certain amount (1000ms?) need to refresh the heap of hidden stars
+  if (elapsed > 1000) {
+    stars.unsetVisible()
+  }
+
   // draw all visible stars (only as often as needed)
   timeSinceStarFrame += elapsed
   if (repaint || timeSinceStarFrame > minMsPerFrame) {
