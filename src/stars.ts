@@ -450,6 +450,17 @@ class StarArray extends Array<Star> {
   }
 
   /**
+   * Returns sets of duplicate entries, which represent binary stars.
+   */
+  getBinary(): Star[][] {
+    const map = this.reduce((map, star) => {
+      const key = `${star.ra},${star.dec}`
+      return map.set(key, map.get(key)?.concat(star) || [star])
+    }, new Map<string, Star[]>())
+    return Array.from(map.values()).filter(stars => stars.length > 1)
+  }
+
+  /**
    * list of currently visible stars
    * returns an empty array if unknown
    */
