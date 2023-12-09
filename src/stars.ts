@@ -476,8 +476,7 @@ class StarArray extends Array<Star> {
 
   /** mimics StarArray.forEach but recalculates the visibility of all stars while looping */
   eachStar(...[callback, thisArg]: Parameters<Array<Star>['forEach']>) {
-    this.#visible = []
-    this.#hidden.clear()
+    this.unsetVisible()
 
     this.forEach((star, i, array) => {
       star.update(Star.pov)
@@ -498,6 +497,11 @@ class StarArray extends Array<Star> {
   eachVisible(callback: (star: Star) => void) {
     // create new array to track visible stars
     const stillVisible: Star[] = []
+
+    // safeguard against adding duplicate stars to the heap
+    if (this.#visible.length === 0) {
+      this.#hidden.clear()
+    }
 
     while ((this.#hidden.top()?.update(Star.pov)?.altitude || 0) > 0) {
       const next = this.#hidden.pop()!
