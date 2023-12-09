@@ -27,6 +27,7 @@
     "vite": "^3.1.0"
   },
   "dependencies": {
+    "@datastructures-js/heap": "^4.3.2",
     "@eonasdan/tempus-dominus": "^6.2.10",
     "@popperjs/core": "^2.11.6"
   }

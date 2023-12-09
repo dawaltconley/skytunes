@@ -1,4 +1,5 @@
 import type * as Interface from './types/skytunes'
+import { MinHeap } from '@datastructures-js/heap'
 import { getLST } from './utilities'
 
 const PI2 = Math.PI * 2
@@ -317,7 +318,7 @@ class Star implements Interface.Star {
 
   #lst?: number
   #lat?: number
-  update(pov: TimeAndPlace): void {
+  update(pov: TimeAndPlace): Star {
     if (pov.lst !== this.#lst) {
       this.#lst = pov.lst
       this.#cache.hourAngle = undefined
@@ -335,6 +336,7 @@ class Star implements Interface.Star {
       this.#cache.horizonTransit = undefined
       this.#cache.angleToRise = undefined
     }
+    return this
   }
 
   /** log data about the star's current position */
@@ -427,7 +429,7 @@ class StarArray extends Array<Star> {
   readonly dimmest: Star
   #ref: Star[] = []
   #visible: Star[] = []
-  #nextToRise: Star[] = []
+  #hidden = new MinHeap<Star>(star => star.update(Star.pov).angleToRise)
 
   constructor(...stars: Star[]) {
     super(...stars)
@@ -461,7 +463,7 @@ class StarArray extends Array<Star> {
    */
   unsetVisible() {
     this.#visible = []
-    this.#nextToRise = []
+    this.#hidden.clear()
   }
 
   /**
@@ -472,63 +474,18 @@ class StarArray extends Array<Star> {
     this.eachStar(() => {})
   }
 
-  /**
-   * mark a star as hidden (below the horizon)
-   * uses a binary search algorithm to insert it in an array of hidden stars
-   * reverse sorted by the order in which they will rise
-   */
-  queueRise(star: Star) {
-    // ignore stars that never rise
-    if (star.highTransit < 0) return
-
-    // handle an empty nextToRise array
-    if (this.#nextToRise.length === 0) {
-      this.#nextToRise.push(star)
-      return
-    }
-
-    // binary search stars to find insertion point
-    let target = star.angleToRise
-    let left = 0
-    let right = this.#nextToRise.length - 1
-    let insert
-
-    while (true) {
-      let i = (((1 + right - left) / 2) | 0) + left // equivalent to Math.ceil((right - left) / 2) + left
-      let star = this.#nextToRise[i]
-      star.update(Star.pov)
-      if (star.angleToRise > target) {
-        // search right
-        if (right - left < 2) {
-          insert = i + 1
-          break
-        }
-        left = i + 1
-      } else {
-        // search left
-        if (right === left) {
-          insert = i
-          break
-        }
-        right = i - 1
-      }
-    }
-
-    this.#nextToRise.splice(insert, 0, star)
-  }
-
   /** mimics StarArray.forEach but recalculates the visibility of all stars while looping */
   eachStar(...[callback, thisArg]: Parameters<Array<Star>['forEach']>) {
     this.#visible = []
-    this.#nextToRise = []
+    this.#hidden.clear()
 
     this.forEach((star, i, array) => {
-      callback.call(thisArg, star, i, array)
       star.update(Star.pov)
+      callback.call(thisArg, star, i, array)
       if (star.altitude > 0) {
         this.#visible.push(star)
-      } else {
-        this.queueRise(star)
+      } else if (star.highTransit > 0) {
+        this.#hidden.push(star)
       }
     })
   }
@@ -542,31 +499,22 @@ class StarArray extends Array<Star> {
     // create new array to track visible stars
     const stillVisible: Star[] = []
 
+    while ((this.#hidden.top()?.update(Star.pov)?.altitude || 0) > 0) {
+      const next = this.#hidden.pop()!
+      callback(next)
+      stillVisible.push(next)
+    }
+
     // loop through the current list of visible stars
     // execute callback on any that are still visible
-    // insert the rest into #nextToRise ordered array
+    // insert the rest into the #hidden heap
     for (let star of this.#visible.length ? this.#visible : this) {
       star.update(Star.pov)
       if (star.altitude > 0) {
         callback(star)
         stillVisible.push(star)
-      } else {
-        this.queueRise(star)
-      }
-    }
-
-    // reverse iterate the #nextToRise array
-    // if a star has risen, execute callback mark it as visible, and continue
-    // break on the first star that is still under the horizon
-    for (let i = this.#nextToRise.length - 1; i > -1; i--) {
-      let star = this.#nextToRise[i]
-      star.update(Star.pov)
-      if (star.altitude > 0) {
-        callback(star)
-        stillVisible.push(star)
-        this.#nextToRise.pop()
-      } else {
-        break
+      } else if (star.highTransit > 0) {
+        this.#hidden.push(star)
       }
     }
 
