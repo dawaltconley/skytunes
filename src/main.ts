@@ -1,4 +1,4 @@
-import { BSC } from './types/skytunes'
+import type { BSC } from './types/skytunes'
 import globalContext from './global'
 import { radianFromRa, radianFromDec } from './utilities'
 import './tailwind.css'
@@ -161,7 +161,7 @@ loop.repaint()
 let resizeTimeout: number
 const observer = new ResizeObserver(() => {
   if (resizeTimeout) clearTimeout(resizeTimeout)
-  resizeTimeout = setTimeout(() => {
+  resizeTimeout = window.setTimeout(() => {
     skyCanvas.setCanvasSize()
     skyCanvas.drawBackground()
     loop.repaint()

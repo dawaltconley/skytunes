@@ -186,7 +186,7 @@ class FrameLoop {
 
   /** log actual fps to the console */
   logFps() {
-    this.#fpsLogger = setInterval(() => {
+    this.#fpsLogger = window.setInterval(() => {
       console.log(`${this.#fps} frames per second`)
       this.#fps = 0
     }, 1000)

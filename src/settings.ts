@@ -273,7 +273,7 @@ speedControl.addEventListener('input', event => {
   if (target.type === 'range') speed = speed ** 2
   setSpeedControl(speed)
   clearTimeout(speedControlTimeout)
-  speedControlTimeout = setTimeout(() => {
+  speedControlTimeout = window.setTimeout(() => {
     globalContext.speed = speed
   }, 100)
 })

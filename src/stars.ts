@@ -112,7 +112,7 @@ class StarSynth extends EventTarget {
     decay = attack + decay
     release = decay + release
 
-    this.#queued = setTimeout(() => {
+    this.#queued = window.setTimeout(() => {
       // skip playing if missed queue (can happen when changing speed)
       if (play < context.currentTime) return this.cancel()
 
@@ -130,7 +130,7 @@ class StarSynth extends EventTarget {
       })
 
       // on started
-      this.#queued = setTimeout(() => {
+      this.#queued = window.setTimeout(() => {
         this.dispatchEvent(this.#startedEvent)
         this.#queued = undefined
         this.#isPlaying = true
