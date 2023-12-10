@@ -4,7 +4,7 @@ import {
   getLST,
   radianFromRa,
   radianFromDec,
-} from '../src/utilities'
+} from '../src/lib/stars'
 
 describe('sinceJ2000()', () => {
   test('correctly calculates the milliseconds since the J2000 epoch', () => {

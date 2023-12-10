@@ -12,7 +12,7 @@ class CanvasLayer {
       'inset-0',
       'w-full',
       'h-full',
-      'rounded-full'
+      'rounded-full',
     )
     container.append(canvas)
     this.canvas = canvas
@@ -110,7 +110,7 @@ class SkyCanvas {
       layer?: CanvasLayer
       radius?: number
       color?: string
-    } = {}
+    } = {},
   ): SkyCanvas {
     const { context } = layer
     const { x, y } = this.plotStar(star)

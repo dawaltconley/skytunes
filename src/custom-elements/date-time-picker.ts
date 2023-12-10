@@ -1,5 +1,5 @@
 import { TempusDominus, DateTime } from '@eonasdan/tempus-dominus'
-import globalContext from '../global'
+import globalContext from '../lib/global'
 
 export class DateTimePicker extends HTMLElement {
   readonly td: TempusDominus

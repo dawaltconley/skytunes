@@ -1,18 +1,17 @@
 import type { BSC } from './types/skytunes'
-import type { DateTimePicker } from './lib/date-time-picker'
-import globalContext from './global'
-import { radianFromRa, radianFromDec } from './utilities'
+import type { DateTimePicker } from './custom-elements/date-time-picker'
+import globalContext from './lib/global'
 import './tailwind.css'
 import colors from 'tailwindcss/colors'
 import {
   TimeAndPlace,
   Star,
-  StarSynth,
   StarArray,
-  noteFromAltitude,
-  ampFromMagnitude,
-} from './stars'
-import { SkyCanvas, FrameLoop, calculateMsPerFrame } from './draw'
+  radianFromRa,
+  radianFromDec,
+} from './lib/stars'
+import { StarSynth, noteFromAltitude, ampFromMagnitude } from './lib/audio'
+import { SkyCanvas, FrameLoop, calculateMsPerFrame } from './lib/draw'
 
 let stars = new StarArray()
 

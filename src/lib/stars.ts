@@ -1,10 +1,10 @@
-import type * as Interface from './types/skytunes'
+import type * as Interface from '../types/skytunes'
 import { MinHeap } from '@datastructures-js/heap'
-import { getLST } from './utilities'
 
 const PI2 = Math.PI * 2
+const j2000 = Date.UTC(2000, 0, 1, 11, 58, 55, 816)
 
-class TimeAndPlace implements Interface.TimeAndPlace {
+export class TimeAndPlace implements Interface.TimeAndPlace {
   readonly date: Date
   readonly long: number
   readonly lat: number
@@ -15,7 +15,7 @@ class TimeAndPlace implements Interface.TimeAndPlace {
   constructor(
     date: Date = new Date(),
     longitude: number = 0,
-    latitude: number = 0
+    latitude: number = 0,
   ) {
     this.date = date
     this.long = longitude
@@ -34,169 +34,11 @@ class TimeAndPlace implements Interface.TimeAndPlace {
   }
 }
 
-interface Envelope {
-  attack: number
-  decay: number
-  sustain: number
-  release: number
-}
-
-interface StarSynthOptions {
-  /**
-   * maximum seconds to schedule a new AudioNode ahead of play time
-   * the longer the buffer, the more AudioNodes connected at any given time
-   */
-  queueBuffer?: number
-  output?: AudioNode
-}
-
-class StarSynth extends EventTarget {
-  readonly context: AudioContext
-  readonly queueBuffer: number
-  #oscillator?: OscillatorNode
-  #gain?: GainNode
-  #analyser?: AnalyserNode
-  #queued?: number
-  #isPlaying: boolean = false
-  output: AudioNode
-
-  #startedEvent = new CustomEvent('started', { detail: this })
-  #endedEvent = new CustomEvent('ended', { detail: this })
-
-  constructor(
-    context: AudioContext,
-    { queueBuffer = 1, output = context.destination }: StarSynthOptions = {}
-  ) {
-    super()
-    this.context = context
-    this.queueBuffer = queueBuffer
-    this.output = output
-  }
-
-  get oscillator(): OscillatorNode | undefined {
-    return this.#oscillator
-  }
-
-  get gain(): GainNode | undefined {
-    return this.#gain
-  }
-
-  get analyser(): AnalyserNode | undefined {
-    return this.#analyser
-  }
-
-  get isQueued(): boolean {
-    return this.#queued !== undefined
-  }
-
-  get isPlaying(): boolean {
-    return this.#isPlaying
-  }
-
-  /**
-   * play a synth
-   * @return the AudioContext time at which the synth stops
-   */
-  play(
-    note: number,
-    {
-      envelope,
-      amp = 1,
-      start = 0,
-    }: { envelope: Envelope; amp?: number; start?: number }
-  ): void {
-    const { context } = this
-    const play = context.currentTime + start
-    let { attack, decay, sustain, release } = envelope
-    attack = play + attack
-    decay = attack + decay
-    release = decay + release
-
-    this.#queued = window.setTimeout(() => {
-      // skip playing if missed queue (can happen when changing speed)
-      if (play < context.currentTime) return this.cancel()
-
-      this.#oscillator = new OscillatorNode(context, {
-        frequency: note,
-      })
-      this.#gain = new GainNode(context, { gain: 0 })
-      this.#gain.gain
-        .setValueAtTime(0, play)
-        .linearRampToValueAtTime(amp, attack)
-        .linearRampToValueAtTime(amp * sustain, decay)
-        .linearRampToValueAtTime(0, release)
-      this.#analyser = new AnalyserNode(context, {
-        fftSize: 32,
-      })
-
-      // on started
-      this.#queued = window.setTimeout(() => {
-        this.dispatchEvent(this.#startedEvent)
-        this.#queued = undefined
-        this.#isPlaying = true
-      }, (play - context.currentTime) * 1000)
-
-      // on ended
-      this.#oscillator.addEventListener('ended', () => {
-        this.dispatchEvent(this.#endedEvent)
-        this.#isPlaying = false
-        // remove references to prevent subsequent calls to the cancelled objects
-        this.#oscillator = undefined
-        this.#gain = undefined
-        this.#analyser = undefined
-      })
-
-      this.#oscillator
-        .connect(this.#gain)
-        .connect(this.#analyser)
-        .connect(this.output)
-      this.#oscillator.start(play)
-      this.#oscillator.stop(release + 0.1)
-    }, Math.floor((start - this.queueBuffer) * 1000))
-  }
-
-  cancel(when?: number) {
-    const { context } = this
-    const start = context.currentTime + (when ?? 0)
-
-    clearTimeout(this.#queued)
-    this.#queued = undefined
-    this.#gain?.gain
-      .linearRampToValueAtTime(0, start + 0.2)
-      .cancelScheduledValues(start + 0.21)
-    this.#oscillator?.stop(start + 0.4)
-  }
-}
-
-const noteFromAltitude = (
-  altitude: number,
-  min: number,
-  max: number
-): number => {
-  let scale = 1 - Math.abs(1 - altitude / (Math.PI / 2))
-  return min + scale * (max - min)
-}
-
-const ampFromMagnitude = (
-  magnitude: number,
-  options: {
-    min?: number
-    max?: number
-    brightest?: number
-    dimmest?: number
-  } = {}
-): number => {
-  const { min = 0, max = 1, brightest = 0, dimmest = 8 } = options
-  let range = dimmest - brightest
-  let scale = (dimmest - magnitude) / range
-  return min + scale * (max - min)
-}
-
 type StarCache = {
   -readonly [K in keyof Star]?: Star[K]
 }
 
-class Star implements Interface.Star {
+export class Star implements Interface.Star {
   static pov = new TimeAndPlace()
 
   readonly ref: number
@@ -211,7 +53,7 @@ class Star implements Interface.Star {
     harvardReferenceNumber: number,
     rightAscension: number,
     declination: number,
-    magnitude: number
+    magnitude: number,
   ) {
     this.ref = harvardReferenceNumber
     this.ra = rightAscension
@@ -244,7 +86,7 @@ class Star implements Interface.Star {
     return (this.#cache.altitude ??= getAltitude(
       this,
       Star.pov,
-      this.hourAngle
+      this.hourAngle,
     ))
   }
 
@@ -257,7 +99,7 @@ class Star implements Interface.Star {
       this,
       Star.pov,
       this.hourAngle,
-      this.altitude
+      this.altitude,
     ))
   }
 
@@ -308,7 +150,7 @@ class Star implements Interface.Star {
       this,
       Star.pov,
       this.horizonTransit,
-      this.hourAngle
+      this.hourAngle,
     ))
   }
 
@@ -354,73 +196,7 @@ class Star implements Interface.Star {
   }
 }
 
-export function getHourAngle(
-  star: Interface.Star,
-  pov: Interface.TimeAndPlace
-): number {
-  let hourAngle = (pov.lst - star.ra) % PI2
-  if (hourAngle < 0) hourAngle += PI2
-  if (hourAngle > Math.PI) hourAngle -= PI2
-  return hourAngle
-}
-
-export function getAltitude(
-  star: Interface.Star,
-  pov: Interface.TimeAndPlace,
-  hourAngle = getHourAngle(star, pov)
-): number {
-  return Math.asin(
-    star.sinDec * pov.sinLat + star.cosDec * pov.cosLat * Math.cos(hourAngle)
-  )
-}
-
-export function getAzimuth(
-  star: Interface.Star,
-  pov: Interface.TimeAndPlace,
-  hourAngle = getHourAngle(star, pov),
-  altitude = getAltitude(star, pov, hourAngle)
-): number {
-  let azimuth = Math.acos(
-    (star.sinDec - Math.sin(altitude) * pov.sinLat) /
-      (Math.cos(altitude) * pov.cosLat)
-  )
-  if (hourAngle > 0) azimuth = PI2 - azimuth
-  return azimuth
-}
-
-export function getHighTransit(
-  star: Interface.Star,
-  pov: Interface.TimeAndPlace
-): number {
-  return Math.asin(star.cosDec * pov.cosLat + star.sinDec * pov.sinLat)
-}
-
-export function getLowTransit(
-  star: Interface.Star,
-  pov: Interface.TimeAndPlace
-): number {
-  return Math.asin(-(star.cosDec * pov.cosLat + star.sinDec * pov.sinLat))
-}
-
-export function getHorizonTransit(
-  { dec }: Interface.Star,
-  { lat }: Interface.TimeAndPlace
-): number {
-  return Math.PI - Math.acos(Math.tan(dec) * Math.tan(lat))
-}
-
-export function getAngleToRise(
-  star: Interface.Star,
-  pov: Interface.TimeAndPlace,
-  horizonTransit = getHorizonTransit(star, pov),
-  hourAngle = getHourAngle(star, pov)
-): number {
-  let ha = hourAngle
-  if (ha > 0) ha = PI2 - ha
-  return Math.abs(ha) - Math.abs(horizonTransit)
-}
-
-class StarArray extends Array<Star> {
+export class StarArray extends Array<Star> {
   static get pov() {
     return Star.pov
   }
@@ -538,11 +314,110 @@ class StarArray extends Array<Star> {
   }
 }
 
-export {
-  Star,
-  StarSynth,
-  StarArray,
-  TimeAndPlace,
-  noteFromAltitude,
-  ampFromMagnitude,
+/** gets the milliseconds since the J2000 epoch */
+export function sinceJ2000(date: Date): number {
+  return date.getTime() - j2000
+}
+
+/** calculates the universal (solar) time in milliseconds */
+export function getUniversalTime(date: Date): number {
+  return date.getTime() - new Date(date).setUTCHours(0, 0, 0, 0)
+}
+
+/**
+ * calculates the local siderial time in radians
+ * based on the following formula in degrees:
+ * lst = 100.46 + (0.985647 * d) + longitude + (15 * ut)
+ *
+ * @param date
+ * @param longitude in radians
+ * @see {@link http://www.stargazing.net/kepler/altaz.html}
+ * @return LST in radians
+ */
+export function getLST(date: Date, longitude: number): number {
+  let d = sinceJ2000(date) / 86400000,
+    ut = getUniversalTime(date) / 240000,
+    long = longitude * (180 / Math.PI)
+  let lst = 100.46 + 0.985647 * d + long + ut
+  return (lst * Math.PI) / 180
+}
+
+/** parse a right ascension string of the format HH:MM:SS.S */
+export const radianFromRa = (hms: string, sep: string = ':'): number => {
+  let [h, m, s]: number[] = hms.split(sep).map(s => Number(s))
+  let hours = h + m / 60 + s / 3600
+  return (hours * Math.PI) / 12
+}
+
+/** parse a declination string of the format +/-DD:MM:SS.SS */
+export const radianFromDec = (dms: string, sep: string = ':'): number => {
+  let [d, m, s]: number[] = dms.split(sep).map(s => Number(s))
+  if (dms.startsWith('-')) (m *= -1), (s *= -1)
+  let degrees = d + m / 60 + s / 3600
+  return (degrees * Math.PI) / 180
+}
+export function getHourAngle(
+  star: Interface.Star,
+  pov: Interface.TimeAndPlace,
+): number {
+  let hourAngle = (pov.lst - star.ra) % PI2
+  if (hourAngle < 0) hourAngle += PI2
+  if (hourAngle > Math.PI) hourAngle -= PI2
+  return hourAngle
+}
+
+export function getAltitude(
+  star: Interface.Star,
+  pov: Interface.TimeAndPlace,
+  hourAngle = getHourAngle(star, pov),
+): number {
+  return Math.asin(
+    star.sinDec * pov.sinLat + star.cosDec * pov.cosLat * Math.cos(hourAngle),
+  )
+}
+
+export function getAzimuth(
+  star: Interface.Star,
+  pov: Interface.TimeAndPlace,
+  hourAngle = getHourAngle(star, pov),
+  altitude = getAltitude(star, pov, hourAngle),
+): number {
+  let azimuth = Math.acos(
+    (star.sinDec - Math.sin(altitude) * pov.sinLat) /
+      (Math.cos(altitude) * pov.cosLat),
+  )
+  if (hourAngle > 0) azimuth = PI2 - azimuth
+  return azimuth
+}
+
+export function getHighTransit(
+  star: Interface.Star,
+  pov: Interface.TimeAndPlace,
+): number {
+  return Math.asin(star.cosDec * pov.cosLat + star.sinDec * pov.sinLat)
+}
+
+export function getLowTransit(
+  star: Interface.Star,
+  pov: Interface.TimeAndPlace,
+): number {
+  return Math.asin(-(star.cosDec * pov.cosLat + star.sinDec * pov.sinLat))
+}
+
+export function getHorizonTransit(
+  { dec }: Interface.Star,
+  { lat }: Interface.TimeAndPlace,
+): number {
+  return Math.PI - Math.acos(Math.tan(dec) * Math.tan(lat))
+}
+
+export function getAngleToRise(
+  star: Interface.Star,
+  pov: Interface.TimeAndPlace,
+  horizonTransit = getHorizonTransit(star, pov),
+  hourAngle = getHourAngle(star, pov),
+): number {
+  let ha = hourAngle
+  if (ha > 0) ha = PI2 - ha
+  return Math.abs(ha) - Math.abs(horizonTransit)
 }
