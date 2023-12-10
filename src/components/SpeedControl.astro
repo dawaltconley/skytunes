@@ -1,0 +1,59 @@
+---
+import MultiInput from './MultiInput.astro'
+---
+
+<label id="speed-control-label" for="speed-control-input">Speed</label>
+<MultiInput
+  id="speed-control"
+  class="flex space-x-4"
+  value="1"
+  min="1"
+  step="0.1"
+>
+  <input id="speed-control-input" class="w-24" type="number" value="1" />
+  <input
+    class="w-full"
+    type="range"
+    value="1"
+    max="50"
+    aria-labeledby="speed-control-label"
+  />
+</MultiInput>
+
+<script>
+  import type { MultiInput, InputElement } from '../lib/multi-input'
+  import globalContext from '../global'
+
+  const speedControl = document.getElementById('speed-control') as MultiInput
+
+  const setSpeedControl = (speed: number): void => {
+    const step = speedControl.step?.split('.')[1].length || 0
+    speedControl.value = speed.toFixed(step)
+    speedControl.inputs.forEach(input => {
+      if (input.type === 'range') {
+        input.value = Math.sqrt(speed).toString()
+      }
+    })
+  }
+  setSpeedControl(globalContext.speed)
+
+  let speedControlTimeout: number
+  speedControl.addEventListener('input', event => {
+    if (!speedControl.value) return
+    let speed = Number(speedControl.value)
+    if (isNaN(speed) || speed <= 0) {
+      return
+    }
+
+    const target = event.target as InputElement
+    if (target.type === 'range') speed = speed ** 2
+    setSpeedControl(speed)
+    clearTimeout(speedControlTimeout)
+    speedControlTimeout = window.setTimeout(() => {
+      globalContext.speed = speed
+    }, 100)
+  })
+  globalContext.listen('speed', event => {
+    setSpeedControl(event.detail.speed)
+  })
+</script>

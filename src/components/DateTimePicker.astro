@@ -1,0 +1,26 @@
+<label for="datetimepickerInput" class="mr-4">Date</label>
+<date-time-picker
+  id="datetimepicker"
+  class="flex"
+  data-td-target-input="nearest"
+  data-td-target-toggle="nearest"
+>
+  <input
+    id="datetimepickerInput"
+    type="text"
+    class="w-full"
+    data-td-target="#datetimepicker"
+  />
+  <button
+    class="px-2 bg-slate-100"
+    data-td-target="#datetimepicker"
+    data-td-toggle="datetimepicker"
+  >
+    <i class="fa-solid fa-calendar"></i>
+  </button>
+</date-time-picker>
+
+<script>
+  import { DateTimePicker } from '../lib/date-time-picker'
+  customElements.define('date-time-picker', DateTimePicker)
+</script>

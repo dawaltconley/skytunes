@@ -1,0 +1,54 @@
+---
+import MultiInput from './MultiInput.astro'
+---
+
+<label id="latitude-control-label" for="latitude-control-input">Latitude</label>
+<MultiInput
+  id="latitude-control"
+  class="flex space-x-4"
+  value="0"
+  min="-90"
+  max="90"
+  step="0.02"
+>
+  <input id="latitude-control-input" class="w-24" type="number" value="0" />
+  <input
+    class="w-full"
+    type="range"
+    value="0"
+    aria-labeledby="latitude-control-label"
+  />
+</MultiInput>
+
+<script>
+  import type { MultiInput, InputElement } from '../lib/multi-input'
+  import globalContext from '../global'
+  import { clamp, toFixed } from '../lib/utilities'
+
+  const latitudeControl = document.getElementById(
+    'latitude-control',
+  ) as MultiInput
+
+  latitudeControl.addEventListener('input', event => {
+    const target = event.target as InputElement | null
+    if (!target?.value) return
+    let value = Number(latitudeControl.value)
+    if (
+      isNaN(value) ||
+      value < Number(latitudeControl.min) ||
+      value > Number(latitudeControl.max)
+    ) {
+      return
+    }
+    value = clamp(value, -89.99999999, 89.99999999)
+    globalContext.lat = value * (Math.PI / 180)
+  })
+
+  globalContext.listen('lat', event => {
+    let { lat } = event.detail
+    if (lat !== undefined) {
+      lat = lat * (180 / Math.PI)
+      latitudeControl.value = toFixed(lat, 7)
+    }
+  })
+</script>

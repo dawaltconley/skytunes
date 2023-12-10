@@ -1,0 +1,39 @@
+---
+import IconToggle from './IconToggle.astro'
+---
+
+<label class="self-end" for="volume-control-input">Sound</label>
+<div>
+  <IconToggle
+    id="volume-control"
+    class="inline-block px-2 py-1 rounded-md bg-slate-100 hover:bg-slate-200 active:bg-slate-300 cursor-pointer"
+    inputId="volume-control-input"
+    onLabel="Playing"
+    onIcon="fa-solid fa-volume fa-fw"
+    offLabel="Muted"
+    offIcon="fa-solid fa-volume-slash fa-fw"
+  />
+</div>
+
+<script>
+  import type { IconToggle } from '../lib/icon-toggle'
+  import globalContext from '../global'
+
+  const volumeControl = document.getElementById('volume-control') as IconToggle
+
+  volumeControl.addEventListener('change', () => {
+    const newState = volumeControl.isOn
+    if (newState) {
+      if (globalContext.audio) {
+        globalContext.audio.resume()
+      } else {
+        globalContext.audio = new AudioContext({
+          latencyHint: 'interactive',
+        })
+      }
+    } else {
+      globalContext.audio?.suspend()
+    }
+    globalContext.update({ isMuted: !newState })
+  })
+</script>

@@ -1,0 +1,43 @@
+---
+export interface Props {
+  id?: string
+  class?: string
+  inputId?: string
+  onLabel?: string
+  onIcon?: string
+  offLabel?: string
+  offIcon?: string
+  on?: boolean
+}
+
+const {
+  id,
+  class: className,
+  inputId,
+  on,
+  onLabel,
+  onIcon,
+  offLabel,
+  offIcon,
+} = Astro.props
+---
+
+<icon-toggle
+  id={id}
+  on={on}
+  on-label={onLabel}
+  on-icon={onIcon}
+  off-label={offLabel}
+  off-icon={offIcon}
+>
+  <label class:list={['relative cursor-pointer', className]}>
+    <i class={on ? onIcon : offIcon} aria-hidden="true"></i>
+    <input id={inputId} class="absolute w-0 h-0 opacity-0" type="checkbox" />
+    {(onLabel || offLabel) && <span>{on ? onLabel : offLabel}</span>}
+  </label>
+</icon-toggle>
+
+<script>
+  import { IconToggle } from '../lib/icon-toggle'
+  customElements.define('icon-toggle', IconToggle)
+</script>

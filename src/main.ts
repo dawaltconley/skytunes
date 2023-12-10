@@ -1,4 +1,5 @@
 import type { BSC } from './types/skytunes'
+import type { DateTimePicker } from './lib/date-time-picker'
 import globalContext from './global'
 import { radianFromRa, radianFromDec } from './utilities'
 import './tailwind.css'
@@ -12,7 +13,6 @@ import {
   ampFromMagnitude,
 } from './stars'
 import { SkyCanvas, FrameLoop, calculateMsPerFrame } from './draw'
-import { updateDateDisplay } from './settings'
 
 let stars = new StarArray()
 
@@ -25,9 +25,9 @@ import('./bsc.json').then(data => {
           star['harvard_ref_#'],
           radianFromRa(star.RA),
           radianFromDec(star.DEC),
-          Number(star.MAG)
-        )
-    )
+          Number(star.MAG),
+        ),
+    ),
   )
 })
 
@@ -51,12 +51,15 @@ globalContext.listen('audio', event => {
         new StarSynth(audio, {
           queueBuffer: 0.2,
           output: compressor,
-        })
+        }),
       )
     })
   }
 })
 
+const datePicker = document.getElementById(
+  'date-time-picker',
+) as DateTimePicker | null
 const canvas = document.getElementById('canvas')!
 const skyCanvas = new SkyCanvas(canvas)
 const loop = new FrameLoop(60)
@@ -96,7 +99,7 @@ loop.animate((elapsed, repaint) => {
     Star.pov = new TimeAndPlace(
       new Date(last + timeSinceStarFrame * speed),
       Star.pov.long,
-      Star.pov.lat
+      Star.pov.lat,
     )
 
     skyCanvas.layers.stars.clear()
@@ -152,7 +155,7 @@ loop.animate((elapsed, repaint) => {
       synth.addEventListener('ended', () => currentlyPlaying.delete(star.ref))
     })
     timeSinceStarFrame = 0
-    updateDateDisplay(Star.pov.date)
+    datePicker?.updateDisplay(Star.pov.date)
   }
 })
 loop.repaint()

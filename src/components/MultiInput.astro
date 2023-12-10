@@ -1,0 +1,19 @@
+---
+export interface Props {
+  id?: string
+  class?: string
+  value?: number | string
+  min?: number | string
+  max?: number | string
+  step?: number | string
+}
+---
+
+<multi-input {...Astro.props}>
+  <slot />
+</multi-input>
+
+<script>
+  import { MultiInput } from '../lib/multi-input'
+  customElements.define('multi-input', MultiInput)
+</script>
