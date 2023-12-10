@@ -1,0 +1,12 @@
+{
+  "diagnostic.displayByAle": true,
+  "suggest.noselect": true,
+  "tsserver.enable": true,
+  "tsserver.useLocalTsdk": true,
+  "css.validate": false,
+  "scss.validate": false,
+  "tailwindCSS.enable": true,
+  "tailwindCSS.lint.invalidConfigPath": "ignore",
+  "astro.enable": true,
+  "astro.autoCreateQuotes": false
+}
