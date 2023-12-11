@@ -59,7 +59,11 @@ globalContext.listen('audio', event => {
 const datePicker = document.getElementById(
   'date-time-picker',
 ) as DateTimePicker | null
-const canvas = document.getElementById('canvas')!
+const canvas = document.getElementById('canvas')
+if (!canvas) {
+  throw new Error('Couln\'t get canvas element by id "canvas"')
+}
+
 const skyCanvas = new SkyCanvas(canvas)
 const loop = new FrameLoop(60)
 
@@ -94,7 +98,7 @@ loop.animate((elapsed, repaint) => {
   if (repaint || timeSinceStarFrame > minMsPerFrame) {
     const { audio, speed } = globalContext
 
-    let last: number = Star.pov.date.getTime()
+    const last: number = Star.pov.date.getTime()
     Star.pov = new TimeAndPlace(
       new Date(last + timeSinceStarFrame * speed),
       Star.pov.long,
@@ -172,7 +176,7 @@ const observer = new ResizeObserver(() => {
 observer.observe(skyCanvas.container)
 
 /** @return true if any of the arguments are not undefined */
-const any = (...args: any[]): boolean => args.some(arg => arg !== undefined)
+const any = (...args: unknown[]): boolean => args.some(arg => arg !== undefined)
 
 // listen for updates to the global context
 globalContext.listen('update', event => {

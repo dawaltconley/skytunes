@@ -26,8 +26,10 @@ export class DateTimePicker extends HTMLElement {
 
   updateDisplay(date: Date): void {
     if (!this.input || this.input === document.activeElement) return
-    let datestr = this.td.dates.formatInput(DateTime.convert(date))
-    if (this.input.value !== datestr) this.input.value = datestr
+    const datestr = this.td.dates.formatInput(DateTime.convert(date))
+    if (this.input.value !== datestr) {
+      this.input.value = datestr
+    }
     this.date = date
   }
 }

@@ -9,6 +9,3 @@ let g:ale_linters['astro'] = ['eslint', 'stylelint']
 let g:ale_fixers['astro'] = ['prettier']
 
 source ~/.vim/coc.vim
-
-call coc#config('tsserver.enable', v:true)
-call coc#config('eslint.enable', v:true)

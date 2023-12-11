@@ -10,7 +10,7 @@ const mutableProperties = [
 type Settings = Pick<GlobalContext, (typeof mutableProperties)[number]>
 
 const isMutableProperty = (
-  p: string
+  p: string,
 ): p is (typeof mutableProperties)[number] =>
   mutableProperties.includes(p as (typeof mutableProperties)[number])
 
@@ -20,12 +20,12 @@ interface UpdateEvent<P extends PropertyKey> extends CustomEvent {
 
 class GlobalContext extends EventTarget implements Settings {
   date: Date = new Date()
-  long: number = 0
-  lat: number = 0
-  speed: number = 1
+  long = 0
+  lat = 0
+  speed = 1
 
   audio?: AudioContext
-  isMuted: boolean = false
+  isMuted = false
 
   constructor() {
     super()
@@ -56,8 +56,8 @@ class GlobalContext extends EventTarget implements Settings {
     const updated: Partial<Settings> = Object.fromEntries(
       Object.entries(options).filter(
         // filter out update options that haven't changed
-        ([p, value]) => value !== this[p as keyof Settings]
-      )
+        ([p, value]) => value !== this[p as keyof Settings],
+      ),
     )
     if (Object.keys(updated).length === 0) return updated
 
@@ -73,7 +73,7 @@ class GlobalContext extends EventTarget implements Settings {
 
   listen<P extends keyof Settings | 'update'>(
     property: P,
-    listener: (event: UpdateEvent<P>) => void
+    listener: (event: UpdateEvent<P>) => void,
   ) {
     if (property === 'update') {
       this.addEventListener('update', listener as EventListener)

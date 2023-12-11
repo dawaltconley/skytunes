@@ -7,6 +7,8 @@ class CanvasLayer {
 
   constructor(container: HTMLElement) {
     const canvas = document.createElement('canvas')
+    const context = canvas.getContext('2d')
+    if (!context) throw new Error("Couldn't get canvas context")
     canvas.classList.add(
       'absolute',
       'inset-0',
@@ -16,7 +18,7 @@ class CanvasLayer {
     )
     container.append(canvas)
     this.canvas = canvas
-    this.context = canvas.getContext('2d')!
+    this.context = context
   }
 
   setSize(width: number, height: number) {
@@ -36,7 +38,7 @@ class SkyCanvas {
     stars: CanvasLayer
     shimmer: CanvasLayer
   }
-  radius: number = 0
+  radius = 0
   center: {
     x: number
     y: number
@@ -56,7 +58,7 @@ class SkyCanvas {
   /** adjusts the canvas width and height to match the screen sice and pixel ratio */
   setCanvasSize(): SkyCanvas {
     let { width, height } = this.container.getBoundingClientRect()
-    let scale = window.devicePixelRatio
+    const scale = window.devicePixelRatio
     width = width * scale
     height = height * scale
 
@@ -72,10 +74,10 @@ class SkyCanvas {
 
   /** draws the sky background */
   drawBackground(): SkyCanvas {
-    let { canvas, context } = this.layers.background
-    let { center, radius } = this
-    let height = canvas.height
-    let skyTop = (height - 2 * radius) / 2
+    const { canvas, context } = this.layers.background
+    const { center, radius } = this
+    const height = canvas.height
+    const skyTop = (height - 2 * radius) / 2
     requestAnimationFrame(() => {
       context.clearRect(0, 0, canvas.width, canvas.height)
       context.beginPath()
@@ -128,8 +130,8 @@ class SkyCanvas {
  * @return minimum milliseconds per frame needed to animate smoothly
  */
 const calculateMsPerFrame = (speed: number, radius: number) => {
-  let pixelsPerDegree = 0.01745240643728351 * radius // approximate
-  let pixelsPerSecond = pixelsPerDegree * (speed / 240)
+  const pixelsPerDegree = 0.01745240643728351 * radius // approximate
+  const pixelsPerSecond = pixelsPerDegree * (speed / 240)
   return 100 / pixelsPerSecond
 }
 
@@ -139,7 +141,7 @@ class FrameLoop {
   #minMsPerFrame = 0
   #repaint = false
   #lastFrameTime?: number
-  #fps: number = 0
+  #fps = 0
   #fpsLogger?: number
   #nextFrame?: number
 
@@ -162,7 +164,7 @@ class FrameLoop {
   animate(eachFrame: (elapsed: number, repaint: boolean) => void) {
     const frame = (timestamp: DOMHighResTimeStamp) => {
       if (this.#lastFrameTime === undefined) this.#lastFrameTime = timestamp
-      let elapsed = timestamp - this.#lastFrameTime
+      const elapsed = timestamp - this.#lastFrameTime
       if (this.#repaint || elapsed > this.#minMsPerFrame) {
         eachFrame(elapsed, this.#repaint)
         this.#lastFrameTime = timestamp
@@ -187,6 +189,7 @@ class FrameLoop {
   /** log actual fps to the console */
   logFps() {
     this.#fpsLogger = window.setInterval(() => {
+      // eslint-disable-next-line no-console
       console.log(`${this.#fps} frames per second`)
       this.#fps = 0
     }, 1000)

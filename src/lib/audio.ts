@@ -21,7 +21,7 @@ export class StarSynth extends EventTarget {
   #gain?: GainNode
   #analyser?: AnalyserNode
   #queued?: number
-  #isPlaying: boolean = false
+  #isPlaying = false
   output: AudioNode
 
   #startedEvent = new CustomEvent('started', { detail: this })
@@ -143,7 +143,7 @@ export const noteFromAltitude = (
   min: number,
   max: number,
 ): number => {
-  let scale = 1 - Math.abs(1 - altitude / (Math.PI / 2))
+  const scale = 1 - Math.abs(1 - altitude / (Math.PI / 2))
   return min + scale * (max - min)
 }
 
@@ -157,7 +157,7 @@ export const ampFromMagnitude = (
   } = {},
 ): number => {
   const { min = 0, max = 1, brightest = 0, dimmest = 8 } = options
-  let range = dimmest - brightest
-  let scale = (dimmest - magnitude) / range
+  const range = dimmest - brightest
+  const scale = (dimmest - magnitude) / range
   return min + scale * (max - min)
 }

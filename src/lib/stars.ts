@@ -12,11 +12,7 @@ export class TimeAndPlace implements Interface.TimeAndPlace {
   readonly sinLat: number
   readonly cosLat: number
 
-  constructor(
-    date: Date = new Date(),
-    longitude: number = 0,
-    latitude: number = 0,
-  ) {
+  constructor(date: Date = new Date(), longitude = 0, latitude = 0) {
     this.date = date
     this.long = longitude
     this.lat = latitude
@@ -183,8 +179,9 @@ export class Star implements Interface.Star {
 
   /** log data about the star's current position */
   log() {
-    let { ref, hourAngle, altitude, azimuth, theta, rho } = this
+    const { ref, hourAngle, altitude, azimuth, theta, rho } = this
     const toDegrees = (r: number) => (r * 180) / Math.PI
+    // eslint-disable-next-line no-console
     console.log({
       ref,
       hourAngle: toDegrees(hourAngle),
@@ -258,7 +255,9 @@ export class StarArray extends Array<Star> {
    * this is slower than StarArray.unsetVisible, but recalculates visibility immediately
    */
   updateVisible() {
-    this.eachStar(() => {})
+    this.eachStar(() => {
+      // update star dates and do nothing
+    })
   }
 
   /** mimics StarArray.forEach but recalculates the visibility of all stars while looping */
@@ -291,15 +290,17 @@ export class StarArray extends Array<Star> {
     }
 
     while ((this.#hidden.top()?.update(Star.pov)?.altitude || 0) > 0) {
-      const next = this.#hidden.pop()!
-      callback(next)
-      stillVisible.push(next)
+      const next = this.#hidden.pop()
+      if (next) {
+        callback(next)
+        stillVisible.push(next)
+      }
     }
 
     // loop through the current list of visible stars
     // execute callback on any that are still visible
     // insert the rest into the #hidden heap
-    for (let star of this.#visible.length ? this.#visible : this) {
+    for (const star of this.#visible.length ? this.#visible : this) {
       star.update(Star.pov)
       if (star.altitude > 0) {
         callback(star)
@@ -335,25 +336,25 @@ export function getUniversalTime(date: Date): number {
  * @return LST in radians
  */
 export function getLST(date: Date, longitude: number): number {
-  let d = sinceJ2000(date) / 86400000,
+  const d = sinceJ2000(date) / 86400000,
     ut = getUniversalTime(date) / 240000,
     long = longitude * (180 / Math.PI)
-  let lst = 100.46 + 0.985647 * d + long + ut
+  const lst = 100.46 + 0.985647 * d + long + ut
   return (lst * Math.PI) / 180
 }
 
 /** parse a right ascension string of the format HH:MM:SS.S */
-export const radianFromRa = (hms: string, sep: string = ':'): number => {
-  let [h, m, s]: number[] = hms.split(sep).map(s => Number(s))
-  let hours = h + m / 60 + s / 3600
+export const radianFromRa = (hms: string, sep = ':'): number => {
+  const [h, m, s]: number[] = hms.split(sep).map(s => Number(s))
+  const hours = h + m / 60 + s / 3600
   return (hours * Math.PI) / 12
 }
 
 /** parse a declination string of the format +/-DD:MM:SS.SS */
-export const radianFromDec = (dms: string, sep: string = ':'): number => {
+export const radianFromDec = (dms: string, sep = ':'): number => {
   let [d, m, s]: number[] = dms.split(sep).map(s => Number(s))
   if (dms.startsWith('-')) (m *= -1), (s *= -1)
-  let degrees = d + m / 60 + s / 3600
+  const degrees = d + m / 60 + s / 3600
   return (degrees * Math.PI) / 180
 }
 export function getHourAngle(
