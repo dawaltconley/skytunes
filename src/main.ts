@@ -57,7 +57,7 @@ globalContext.listen('audio', event => {
 })
 
 const datePicker = document.getElementById(
-  'date-time-picker',
+  'datetimepicker',
 ) as DateTimePicker | null
 const canvas = document.getElementById('canvas')
 if (!canvas) {

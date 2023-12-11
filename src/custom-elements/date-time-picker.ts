@@ -17,7 +17,7 @@ export class DateTimePicker extends HTMLElement {
     })
     this.td.subscribe('show.td', () => {
       if (!this.input) return
-      const display = DateTime.fromString(this.input.value, {})
+      const display = this.td.dates.parseInput(this.input.value)
       if (display.toString() === 'Invalid Date') return
       display.setSeconds(this.date.getSeconds(), this.date.getMilliseconds())
       this.td.dates.setValue(display)
