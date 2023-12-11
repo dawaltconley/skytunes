@@ -1,10 +1,13 @@
-/** @type {import('ts-jest/dist/types').InitialOptionsTsJest} */
+/** @type {import('ts-jest').JestConfigWithTsJest} */
 export default {
   preset: 'ts-jest',
   testEnvironment: 'node',
-  globals: {
-    'ts-jest': {
-      tsconfig: 'tests/tsconfig.json',
-    },
+  transform: {
+    '^.+\\.test\\.tsx?$': [
+      'ts-jest',
+      {
+        tsconfig: 'tests/tsconfig.json',
+      },
+    ],
   },
 }
