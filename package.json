@@ -31,7 +31,7 @@
     "typescript": "^5.3.3"
   },
   "dependencies": {
-    "@datastructures-js/heap": "^4.3.2",
+    "@datastructures-js/heap": "^4.3.3",
     "@eonasdan/tempus-dominus": "^6.2.10",
     "@popperjs/core": "^2.11.6"
   }
