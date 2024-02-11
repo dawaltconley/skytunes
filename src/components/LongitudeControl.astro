@@ -23,7 +23,7 @@ import MultiInput from './MultiInput.astro'
 </MultiInput>
 
 <script>
-  import type { MultiInput, InputElement } from '../custom-elements/multi-input'
+  import type { MultiInput } from '../custom-elements/multi-input'
   import globalContext from '../lib/global'
   import { toFixed } from '../lib/utilities'
 
@@ -32,8 +32,8 @@ import MultiInput from './MultiInput.astro'
       'longitude-control',
     ) as MultiInput
 
-    longitudeControl.addEventListener('input', event => {
-      const target = event.target as InputElement | null
+    longitudeControl.addEventListener('multiinput', event => {
+      const target = event.target as MultiInput | null
       if (!target?.value) return
       const value = Number(longitudeControl.value)
       if (
