@@ -25,30 +25,30 @@ import MultiInput from './MultiInput.astro'
   import globalContext from '../lib/global'
   import { clamp, toFixed } from '../lib/utilities'
 
-  const latitudeControl = document.getElementById(
-    'latitude-control',
-  ) as MultiInput
+  customElements.whenDefined('multi-input').then(() => {
+    const latitudeControl = document.getElementById(
+      'latitude-control',
+    ) as MultiInput
 
-  latitudeControl.addEventListener('input', event => {
-    const target = event.target as InputElement | null
-    if (!target?.value) return
-    let value = Number(latitudeControl.value)
-    if (
-      isNaN(value) ||
-      value < Number(latitudeControl.min) ||
-      value > Number(latitudeControl.max)
-    ) {
-      return
-    }
-    value = clamp(value, -89.99999999, 89.99999999)
-    globalContext.lat = value * (Math.PI / 180)
-  })
+    latitudeControl.addEventListener('input', event => {
+      const target = event.target as InputElement | null
+      if (!target?.value) return
+      let value = Number(latitudeControl.value)
+      if (
+        isNaN(value) ||
+        value < Number(latitudeControl.min) ||
+        value > Number(latitudeControl.max)
+      ) {
+        return
+      }
+      value = clamp(value, -89.99999999, 89.99999999)
+      globalContext.lat = value * (Math.PI / 180)
+    })
 
-  globalContext.listen('lat', event => {
-    let { lat } = event.detail
-    if (lat !== undefined) {
+    globalContext.listen('lat', event => {
+      let { lat } = event.detail
       lat = lat * (180 / Math.PI)
       latitudeControl.value = toFixed(lat, 7)
-    }
+    })
   })
 </script>

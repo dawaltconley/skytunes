@@ -21,39 +21,42 @@ import MultiInput from './MultiInput.astro'
 </MultiInput>
 
 <script>
-  import type { MultiInput, InputElement } from '../custom-elements/multi-input'
+  import type { MultiInput } from '../custom-elements/multi-input'
   import globalContext from '../lib/global'
 
-  const speedControl = document.getElementById('speed-control') as MultiInput
+  customElements.whenDefined('multi-input').then(() => {
+    const speedControl = document.getElementById('speed-control') as MultiInput
 
-  const setSpeedControl = (speed: number): void => {
-    const step = speedControl.step?.split('.')[1].length || 0
-    speedControl.value = speed.toFixed(step)
-    speedControl.inputs.forEach(input => {
+    speedControl.getInputValue = (value, input) => {
       if (input.type === 'range') {
-        input.value = Math.sqrt(speed).toString()
+        return (Number(value) ** 2).toString()
       }
-    })
-  }
-  setSpeedControl(globalContext.speed)
-
-  let speedControlTimeout: number
-  speedControl.addEventListener('input', event => {
-    if (!speedControl.value) return
-    let speed = Number(speedControl.value)
-    if (isNaN(speed) || speed <= 0) {
-      return
+      return value
     }
 
-    const target = event.target as InputElement
-    if (target.type === 'range') speed = speed ** 2
-    setSpeedControl(speed)
-    clearTimeout(speedControlTimeout)
-    speedControlTimeout = window.setTimeout(() => {
-      globalContext.speed = speed
-    }, 100)
-  })
-  globalContext.listen('speed', event => {
-    setSpeedControl(event.detail.speed)
+    speedControl.setInputValue = (value, input) => {
+      const step = speedControl.step?.split('.')[1].length || 0
+      const speed = Number(value)
+      if (input.type === 'range') {
+        return Math.sqrt(speed).toFixed(step)
+      }
+      return speed.toFixed(step)
+    }
+
+    speedControl.value = globalContext.speed.toString()
+
+    let speedControlTimeout: number
+    speedControl.addEventListener('multiinput', () => {
+      clearTimeout(speedControlTimeout)
+      speedControlTimeout = window.setTimeout(() => {
+        const speed = Number(speedControl.value)
+        if (isNaN(speed) || speed <= 0) return
+        globalContext.speed = speed
+      }, 100)
+    })
+
+    globalContext.listen('speed', event => {
+      speedControl.value = event.detail.speed.toString()
+    })
   })
 </script>

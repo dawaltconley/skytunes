@@ -19,21 +19,25 @@ import IconToggle from './IconToggle.astro'
   import type { IconToggle } from '../custom-elements/icon-toggle'
   import globalContext from '../lib/global'
 
-  const volumeControl = document.getElementById('volume-control') as IconToggle
+  customElements.whenDefined('icon-toggle').then(() => {
+    const volumeControl = document.getElementById(
+      'volume-control',
+    ) as IconToggle
 
-  volumeControl.addEventListener('change', () => {
-    const newState = volumeControl.isOn
-    if (newState) {
-      if (globalContext.audio) {
-        globalContext.audio.resume()
+    volumeControl.addEventListener('change', () => {
+      const newState = volumeControl.isOn
+      if (newState) {
+        if (globalContext.audio) {
+          globalContext.audio.resume()
+        } else {
+          globalContext.audio = new AudioContext({
+            latencyHint: 'interactive',
+          })
+        }
       } else {
-        globalContext.audio = new AudioContext({
-          latencyHint: 'interactive',
-        })
+        globalContext.audio?.suspend()
       }
-    } else {
-      globalContext.audio?.suspend()
-    }
-    globalContext.update({ isMuted: !newState })
+      globalContext.update({ isMuted: !newState })
+    })
   })
 </script>

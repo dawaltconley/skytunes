@@ -1,15 +1,21 @@
 export type InputElement = HTMLInputElement
 
+const passthrough = (v: string) => v
+
 export class MultiInput extends HTMLElement {
   inputs: InputElement[] = []
   inputListener: EventListener
+  getInputValue: (value: string, input: InputElement) => string = passthrough
+  setInputValue: (value: string, input: InputElement) => string = passthrough
 
   constructor() {
     super()
     this.inputListener = function (e) {
       const target = e.target as InputElement
-      this.value = target.value
+      this.value = this.getInputValue(target.value, target)
+      this.dispatchEvent(new CustomEvent('multiinput', { detail: this.value }))
     }
+    this.inputListener = this.inputListener.bind(this)
   }
 
   connectedCallback() {
@@ -22,7 +28,7 @@ export class MultiInput extends HTMLElement {
       })
     })
 
-    this.addEventListener('input', this.inputListener.bind(this))
+    this.addEventListener('input', this.inputListener)
   }
 
   static get observedAttributes() {
@@ -64,7 +70,11 @@ export class MultiInput extends HTMLElement {
   ) {
     if (oldValue === newValue) return
     this.inputs.forEach(input => {
-      input[name] = newValue
+      input[name] = this.setInputValue(newValue, input)
     })
+  }
+
+  disconnectedCallback() {
+    this.removeEventListener('input', this.inputListener)
   }
 }

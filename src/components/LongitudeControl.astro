@@ -27,29 +27,29 @@ import MultiInput from './MultiInput.astro'
   import globalContext from '../lib/global'
   import { toFixed } from '../lib/utilities'
 
-  const longitudeControl = document.getElementById(
-    'longitude-control',
-  ) as MultiInput
+  customElements.whenDefined('multi-input').then(() => {
+    const longitudeControl = document.getElementById(
+      'longitude-control',
+    ) as MultiInput
 
-  longitudeControl.addEventListener('input', event => {
-    const target = event.target as InputElement | null
-    if (!target?.value) return
-    const value = Number(longitudeControl.value)
-    if (
-      isNaN(value) ||
-      value < Number(longitudeControl.min) ||
-      value > Number(longitudeControl.max)
-    ) {
-      return
-    }
-    globalContext.long = value * (Math.PI / 180)
-  })
+    longitudeControl.addEventListener('input', event => {
+      const target = event.target as InputElement | null
+      if (!target?.value) return
+      const value = Number(longitudeControl.value)
+      if (
+        isNaN(value) ||
+        value < Number(longitudeControl.min) ||
+        value > Number(longitudeControl.max)
+      ) {
+        return
+      }
+      globalContext.long = value * (Math.PI / 180)
+    })
 
-  globalContext.listen('long', event => {
-    let { long } = event.detail
-    if (long !== undefined) {
+    globalContext.listen('long', event => {
+      let { long } = event.detail
       long = long * (180 / Math.PI)
       longitudeControl.value = toFixed(long, 7)
-    }
+    })
   })
 </script>
