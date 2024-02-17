@@ -158,7 +158,11 @@ loop.animate((elapsed, repaint) => {
       synth.addEventListener('ended', () => currentlyPlaying.delete(star.ref))
     })
     timeSinceStarFrame = 0
-    datePicker?.updateDisplay(Star.pov.date)
+
+    // check if date-time-picker custom element has been defined
+    if (datePicker?.updateDisplay) {
+      datePicker.updateDisplay(Star.pov.date)
+    }
   }
 })
 loop.repaint()
