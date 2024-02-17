@@ -186,7 +186,7 @@ const any = (...args: unknown[]): boolean => args.some(arg => arg !== undefined)
 globalContext.listen('update', event => {
   const { date, lat, long, speed, isMuted } = event.detail
   if (any(date, lat, long)) {
-    Star.pov = new TimeAndPlace(date, long, lat)
+    Star.pov = TimeAndPlace.from(Star.pov, event.detail)
     stars.unsetVisible()
   }
   if (any(date, speed)) {

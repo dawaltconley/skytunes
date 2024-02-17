@@ -28,6 +28,14 @@ export class TimeAndPlace implements Interface.TimeAndPlace {
       this.lat === other.lat
     )
   }
+
+  /** @returns a copy of a TimeAndPlace object updating only defined properties */
+  static from(
+    old: Interface.TimeAndPlace,
+    { date, long, lat }: Partial<Interface.TimeAndPlace>,
+  ): TimeAndPlace {
+    return new TimeAndPlace(date ?? old.date, long ?? old.long, lat ?? old.lat)
+  }
 }
 
 type StarCache = {
