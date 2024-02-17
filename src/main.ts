@@ -214,4 +214,4 @@ navigator.geolocation.getCurrentPosition(({ coords, timestamp }) => {
     lat: coords.latitude * (Math.PI / 180),
   })
 })
-;(window as any).context = globalContext
+// ;(window as any).context = globalContext
