@@ -32,7 +32,13 @@ $utilities: map.deep-merge(
   (
     'width': (
       'values': (
+        0: 0,
         fit: fit-content,
+      ),
+    ),
+    'height': (
+      'values': (
+        0: 0,
       ),
     ),
   )

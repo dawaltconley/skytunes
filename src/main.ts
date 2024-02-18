@@ -1,8 +1,7 @@
 import type { BSC } from './types/skytunes'
 import type { DateTimePicker } from './custom-elements/date-time-picker'
 import globalContext from './lib/global'
-import './tailwind.css'
-import colors from 'tailwindcss/colors'
+import colors from './data/colors'
 import {
   TimeAndPlace,
   Star,
@@ -15,7 +14,7 @@ import { SkyCanvas, FrameLoop, calculateMsPerFrame } from './lib/draw'
 
 let stars = new StarArray()
 
-import('./bsc.json').then(data => {
+import('./data/bsc.json').then(data => {
   const bsc = data.default
   stars = new StarArray(
     ...bsc.map(
@@ -82,7 +81,7 @@ loop.animate((elapsed, repaint) => {
       const radius = (dB * skyCanvas.radius * 0.008) / 256
       skyCanvas.drawStar(stars.getStar(starRef), {
         layer: skyCanvas.layers.shimmer,
-        color: colors.blue[100],
+        color: colors.sky.starActive,
         radius,
       })
     }

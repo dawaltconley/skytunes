@@ -1,5 +1,5 @@
 import type { Star } from './stars'
-import colors from 'tailwindcss/colors'
+import colors from '../data/colors'
 
 class CanvasLayer {
   canvas: HTMLCanvasElement
@@ -10,11 +10,12 @@ class CanvasLayer {
     const context = canvas.getContext('2d')
     if (!context) throw new Error("Couldn't get canvas context")
     canvas.classList.add(
-      'absolute',
-      'inset-0',
-      'w-full',
-      'h-full',
-      'rounded-full',
+      'position-absolute',
+      'top-0',
+      'start-0',
+      'w-100',
+      'h-100',
+      'rounded-circle',
     )
     container.append(canvas)
     this.canvas = canvas
@@ -82,7 +83,7 @@ class SkyCanvas {
       context.clearRect(0, 0, canvas.width, canvas.height)
       context.beginPath()
       context.arc(center.x, center.y, radius, 0, 2 * Math.PI)
-      context.fillStyle = colors.blue['900']
+      context.fillStyle = colors.sky.background
       context.fill()
       context.beginPath()
       context.moveTo(center.x, skyTop)
@@ -107,7 +108,7 @@ class SkyCanvas {
     {
       layer = this.layers.stars,
       radius = (8 - star.mag) * (this.radius * 0.0008),
-      color = colors.yellow[200],
+      color = colors.sky.star,
     }: {
       layer?: CanvasLayer
       radius?: number

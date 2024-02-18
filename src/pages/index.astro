@@ -13,10 +13,20 @@ import Controls from '../components/Controls.astro'
       src="https://kit.fontawesome.com/d54ca58f45.js"
       crossorigin="anonymous"></script>
   </head>
-  <body class="w-screen h-screen p-4">
-    <div id="canvas" class="relative w-full max-h-[80vh] aspect-square mx-auto">
-    </div>
+  <body class="p-3">
+    <div id="canvas"></div>
     <Controls />
     <script src="../main.ts"></script>
   </body>
 </html>
+
+<style>
+  #canvas {
+    position: relative;
+    width: 100%;
+    max-height: 80vh;
+    max-height: 80svh;
+    aspect-ratio: 1 / 1;
+    margin: 0 auto;
+  }
+</style>
