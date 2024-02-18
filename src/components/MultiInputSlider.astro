@@ -24,16 +24,35 @@ const {
   <label id={`${id}-label`} for={`${id}-input`} class="input-group-text"
     >{label}</label
   >
+  <input id={`${id}-input`} class="form-control" type="number" value={value} />
   <input
-    id={`${id}-input`}
-    class="form-control w-fit flex-shrink-0 flex-grow-0"
-    type="number"
-    value={value}
-  />
-  <input
-    class="w-full form-control form-range flex-grow-1"
+    class="form-control form-range"
     type="range"
     value={value}
     aria-labelledby={`${id}-label`}
   />
 </MultiInput>
+
+<style lang="scss">
+  .input-group {
+    flex-wrap: nowrap;
+  }
+
+  .form-control[type='number'] {
+    flex-shrink: 0;
+    min-width: 6em;
+    text-align: right;
+
+    appearance: textField;
+    &:focus,
+    &:active {
+      appearance: auto;
+    }
+  }
+
+  .form-control[type='range'] {
+    flex-shrink: 3;
+    flex-grow: 0;
+    flex-basis: 70%;
+  }
+</style>

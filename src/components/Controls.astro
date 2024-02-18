@@ -6,12 +6,23 @@ import LatitudeControl from './LatitudeControl.astro'
 import SpeedControl from './SpeedControl.astro'
 ---
 
-<div id="controls" class="container p-2 mt-3">
+<div id="controls" class="container-fluid mt-5">
   <div class="row g-2">
-    <VolumeControl />
-    <DateTimePicker />
+    <div class="col-sm-auto">
+      <VolumeControl />
+    </div>
+    <div class="col-sm">
+      <DateTimePicker />
+    </div>
     <LongitudeControl />
     <LatitudeControl />
     <SpeedControl />
   </div>
 </div>
+
+<style>
+  #controls {
+    max-width: calc(var(--bs-breakpoint-md));
+    margin: 0 auto;
+  }
+</style>
