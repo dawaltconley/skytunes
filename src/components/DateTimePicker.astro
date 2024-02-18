@@ -1,22 +1,23 @@
-<label for="datetimepickerInput" class="mr-4">Date</label>
 <date-time-picker
   id="datetimepicker"
-  class="flex"
+  class="input-group"
   data-td-target-input="nearest"
   data-td-target-toggle="nearest"
 >
+  <label for="datetimepickerInput" class="input-group-text">Date</label>
   <input
     id="datetimepickerInput"
     type="text"
-    class="w-full"
+    class="form-control"
     data-td-target="#datetimepicker"
   />
   <button
-    class="px-2 bg-slate-100"
+    type="button"
+    class="btn btn-outline-secondary"
     data-td-target="#datetimepicker"
     data-td-toggle="datetimepicker"
   >
-    <i class="fa-solid fa-calendar"></i>
+    <i class="far fa-calendar"></i>
   </button>
 </date-time-picker>
 
