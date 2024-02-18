@@ -1,0 +1,52 @@
+---
+import IconToggle from './IconToggle.astro'
+---
+
+<IconToggle
+  id="theme-control"
+  class="btn btn-theme rounded-pill"
+  onIcon="fas fa-sun fa-fw fa-lg"
+  offIcon="fas fa-moon fa-fw fa-lg"
+  on={false}
+/>
+
+<script>
+  import type { IconToggle } from '../custom-elements/icon-toggle'
+
+  type Theme = 'light' | 'dark'
+  const isTheme = (s: string | null | undefined): s is Theme =>
+    s === 'light' || s === 'dark'
+
+  function loadTheme(): Theme | null {
+    const saved = window.localStorage.getItem('theme')
+    return isTheme(saved) ? saved : null
+  }
+  function saveTheme(theme: Theme): void {
+    window.localStorage.setItem('theme', theme)
+  }
+  function getPreferredTheme(): Theme {
+    const saved = loadTheme()
+    if (saved) return saved
+    return window.matchMedia('(prefers-color-scheme: dark)').matches
+      ? 'dark'
+      : 'light'
+  }
+  function setTheme(theme: Theme): void {
+    document.documentElement.setAttribute('data-bs-theme', theme)
+  }
+
+  const preferred = getPreferredTheme()
+  setTheme(preferred)
+
+  customElements.whenDefined('icon-toggle').then(() => {
+    const control = document.getElementById('theme-control') as IconToggle
+
+    control.isOn = preferred === 'light'
+
+    control.addEventListener('change', () => {
+      const newTheme: Theme = control.isOn ? 'light' : 'dark'
+      setTheme(newTheme)
+      saveTheme(newTheme)
+    })
+  })
+</script>

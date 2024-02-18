@@ -49,3 +49,10 @@ $utilities: map.deep-merge(
 
 // 8. Add additional custom code here
 @import 'input-group-range';
+
+.btn-theme {
+  @extend .btn-light;
+  [data-bs-theme='dark'] & {
+    @extend .btn-dark;
+  }
+}

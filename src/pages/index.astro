@@ -1,10 +1,11 @@
 ---
 import '../styles/bootstrap.scss'
 import Controls from '../components/Controls.astro'
+import ThemeControl from '../components/ThemeControl.astro'
 ---
 
 <!doctype html>
-<html lang="en">
+<html lang="en" data-bs-theme="dark">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -18,6 +19,9 @@ import Controls from '../components/Controls.astro'
       <div id="canvas"></div>
     </div>
     <Controls />
+    <div class="position-absolute top-0 end-0 py-3 px-2 px-sm-3">
+      <ThemeControl />
+    </div>
     <script src="../main.ts"></script>
   </body>
 </html>
