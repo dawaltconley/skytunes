@@ -8,5 +8,6 @@
   "tailwindCSS.enable": true,
   "tailwindCSS.lint.invalidConfigPath": "ignore",
   "astro.enable": true,
-  "astro.autoCreateQuotes": false
+  "astro.autoCreateQuotes": false,
+  "html-css-support.enabledLanguages": ["html", "astro", "css", "scss"]
 }
