@@ -1,24 +1,14 @@
 ---
-import MultiInput from './MultiInput.astro'
+import MultiInputSlider from './MultiInputSlider.astro'
 ---
 
-<label id="speed-control-label" for="speed-control-input">Speed</label>
-<MultiInput
+<MultiInputSlider
   id="speed-control"
-  class="flex space-x-4"
+  label="Speed"
   value="1"
   min="1"
   step="0.1"
->
-  <input id="speed-control-input" class="w-24" type="number" value="1" />
-  <input
-    class="w-full"
-    type="range"
-    value="1"
-    max="50"
-    aria-labelledby="speed-control-label"
-  />
-</MultiInput>
+/>
 
 <script>
   import type { MultiInput } from '../custom-elements/multi-input'

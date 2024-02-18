@@ -1,0 +1,14 @@
+.input-group {
+  & > .form-range {
+    height: auto;
+    padding: 0 0.75rem;
+  }
+
+  &-sm > .form-range {
+    padding: 0 0.5rem;
+  }
+
+  &-lg > .form-range {
+    padding: 0 1rem;
+  }
+}

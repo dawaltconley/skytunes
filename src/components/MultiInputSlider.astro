@@ -1,0 +1,39 @@
+---
+import MultiInput, { type Props as MultiInputProps } from './MultiInput.astro'
+
+export interface Props extends MultiInputProps {
+  label: string
+  id?: string
+}
+
+const {
+  label,
+  id = label.toLowerCase(),
+  class: className,
+  value = 0,
+  ...multiInputProps
+} = Astro.props
+---
+
+<MultiInput
+  id={id}
+  class:list={['input-group col-span-2', className]}
+  value={value}
+  {...multiInputProps}
+>
+  <label id={`${id}-label`} for={`${id}-input`} class="input-group-text"
+    >{label}</label
+  >
+  <input
+    id={`${id}-input`}
+    class="form-control w-fit flex-shrink-0 flex-grow-0"
+    type="number"
+    value={value}
+  />
+  <input
+    class="w-full form-control form-range flex-grow-1"
+    type="range"
+    value={value}
+    aria-labelledby={`${id}-label`}
+  />
+</MultiInput>

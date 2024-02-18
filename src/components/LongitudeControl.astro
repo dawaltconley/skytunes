@@ -1,26 +1,15 @@
 ---
-import MultiInput from './MultiInput.astro'
+import MultiInputSlider from './MultiInputSlider.astro'
 ---
 
-<label id="longitude-control-label" for="longitude-control-input"
-  >Longitude</label
->
-<MultiInput
+<MultiInputSlider
   id="longitude-control"
-  class="flex space-x-4"
+  label="Longitude"
   value="0"
   min="-180"
   max="180"
   step="0.02"
->
-  <input id="longitude-control-input" class="w-24" type="number" value="0" />
-  <input
-    class="w-full"
-    type="range"
-    value="1"
-    aria-labelledby="longitude-control-label"
-  />
-</MultiInput>
+/>
 
 <script>
   import type { MultiInput } from '../custom-elements/multi-input'
