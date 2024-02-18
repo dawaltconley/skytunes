@@ -20,6 +20,7 @@ import '@eonasdan/tempus-dominus/dist/css/tempus-dominus.css'
     class="btn btn-outline-secondary"
     data-td-target="#datetimepicker"
     data-td-toggle="datetimepicker"
+    aria-pressed="false"
   >
     <i class="far fa-calendar"></i>
   </button>
@@ -28,4 +29,20 @@ import '@eonasdan/tempus-dominus/dist/css/tempus-dominus.css'
 <script>
   import { DateTimePicker } from '../custom-elements/date-time-picker'
   customElements.define('date-time-picker', DateTimePicker)
+
+  const dateTimePicker = document.getElementById(
+    'datetimepicker',
+  ) as DateTimePicker
+  const button = dateTimePicker.querySelector('.btn[data-td-toggle]')
+
+  if (button) {
+    dateTimePicker.td.subscribe('show.td', () => {
+      button.setAttribute('aria-pressed', 'true')
+      button.classList.add('active')
+    })
+    dateTimePicker.td.subscribe('hide.td', () => {
+      button.setAttribute('aria-pressed', 'false')
+      button.classList.remove('active')
+    })
+  }
 </script>
