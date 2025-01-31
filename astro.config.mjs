@@ -2,7 +2,7 @@ import { defineConfig } from 'astro/config'
 
 // https://astro.build/config
 export default defineConfig({
-  site: 'https://skytunes.app',
+  site: 'https://skytunes.dylan.ac',
   output: 'static',
   vite: {
     css: {
